@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+postgres_data/
+.dockerignore
+.git
+.gitignore
+pgadmin_data/ 

@@ -1,0 +1,6 @@
+tiktoken
+openai
+python-decouple
+gitpython
+tqdm
+rich

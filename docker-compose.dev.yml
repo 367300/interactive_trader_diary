@@ -1,0 +1,67 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    working_dir: /app/django_base
+    volumes:
+      - ./django_base:/app/django_base
+    command: >
+      python -Xfrozen_modules=off -m debugpy --listen 0.0.0.0:5678 -m uvicorn django_base.asgi:application --host 0.0.0.0 --port 8000
+    env_file:
+      - .env
+    environment:
+      - DJANGO_DEBUG=${DJANGO_DEBUG}
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
+      - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS}
+      - DJANGO_LANGUAGE_CODE=${DJANGO_LANGUAGE_CODE}
+      - DJANGO_TIME_ZONE=${DJANGO_TIME_ZONE}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+    ports:
+      - "8000:8000"
+      - "5678:5678"
+    depends_on:
+      - rabbitmq
+    user: "${UID}:${GID}"
+
+  celery:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    working_dir: /app/django_base
+    command: celery -A django_base worker --loglevel=info
+    volumes:
+      - ./django_base:/app/django_base
+    env_file:
+      - .env
+    environment:
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+    depends_on:
+      - rabbitmq
+
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+    ports:
+      - "5050:80"
+    depends_on:
+      - db
+
+  flower:
+    image: mher/flower:2.0.1
+    environment:
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+    ports:
+      - "5555:5555"
+    depends_on:
+      - rabbitmq
+      - celery
