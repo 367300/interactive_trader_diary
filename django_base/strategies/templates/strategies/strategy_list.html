@@ -1,0 +1,157 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Мои стратегии - Дневник трейдера{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="h2 mb-0">
+                    <i class="bi bi-diagram-3 me-2"></i>Мои стратегии
+                </h1>
+                <p class="text-muted">Управление торговыми стратегиями</p>
+            </div>
+            <a href="{% url 'strategies:strategy_create' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-2"></i>Новая стратегия
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Статистика -->
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-soft">
+            <div class="card-body text-center">
+                <div class="h4 text-primary mb-1">{{ total_strategies }}</div>
+                <small class="text-muted">Всего стратегий</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card border-0 shadow-soft">
+            <div class="card-body text-center">
+                <div class="h4 text-success mb-1">{{ active_strategies }}</div>
+                <small class="text-muted">Активных стратегий</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Список стратегий -->
+<div class="row g-4">
+    {% if strategies %}
+        {% for strategy in strategies %}
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-soft h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <h5 class="card-title mb-1">{{ strategy.name }}</h5>
+                                <span class="badge bg-{% if strategy.is_active %}success{% else %}secondary{% endif %}">
+                                    {% if strategy.is_active %}Активна{% else %}Неактивна{% endif %}
+                                </span>
+                            </div>
+                            <div class="dropdown">
+                                <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    <i class="bi bi-three-dots"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="{% url 'strategies:strategy_detail' strategy.pk %}">
+                                        <i class="bi bi-eye me-2"></i>Просмотр
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="{% url 'strategies:strategy_update' strategy.pk %}">
+                                        <i class="bi bi-pencil me-2"></i>Редактировать
+                                    </a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item text-danger" href="{% url 'strategies:strategy_delete' strategy.pk %}"
+                                           onclick="return confirm('Вы уверены, что хотите удалить эту стратегию?')">
+                                        <i class="bi bi-trash me-2"></i>Удалить
+                                    </a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="bi bi-tag text-primary me-2"></i>
+                                <span class="fw-bold">{{ strategy.get_strategy_type_display }}</span>
+                            </div>
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="bi bi-building text-info me-2"></i>
+                                <span>{{ strategy.get_instruments_display }}</span>
+                            </div>
+                        </div>
+                        
+                        {% if strategy.description %}
+                            <p class="text-muted small mb-3">{{ strategy.description|truncatewords:20 }}</p>
+                        {% endif %}
+                        
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <div class="text-center p-2 bg-light rounded">
+                                    <div class="fw-bold text-primary">{{ strategy.closed_trades_count }}</div>
+                                    <small class="text-muted">Сделок</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-center p-2 bg-light rounded">
+                                    <div class="fw-bold {% if strategy.total_pnl >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                        {% if strategy.total_pnl >= 0 %}+{% endif %}{{ strategy.total_pnl|floatformat:2 }}
+                                    </div>
+                                    <small class="text-muted">P&L (руб.)</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">
+                                <i class="bi bi-calendar me-1"></i>
+                                Создана {{ strategy.created_at|date:"d.m.Y" }}
+                            </small>
+                            <a href="{% url 'strategies:strategy_detail' strategy.pk %}" class="btn btn-outline-primary btn-sm">
+                                Подробнее
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="col-12">
+            <div class="card border-0 shadow-soft">
+                <div class="card-body text-center py-5">
+                    <i class="bi bi-diagram-3 text-muted fs-1 mb-3"></i>
+                    <h5 class="text-muted">У вас пока нет стратегий</h5>
+                    <p class="text-muted">Создайте первую стратегию, чтобы систематизировать свою торговлю</p>
+                    <a href="{% url 'strategies:strategy_create' %}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle me-2"></i>Создать первую стратегию
+                    </a>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.card {
+    transition: transform 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-3px);
+}
+
+.dropdown-toggle::after {
+    display: none;
+}
+
+.badge {
+    font-size: 0.75rem;
+}
+</style>
+{% endblock %}

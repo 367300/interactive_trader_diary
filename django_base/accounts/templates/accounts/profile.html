@@ -1,0 +1,207 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Профиль - Дневник трейдера{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="h2 mb-0">
+            <i class="bi bi-person-gear me-2"></i>Мой профиль
+        </h1>
+        <p class="text-muted">Управление настройками аккаунта</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Информация о пользователе -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-soft">
+            <div class="card-body text-center p-4">
+                <div class="profile-avatar bg-primary bg-gradient text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 120px; height: 120px;">
+                    <i class="bi bi-person-fill fs-1"></i>
+                </div>
+                <h5 class="card-title">{{ user.username }}</h5>
+                <p class="text-muted">{{ user.email }}</p>
+                <p class="text-muted small">
+                    <i class="bi bi-calendar me-1"></i>
+                    Зарегистрирован {{ user.date_joined|date:"d.m.Y" }}
+                </p>
+            </div>
+        </div>
+        
+        <!-- Статистика профиля -->
+        <div class="card border-0 shadow-soft mt-4">
+            <div class="card-header bg-white border-0">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-bar-chart me-2"></i>Статистика
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <div class="text-center">
+                            <div class="h4 text-primary mb-1">0</div>
+                            <small class="text-muted">Сделок</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center">
+                            <div class="h4 text-success mb-1">0</div>
+                            <small class="text-muted">Стратегий</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Настройки профиля -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-soft">
+            <div class="card-header bg-white border-0">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-gear me-2"></i>Настройки депозита
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                <input type="number" 
+                                       class="form-control" 
+                                       id="initial_deposit" 
+                                       name="initial_deposit" 
+                                       placeholder="Начальный депозит"
+                                       value="{% if profile.initial_deposit %}{{ profile.initial_deposit }}{% endif %}"
+                                       step="0.01">
+                                <label for="initial_deposit">Начальный депозит (руб.)</label>
+                                <div class="form-text">Сумма, с которой вы начали торговать</div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                <input type="number" 
+                                       class="form-control" 
+                                       id="current_deposit" 
+                                       name="current_deposit" 
+                                       placeholder="Текущий депозит"
+                                       value="{% if profile.current_deposit %}{{ profile.current_deposit }}{% endif %}"
+                                       step="0.01">
+                                <label for="current_deposit">Текущий депозит (руб.)</label>
+                                <div class="form-text">Текущая сумма на счете</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-check mt-3">
+                        <input class="form-check-input" 
+                               type="checkbox" 
+                               id="use_default_deposit" 
+                               name="use_default_deposit"
+                               {% if profile.use_default_deposit %}checked{% endif %}>
+                        <label class="form-check-label" for="use_default_deposit">
+                            Использовать дефолтный депозит (1 000 000 руб.)
+                        </label>
+                        <div class="form-text">
+                            Если не указан собственный депозит, будет использоваться дефолтное значение для расчетов
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg me-2"></i>Сохранить настройки
+                        </button>
+                        <a href="{% url 'core:dashboard' %}" class="btn btn-outline-secondary ms-2">
+                            <i class="bi bi-arrow-left me-2"></i>Назад к дашборду
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Информация о депозите -->
+        <div class="card border-0 shadow-soft mt-4">
+            <div class="card-header bg-white border-0">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-info-circle me-2"></i>Информация о депозите
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <h6 class="alert-heading">
+                        <i class="bi bi-lightbulb me-2"></i>Для чего нужен депозит?
+                    </h6>
+                    <p class="mb-2">Депозит используется для расчета следующих метрик:</p>
+                    <ul class="mb-0">
+                        <li><strong>Доходность в процентах</strong> - показывает эффективность торговли относительно размера депозита</li>
+                        <li><strong>Риск-менеджмент</strong> - помогает оценить размер позиций</li>
+                        <li><strong>Сравнение стратегий</strong> - позволяет сравнивать эффективность разных подходов</li>
+                    </ul>
+                </div>
+                
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-calculator text-primary fs-4 me-3"></i>
+                            <div>
+                                <h6 class="mb-0">Текущий депозит для расчетов</h6>
+                                <small class="text-muted">
+                                    {% if profile.get_effective_deposit %}
+                                        {{ profile.get_effective_deposit|floatformat:0 }} ₽
+                                    {% else %}
+                                        Не указан
+                                    {% endif %}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-shield-check text-success fs-4 me-3"></i>
+                            <div>
+                                <h6 class="mb-0">Приватность</h6>
+                                <small class="text-muted">Ваши финансовые данные защищены</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.profile-avatar {
+    transition: transform 0.3s ease;
+}
+
+.profile-avatar:hover {
+    transform: scale(1.05);
+}
+
+.form-floating > label {
+    padding: 1rem 0.75rem;
+}
+
+.btn {
+    border-radius: 8px;
+    font-weight: 500;
+}
+
+.card {
+    transition: transform 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+</style>
+{% endblock %}

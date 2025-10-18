@@ -1,0 +1,104 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Удаление сделки - Дневник трейдера{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-6 mx-auto">
+        <div class="card border-0 shadow-soft">
+            <div class="card-header bg-white border-0">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-exclamation-triangle text-warning me-2"></i>Подтверждение удаления
+                    </h5>
+                    <a href="{% url 'trades:trade_detail' trade.pk %}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-arrow-left me-1"></i>Назад
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning" role="alert">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <strong>Внимание!</strong> Вы собираетесь удалить сделку. Это действие нельзя отменить.
+                </div>
+                
+                <div class="mb-4">
+                    <h6>Информация о сделке:</h6>
+                    <div class="row g-3">
+                        <div class="col-sm-6">
+                            <strong>Инструмент:</strong>
+                            <div class="text-muted">{{ trade.instrument.ticker }} ({{ trade.instrument.name }})</div>
+                        </div>
+                        <div class="col-sm-6">
+                            <strong>Направление:</strong>
+                            <div>
+                                {% if trade.direction == 'LONG' %}
+                                    <span class="badge bg-success">Лонг</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Шорт</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <strong>Дата:</strong>
+                            <div class="text-muted">{{ trade.trade_date|date:"d.m.Y H:i" }}</div>
+                        </div>
+                        <div class="col-sm-6">
+                            <strong>Цена входа:</strong>
+                            <div class="text-muted">{{ trade.entry_price }} ₽</div>
+                        </div>
+                        {% if trade.strategy %}
+                        <div class="col-sm-6">
+                            <strong>Стратегия:</strong>
+                            <div class="text-muted">{{ trade.strategy.name }}</div>
+                        </div>
+                        {% endif %}
+                        {% if trade.actual_result_rub %}
+                        <div class="col-sm-6">
+                            <strong>Результат:</strong>
+                            <div class="{% if trade.actual_result_rub >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                {% if trade.actual_result_rub >= 0 %}+{% endif %}{{ trade.actual_result_rub|floatformat:2 }} ₽
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash me-2"></i>Да, удалить сделку
+                        </button>
+                        <a href="{% url 'trades:trade_detail' trade.pk %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-lg me-2"></i>Отмена
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.card {
+    border-radius: 12px;
+}
+
+.alert {
+    border-radius: 8px;
+}
+
+.btn {
+    border-radius: 8px;
+    font-weight: 500;
+}
+
+.badge {
+    font-size: 0.875rem;
+}
+</style>
+{% endblock %}

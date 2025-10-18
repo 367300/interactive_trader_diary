@@ -1,0 +1,176 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}О проекте - Дневник трейдера{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="text-center mb-5">
+            <h1 class="display-4 fw-bold mb-3">О проекте</h1>
+            <p class="lead text-muted">
+                Интерактивный дневник трейдера — это современный инструмент для систематического анализа торговой деятельности
+            </p>
+        </div>
+        
+        <div class="card border-0 shadow-soft mb-4">
+            <div class="card-body p-4">
+                <h2 class="h4 mb-3">
+                    <i class="bi bi-lightbulb text-warning me-2"></i>Идея проекта
+                </h2>
+                <p>
+                    Проект создан с целью предоставить трейдерам мощный инструмент для ведения дневника торговли, 
+                    анализа результатов и улучшения торговых стратегий. Мы понимаем, что успешная торговля требует 
+                    не только технических навыков, но и дисциплины в ведении учета и анализе собственных действий.
+                </p>
+            </div>
+        </div>
+        
+        <div class="card border-0 shadow-soft mb-4">
+            <div class="card-body p-4">
+                <h2 class="h4 mb-3">
+                    <i class="bi bi-target text-primary me-2"></i>Цели проекта
+                </h2>
+                <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <i class="bi bi-check-circle text-success me-2"></i>
+                        Предоставить простой и интуитивный интерфейс для ведения дневника сделок
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-check-circle text-success me-2"></i>
+                        Автоматизировать расчет ключевых метрик торговой деятельности
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-check-circle text-success me-2"></i>
+                        Обеспечить возможность детального анализа торговых паттернов
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-check-circle text-success me-2"></i>
+                        Подготовить основу для интеграции с внешними API и брокерами
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="card border-0 shadow-soft mb-4">
+            <div class="card-body p-4">
+                <h2 class="h4 mb-3">
+                    <i class="bi bi-gear text-info me-2"></i>Технологический стек
+                </h2>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-code-slash text-primary fs-3 me-3"></i>
+                            <div>
+                                <h6 class="mb-0">Django 5</h6>
+                                <small class="text-muted">Backend Framework</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-database text-success fs-3 me-3"></i>
+                            <div>
+                                <h6 class="mb-0">PostgreSQL</h6>
+                                <small class="text-muted">База данных</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-bootstrap text-purple fs-3 me-3"></i>
+                            <div>
+                                <h6 class="mb-0">Bootstrap 5</h6>
+                                <small class="text-muted">UI Framework</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-cloud text-info fs-3 me-3"></i>
+                            <div>
+                                <h6 class="mb-0">Docker</h6>
+                                <small class="text-muted">Контейнеризация</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card border-0 shadow-soft mb-4">
+            <div class="card-body p-4">
+                <h2 class="h4 mb-3">
+                    <i class="bi bi-graph-up text-success me-2"></i>Планы развития
+                </h2>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-primary">Этап 1: Базовая функциональность</h6>
+                        <ul class="list-unstyled">
+                            <li class="mb-1">
+                                <i class="bi bi-circle-fill text-success me-2" style="font-size: 0.5rem;"></i>
+                                Модели для хранения сделок
+                            </li>
+                            <li class="mb-1">
+                                <i class="bi bi-circle-fill text-success me-2" style="font-size: 0.5rem;"></i>
+                                Интерфейс для ввода сделок
+                            </li>
+                            <li class="mb-1">
+                                <i class="bi bi-circle-fill text-warning me-2" style="font-size: 0.5rem;"></i>
+                                Базовые расчеты статистики
+                            </li>
+                            <li class="mb-1">
+                                <i class="bi bi-circle-fill text-warning me-2" style="font-size: 0.5rem;"></i>
+                                Аутентификация пользователей
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-primary">Этап 2: Аналитика и визуализация</h6>
+                        <ul class="list-unstyled">
+                            <li class="mb-1">
+                                <i class="bi bi-circle text-muted me-2" style="font-size: 0.5rem;"></i>
+                                Расширенная статистика
+                            </li>
+                            <li class="mb-1">
+                                <i class="bi bi-circle text-muted me-2" style="font-size: 0.5rem;"></i>
+                                Графики и диаграммы
+                            </li>
+                            <li class="mb-1">
+                                <i class="bi bi-circle text-muted me-2" style="font-size: 0.5rem;"></i>
+                                Фильтрация сделок
+                            </li>
+                            <li class="mb-1">
+                                <i class="bi bi-circle text-muted me-2" style="font-size: 0.5rem;"></i>
+                                Экспорт данных
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="text-center">
+            <a href="{% url 'core:index' %}" class="btn btn-primary btn-lg">
+                <i class="bi bi-arrow-left me-2"></i>Вернуться на главную
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.text-purple {
+    color: #6f42c1 !important;
+}
+
+.card {
+    transition: transform 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+</style>
+{% endblock %}

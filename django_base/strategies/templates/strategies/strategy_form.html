@@ -1,0 +1,163 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - Дневник трейдера{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card border-0 shadow-soft">
+            <div class="card-header bg-white border-0">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-diagram-3 me-2"></i>{{ title }}
+                    </h5>
+                    <a href="{% url 'strategies:strategy_list' %}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-arrow-left me-1"></i>Назад к списку
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <form method="post" class="needs-validation" novalidate>
+                    {% csrf_token %}
+                    
+                    <div class="row g-3">
+                        <!-- Основная информация -->
+                        <div class="col-12">
+                            <h6 class="text-primary mb-3">
+                                <i class="bi bi-info-circle me-2"></i>Основная информация
+                            </h6>
+                        </div>
+                        
+                        <div class="col-12">
+                            <div class="form-floating">
+                                {{ form.name }}
+                                <label for="{{ form.name.id_for_label }}">Название стратегии *</label>
+                                {% if form.name.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.name.errors.0 }}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Краткое и понятное название</div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12">
+                            <div class="form-floating">
+                                {{ form.description }}
+                                <label for="{{ form.description.id_for_label }}">Описание стратегии</label>
+                                {% if form.description.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.description.errors.0 }}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Подробное описание правил входа и выхода</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Параметры стратегии -->
+                        <div class="col-12 mt-4">
+                            <h6 class="text-success mb-3">
+                                <i class="bi bi-gear me-2"></i>Параметры стратегии
+                            </h6>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                {{ form.strategy_type }}
+                                <label for="{{ form.strategy_type.id_for_label }}">Тип стратегии *</label>
+                                {% if form.strategy_type.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.strategy_type.errors.0 }}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">{{ form.strategy_type.help_text }}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                {{ form.instruments }}
+                                <label for="{{ form.instruments.id_for_label }}">Инструменты *</label>
+                                {% if form.instruments.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.instruments.errors.0 }}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">{{ form.instruments.help_text }}</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Статус -->
+                        <div class="col-12 mt-3">
+                            <div class="form-check">
+                                {{ form.is_active }}
+                                <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                    Стратегия активна
+                                </label>
+                                <div class="form-text">{{ form.is_active.help_text }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-check-lg me-2"></i>{{ button_text }}
+                                </button>
+                                <a href="{% url 'strategies:strategy_list' %}" class="btn btn-outline-secondary">
+                                    <i class="bi bi-x-lg me-2"></i>Отмена
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.form-floating > label {
+    padding: 1rem 0.75rem;
+}
+
+.btn {
+    border-radius: 8px;
+    font-weight: 500;
+}
+
+.card {
+    border-radius: 12px;
+}
+
+.form-check-input {
+    margin-top: 0.25rem;
+}
+
+.invalid-feedback {
+    font-size: 0.875rem;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Валидация формы
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('.needs-validation');
+    if (form) {
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        });
+    }
+});
+</script>
+{% endblock %}

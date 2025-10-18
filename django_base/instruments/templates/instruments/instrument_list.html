@@ -1,0 +1,166 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Торговые инструменты - Дневник трейдера{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="h2 mb-0">
+                    <i class="bi bi-building me-2"></i>Торговые инструменты
+                </h1>
+                <p class="text-muted">Справочник доступных инструментов для торговли</p>
+            </div>
+            <a href="{% url 'instruments:instrument_stats' %}" class="btn btn-outline-primary">
+                <i class="bi bi-bar-chart me-2"></i>Статистика
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Фильтры и поиск -->
+<div class="card border-0 shadow-soft mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label for="search" class="form-label">Поиск</label>
+                <input type="text" class="form-control" id="search" name="search" 
+                       value="{{ current_search }}" placeholder="Поиск по тикеру или названию">
+            </div>
+            <div class="col-md-4">
+                <label for="type" class="form-label">Тип инструмента</label>
+                <select class="form-select" id="type" name="type">
+                    <option value="">Все типы</option>
+                    <option value="STOCK" {% if current_filter == 'STOCK' %}selected{% endif %}>Акции</option>
+                    <option value="FUTURES" {% if current_filter == 'FUTURES' %}selected{% endif %}>Фьючерсы</option>
+                </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <div class="btn-group w-100">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-search me-2"></i>Применить
+                    </button>
+                    <a href="{% url 'instruments:instrument_list' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-clockwise me-2"></i>Сбросить
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Статистика -->
+<div class="row g-3 mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-soft">
+            <div class="card-body text-center">
+                <div class="h4 text-primary mb-1">{{ total_instruments }}</div>
+                <small class="text-muted">Всего инструментов в справочнике</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Список инструментов -->
+<div class="row g-4">
+    {% if instruments %}
+        {% for instrument in instruments %}
+            <div class="col-lg-4 col-md-6">
+                <div class="card border-0 shadow-soft h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <h5 class="card-title mb-1">{{ instrument.ticker }}</h5>
+                                <span class="badge bg-{% if instrument.instrument_type == 'STOCK' %}primary{% else %}success{% endif %}">
+                                    {{ instrument.get_instrument_type_display }}
+                                </span>
+                            </div>
+                            {% if instrument.trades_count > 0 %}
+                                <div class="text-end">
+                                    <div class="small text-muted">Сделок</div>
+                                    <div class="h6 mb-0 text-primary">{{ instrument.trades_count }}</div>
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <h6 class="card-subtitle mb-2 text-muted">{{ instrument.name }}</h6>
+                        
+                        {% if instrument.sector %}
+                            <div class="mb-2">
+                                <small class="text-muted">
+                                    <i class="bi bi-building me-1"></i>{{ instrument.sector }}
+                                </small>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <div class="text-center p-2 bg-light rounded">
+                                    <div class="fw-bold text-primary">{{ instrument.lot_size }}</div>
+                                    <small class="text-muted">Лот</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-center p-2 bg-light rounded">
+                                    <div class="fw-bold text-success">{{ instrument.min_price_step }}</div>
+                                    <small class="text-muted">Шаг цены</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">
+                                <i class="bi bi-currency-exchange me-1"></i>{{ instrument.currency }}
+                            </small>
+                            {% if instrument.trades_count > 0 %}
+                                <small class="text-success">
+                                    <i class="bi bi-check-circle me-1"></i>В использовании
+                                </small>
+                            {% else %}
+                                <small class="text-muted">
+                                    <i class="bi bi-circle me-1"></i>Не используется
+                                </small>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="col-12">
+            <div class="card border-0 shadow-soft">
+                <div class="card-body text-center py-5">
+                    <i class="bi bi-search text-muted fs-1 mb-3"></i>
+                    <h5 class="text-muted">Инструменты не найдены</h5>
+                    <p class="text-muted">Попробуйте изменить параметры поиска или фильтрации</p>
+                    <a href="{% url 'instruments:instrument_list' %}" class="btn btn-primary">
+                        <i class="bi bi-arrow-clockwise me-2"></i>Показать все инструменты
+                    </a>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.card {
+    transition: transform 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-3px);
+}
+
+.badge {
+    font-size: 0.75rem;
+}
+
+.form-label {
+    font-weight: 500;
+}
+</style>
+{% endblock %}

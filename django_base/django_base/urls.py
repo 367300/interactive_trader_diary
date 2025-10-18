@@ -21,7 +21,11 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('tasks/', include('tasks.urls', namespace='tasks')),
+    path('', include('core.urls', namespace='core')),
+    path('accounts/', include('accounts.urls', namespace='accounts')),
+    path('strategies/', include('strategies.urls', namespace='strategies')),
+    path('instruments/', include('instruments.urls', namespace='instruments')),
+    path('trades/', include('trades.urls', namespace='trades')),
 ]
 
 if settings.DEBUG:

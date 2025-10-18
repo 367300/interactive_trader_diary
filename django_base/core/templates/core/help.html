@@ -1,0 +1,248 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Помощь - Дневник трейдера{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-10 mx-auto">
+        <div class="text-center mb-5">
+            <h1 class="display-4 fw-bold mb-3">Помощь</h1>
+            <p class="lead text-muted">
+                Часто задаваемые вопросы и руководство по использованию
+            </p>
+        </div>
+        
+        <!-- FAQ -->
+        <div class="card border-0 shadow-soft mb-4">
+            <div class="card-header bg-white border-0">
+                <h2 class="h4 mb-0">
+                    <i class="bi bi-question-circle text-primary me-2"></i>Часто задаваемые вопросы
+                </h2>
+            </div>
+            <div class="card-body p-0">
+                <div class="accordion" id="faqAccordion">
+                    <div class="accordion-item border-0">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                                Как добавить новую сделку?
+                            </button>
+                        </h2>
+                        <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                <p>Для добавления новой сделки:</p>
+                                <ol>
+                                    <li>Перейдите в раздел "Сделки" или нажмите кнопку "Новая сделка" на дашборде</li>
+                                    <li>Заполните обязательные поля: инструмент, дата/время, направление, цена входа, количество</li>
+                                    <li>Укажите стратегию, если она есть</li>
+                                    <li>Добавьте анализ сделки и основание для входа</li>
+                                    <li>Нажмите "Сохранить"</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion-item border-0">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                                Как настроить депозит?
+                            </button>
+                        </h2>
+                        <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                <p>Для настройки депозита:</p>
+                                <ol>
+                                    <li>Перейдите в раздел "Профиль" в верхнем меню</li>
+                                    <li>Укажите начальный депозит или текущий депозит</li>
+                                    <li>Можете включить опцию "Использовать дефолтный депозит (1 млн руб.)"</li>
+                                    <li>Нажмите "Сохранить"</li>
+                                </ol>
+                                <p class="text-muted mt-3">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Депозит используется для расчета процента доходности и других метрик.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion-item border-0">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                                Как создать торговую стратегию?
+                            </button>
+                        </h2>
+                        <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                <p>Для создания торговой стратегии:</p>
+                                <ol>
+                                    <li>Перейдите в раздел "Стратегии"</li>
+                                    <li>Нажмите "Создать стратегию"</li>
+                                    <li>Укажите название и описание стратегии</li>
+                                    <li>Выберите тип стратегии (скальпинг, дневная торговля, свинг, позиционная)</li>
+                                    <li>Укажите типы инструментов (акции, фьючерсы или оба)</li>
+                                    <li>Нажмите "Сохранить"</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion-item border-0">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
+                                Как закрыть сделку?
+                            </button>
+                        </h2>
+                        <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                <p>Для закрытия сделки:</p>
+                                <ol>
+                                    <li>Найдите нужную сделку в списке сделок</li>
+                                    <li>Нажмите "Редактировать"</li>
+                                    <li>Укажите цену выхода</li>
+                                    <li>Рассчитайте и укажите фактический результат</li>
+                                    <li>Отметьте галочку "Сделка закрыта"</li>
+                                    <li>Добавьте основание для закрытия в анализе</li>
+                                    <li>Нажмите "Сохранить"</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion-item border-0">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq5">
+                                Что такое win rate?
+                            </button>
+                        </h2>
+                        <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                <p><strong>Win Rate</strong> — это процент прибыльных сделок от общего количества закрытых сделок.</p>
+                                <p>Формула: (Количество прибыльных сделок / Общее количество закрытых сделок) × 100%</p>
+                                <p class="text-muted mt-3">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Win Rate показывает, как часто ваши сделки оказываются прибыльными. 
+                                    Высокий win rate не всегда означает прибыльность — важнее общий P&L.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Руководство -->
+        <div class="card border-0 shadow-soft mb-4">
+            <div class="card-header bg-white border-0">
+                <h2 class="h4 mb-0">
+                    <i class="bi bi-book text-success me-2"></i>Руководство пользователя
+                </h2>
+            </div>
+            <div class="card-body p-4">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <h5 class="text-primary">Начало работы</h5>
+                        <ol class="list-unstyled">
+                            <li class="mb-2">
+                                <i class="bi bi-1-circle-fill text-primary me-2"></i>
+                                Зарегистрируйтесь или войдите в систему
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-2-circle-fill text-primary me-2"></i>
+                                Настройте профиль и депозит
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-3-circle-fill text-primary me-2"></i>
+                                Создайте торговые стратегии
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-4-circle-fill text-primary me-2"></i>
+                                Начните добавлять сделки
+                            </li>
+                        </ol>
+                    </div>
+                    <div class="col-md-6">
+                        <h5 class="text-success">Эффективное использование</h5>
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle text-success me-2"></i>
+                                Регулярно ведите дневник сделок
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle text-success me-2"></i>
+                                Анализируйте свои эмоции и ошибки
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle text-success me-2"></i>
+                                Используйте теги для группировки сделок
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle text-success me-2"></i>
+                                Периодически просматривайте статистику
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Контакты -->
+        <div class="card border-0 shadow-soft mb-4">
+            <div class="card-header bg-white border-0">
+                <h2 class="h4 mb-0">
+                    <i class="bi bi-envelope text-info me-2"></i>Поддержка
+                </h2>
+            </div>
+            <div class="card-body p-4">
+                <p>Если у вас возникли вопросы или проблемы:</p>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="bi bi-github text-dark fs-4 me-3"></i>
+                            <div>
+                                <h6 class="mb-0">GitHub Issues</h6>
+                                <small class="text-muted">Сообщить об ошибке или предложить улучшение</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="bi bi-chat-dots text-primary fs-4 me-3"></i>
+                            <div>
+                                <h6 class="mb-0">Обсуждения</h6>
+                                <small class="text-muted">Задать вопрос сообществу</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="text-center">
+            <a href="{% url 'core:index' %}" class="btn btn-primary btn-lg">
+                <i class="bi bi-arrow-left me-2"></i>Вернуться на главную
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.accordion-button:not(.collapsed) {
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+}
+
+.accordion-button:focus {
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+.card {
+    transition: transform 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+</style>
+{% endblock %}

@@ -1,0 +1,244 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Мои сделки - Дневник трейдера{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="h2 mb-0">
+                    <i class="bi bi-list-ul me-2"></i>Мои сделки
+                </h1>
+                <p class="text-muted">Управление торговыми операциями</p>
+            </div>
+            <a href="{% url 'trades:trade_create' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-2"></i>Новая сделка
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Статистика -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3 col-6">
+        <div class="card border-0 shadow-soft">
+            <div class="card-body text-center">
+                <div class="h4 text-primary mb-1">{{ total_trades }}</div>
+                <small class="text-muted">Всего сделок</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="card border-0 shadow-soft">
+            <div class="card-body text-center">
+                <div class="h4 text-success mb-1">{{ closed_trades }}</div>
+                <small class="text-muted">Закрытых</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="card border-0 shadow-soft">
+            <div class="card-body text-center">
+                <div class="h4 text-warning mb-1">{{ open_trades }}</div>
+                <small class="text-muted">Открытых</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="card border-0 shadow-soft">
+            <div class="card-body text-center">
+                <div class="h4 {% if total_pnl >= 0 %}text-success{% else %}text-danger{% endif %} mb-1">
+                    {% if total_pnl >= 0 %}+{% endif %}{{ total_pnl|floatformat:2 }}
+                </div>
+                <small class="text-muted">P&L (руб.)</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Список сделок -->
+<div class="card border-0 shadow-soft">
+    <div class="card-header bg-white border-0">
+        <div class="row align-items-center">
+            <div class="col">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-table me-2"></i>Список сделок
+                </h5>
+            </div>
+            <div class="col-auto">
+                <span class="text-muted">Win Rate: {{ win_rate|floatformat:1 }}%</span>
+            </div>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        {% if trades %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Дата</th>
+                            <th>Инструмент</th>
+                            <th>Направление</th>
+                            <th>Цена входа</th>
+                            <th>Цена выхода</th>
+                            <th>Количество</th>
+                            <th>Результат</th>
+                            <th>Статус</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for trade in trades %}
+                            <tr>
+                                <td>
+                                    <div class="fw-bold">{{ trade.trade_date|date:"d.m.Y" }}</div>
+                                    <small class="text-muted">{{ trade.trade_date|time:"H:i" }}</small>
+                                </td>
+                                <td>
+                                    <div class="fw-bold">{{ trade.instrument.ticker }}</div>
+                                    <small class="text-muted">{{ trade.instrument.name }}</small>
+                                </td>
+                                <td>
+                                    {% if trade.direction == 'LONG' %}
+                                        <span class="badge bg-success">Лонг</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Шорт</span>
+                                    {% endif %}
+                                </td>
+                                <td class="fw-bold">{{ trade.entry_price }}</td>
+                                <td>
+                                    {% if trade.exit_price %}
+                                        {{ trade.exit_price }}
+                                    {% else %}
+                                        <span class="text-muted">—</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ trade.quantity }}</td>
+                                <td>
+                                    {% if trade.actual_result_rub %}
+                                        {% if trade.actual_result_rub >= 0 %}
+                                            <span class="text-success fw-bold">+{{ trade.actual_result_rub|floatformat:2 }}</span>
+                                        {% else %}
+                                            <span class="text-danger fw-bold">{{ trade.actual_result_rub|floatformat:2 }}</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-muted">—</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if trade.is_closed %}
+                                        <span class="badge bg-success">Закрыта</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">Открыта</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'trades:trade_detail' trade.pk %}" 
+                                           class="btn btn-outline-primary" 
+                                           data-bs-toggle="tooltip" 
+                                           title="Просмотр">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a href="{% url 'trades:trade_update' trade.pk %}" 
+                                           class="btn btn-outline-secondary" 
+                                           data-bs-toggle="tooltip" 
+                                           title="Редактировать">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <a href="{% url 'trades:trade_delete' trade.pk %}" 
+                                           class="btn btn-outline-danger" 
+                                           data-bs-toggle="tooltip" 
+                                           title="Удалить"
+                                           onclick="return confirm('Вы уверены, что хотите удалить эту сделку?')">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Пагинация -->
+            {% if is_paginated %}
+                <div class="card-footer bg-white border-0">
+                    <nav aria-label="Навигация по страницам">
+                        <ul class="pagination justify-content-center mb-0">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=1">Первая</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Предыдущая</a>
+                                </li>
+                            {% endif %}
+                            
+                            <li class="page-item active">
+                                <span class="page-link">
+                                    Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}
+                                </span>
+                            </li>
+                            
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">Следующая</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Последняя</a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+            {% endif %}
+        {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-journal-text text-muted fs-1 mb-3"></i>
+                <h5 class="text-muted">У вас пока нет сделок</h5>
+                <p class="text-muted">Создайте первую сделку, чтобы начать вести дневник торговли</p>
+                <a href="{% url 'trades:trade_create' %}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle me-2"></i>Создать первую сделку
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.table th {
+    border-top: none;
+    font-weight: 600;
+    color: #495057;
+}
+
+.btn-group-sm .btn {
+    padding: 0.25rem 0.5rem;
+}
+
+.card {
+    transition: transform 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-1px);
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Инициализация тултипов
+document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+{% endblock %}

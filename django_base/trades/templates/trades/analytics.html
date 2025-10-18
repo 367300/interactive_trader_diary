@@ -1,0 +1,247 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Аналитика сделок - Дневник трейдера{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="h2 mb-0">
+                    <i class="bi bi-graph-up me-2"></i>Аналитика сделок
+                </h1>
+                <p class="text-muted">Детальный анализ торговой деятельности</p>
+            </div>
+            <a href="{% url 'trades:trade_list' %}" class="btn btn-outline-primary">
+                <i class="bi bi-arrow-left me-2"></i>Назад к списку
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Общая статистика -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-soft">
+            <div class="card-body text-center">
+                <div class="h4 text-primary mb-1">{{ total_trades }}</div>
+                <small class="text-muted">Всего сделок</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-soft">
+            <div class="card-body text-center">
+                <div class="h4 text-success mb-1">{{ closed_trades }}</div>
+                <small class="text-muted">Закрытых сделок</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-soft">
+            <div class="card-body text-center">
+                <div class="h4 {% if total_pnl >= 0 %}text-success{% else %}text-danger{% endif %} mb-1">
+                    {% if total_pnl >= 0 %}+{% endif %}{{ total_pnl|floatformat:2 }}
+                </div>
+                <small class="text-muted">Общий P&L (руб.)</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-soft">
+            <div class="card-body text-center">
+                <div class="h4 text-info mb-1">{{ win_rate|floatformat:1 }}%</div>
+                <small class="text-muted">Процент прибыльных</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Статистика по стратегиям -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-soft">
+            <div class="card-header bg-white border-0">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-diagram-3 me-2"></i>Статистика по стратегиям
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if strategy_stats %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Стратегия</th>
+                                    <th>Сделок</th>
+                                    <th>P&L</th>
+                                    <th>% прибыльных</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for stat in strategy_stats %}
+                                <tr>
+                                    <td>
+                                        <div>
+                                            <strong>{{ stat.strategy__name }}</strong>
+                                            <div class="small text-muted">{{ stat.strategy__get_strategy_type_display }}</div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-primary">{{ stat.trades_count }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="{% if stat.total_pnl >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                            {% if stat.total_pnl >= 0 %}+{% endif %}{{ stat.total_pnl|floatformat:2 }} ₽
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{% if stat.win_rate >= 60 %}success{% elif stat.win_rate >= 40 %}warning{% else %}danger{% endif %}">
+                                            {{ stat.win_rate|floatformat:1 }}%
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-diagram-3 text-muted fs-1 mb-3"></i>
+                        <h5 class="text-muted">Нет данных по стратегиям</h5>
+                        <p class="text-muted">Создайте стратегии и совершите сделки</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Статистика по инструментам -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-soft">
+            <div class="card-header bg-white border-0">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-building me-2"></i>Топ инструментов
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if instrument_stats %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Инструмент</th>
+                                    <th>Сделок</th>
+                                    <th>P&L</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for stat in instrument_stats %}
+                                <tr>
+                                    <td>
+                                        <div>
+                                            <strong>{{ stat.instrument__ticker }}</strong>
+                                            <div class="small text-muted">{{ stat.instrument__name }}</div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">{{ stat.trades_count }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="{% if stat.total_pnl >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                            {% if stat.total_pnl >= 0 %}+{% endif %}{{ stat.total_pnl|floatformat:2 }} ₽
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-building text-muted fs-1 mb-3"></i>
+                        <h5 class="text-muted">Нет данных по инструментам</h5>
+                        <p class="text-muted">Совершите сделки с разными инструментами</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Ежемесячная статистика -->
+    {% if monthly_stats %}
+    <div class="col-12">
+        <div class="card border-0 shadow-soft">
+            <div class="card-header bg-white border-0">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-calendar-month me-2"></i>Ежемесячная статистика
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Месяц</th>
+                                <th>Сделок</th>
+                                <th>Закрытых</th>
+                                <th>P&L</th>
+                                <th>% прибыльных</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stat in monthly_stats %}
+                            <tr>
+                                <td>
+                                    <strong>{{ stat.month|date:"F Y" }}</strong>
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary">{{ stat.total_trades }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-success">{{ stat.closed_trades }}</span>
+                                </td>
+                                <td>
+                                    <span class="{% if stat.total_pnl >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                        {% if stat.total_pnl >= 0 %}+{% endif %}{{ stat.total_pnl|floatformat:2 }} ₽
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{% if stat.win_rate >= 60 %}success{% elif stat.win_rate >= 40 %}warning{% else %}danger{% endif %}">
+                                        {{ stat.win_rate|floatformat:1 }}%
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.card {
+    transition: transform 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.badge {
+    font-size: 0.875rem;
+}
+
+.table th {
+    border-top: none;
+    font-weight: 600;
+    color: #495057;
+}
+</style>
+{% endblock %}

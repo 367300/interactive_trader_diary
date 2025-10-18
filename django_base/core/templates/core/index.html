@@ -1,0 +1,308 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Интерактивный дневник трейдера - Главная{% endblock %}
+
+{% block content %}
+<div class="hero-section bg-gradient-primary text-white py-5 mb-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold mb-4">
+                    Интерактивный дневник трейдера
+                </h1>
+                <p class="lead mb-4">
+                    Профессиональный инструмент для систематического анализа торговой деятельности, 
+                    сбора статистики и улучшения торговых стратегий
+                </p>
+                <div class="d-flex gap-3">
+                    {% if not user.is_authenticated %}
+                        <a href="{% url 'accounts:register' %}" class="btn btn-light btn-lg">
+                            <i class="bi bi-person-plus me-2"></i>Начать бесплатно
+                        </a>
+                        <a href="{% url 'accounts:login' %}" class="btn btn-outline-light btn-lg">
+                            <i class="bi bi-box-arrow-in-right me-2"></i>Войти
+                        </a>
+                    {% else %}
+                        <a href="{% url 'core:dashboard' %}" class="btn btn-light btn-lg">
+                            <i class="bi bi-speedometer2 me-2"></i>Перейти к дашборду
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-lg-6 text-center">
+                <div class="hero-image">
+                    <i class="bi bi-graph-up-arrow display-1 opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Основные возможности -->
+<section class="py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 mx-auto text-center mb-5">
+                <h2 class="display-5 fw-bold mb-3">Основные возможности</h2>
+                <p class="lead text-muted">
+                    Полный набор инструментов для профессионального трейдера
+                </p>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-soft">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon bg-primary bg-gradient text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                            <i class="bi bi-journal-text fs-4"></i>
+                        </div>
+                        <h5 class="card-title">Дневник сделок</h5>
+                        <p class="card-text text-muted">
+                            Запись и детальный анализ каждой торговой операции с возможностью 
+                            прикрепления скриншотов и заметок
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-soft">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon bg-success bg-gradient text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                            <i class="bi bi-bar-chart-line fs-4"></i>
+                        </div>
+                        <h5 class="card-title">Статистика торговли</h5>
+                        <p class="card-text text-muted">
+                            Автоматический расчет ключевых метрик: прибыльность, win rate, 
+                            средняя сделка и многое другое
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-soft">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon bg-info bg-gradient text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                            <i class="bi bi-diagram-3 fs-4"></i>
+                        </div>
+                        <h5 class="card-title">Анализ паттернов</h5>
+                        <p class="card-text text-muted">
+                            Выявление успешных и неудачных торговых стратегий 
+                            с помощью машинного обучения
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-soft">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon bg-warning bg-gradient text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                            <i class="bi bi-link-45deg fs-4"></i>
+                        </div>
+                        <h5 class="card-title">Интеграция с брокерами</h5>
+                        <p class="card-text text-muted">
+                            Автоматический импорт сделок через Tinkoff API 
+                            и другие брокерские интерфейсы
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-Ord6 col-lg-4">
+                <div class="card h-100 border-0 shadow-soft">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon bg-danger bg-gradient text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                            <i class="bi bi-graph-up fs-4"></i>
+                        </div>
+                        <h5 class="card-title">Рыночные данные</h5>
+                        <p class="card-text text-muted">
+                            Получение актуальных котировок и новостей 
+                            в режиме реального времени
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-soft">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon bg-secondary bg-gradient text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                            <i class="bi bi-pie-chart fs-4"></i>
+                        </div>
+                        <h5 class="card-title">Визуализация</h5>
+                        <p class="card-text text-muted">
+                            Интерактивные графики P&L, распределение прибыли/убытков 
+                            и тепловые карты торговой активности
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Преимущества -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 mx-auto text-center mb-5">
+                <h2 class="display-5 fw-bold mb-3">Почему выбирают нас</h2>
+                <p class="lead text-muted">
+                    Современные технологии и проверенные подходы к анализу торговли
+                </p>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="text-center">
+                    <div class="bg-primary bg-gradient text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                        <i class="bi bi-shield-check fs-2"></i>
+                    </div>
+                    <h5>Безопасность данных</h5>
+                    <p class="text-muted">
+                        Все ваши торговые данные надежно защищены и хранятся 
+                        в зашифрованном виде
+                    </p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="text-center">
+                    <div class="bg-success bg-gradient text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                        <i class="bi bi-lightning-charge fs-2"></i>
+                    </div>
+                    <h5>Быстрая работа</h5>
+                    <p class="text-muted">
+                        Оптимизированная архитектура обеспечивает мгновенный 
+                        отклик интерфейса
+                    </p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="text-center">
+                    <div class="bg-info bg-gradient text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                        <i class="bi bi-phone fs-2"></i>
+                    </div>
+                    <h5>Мобильная версия</h5>
+                    <p class="text-muted">
+                        Полностью адаптивный интерфейс, который отлично 
+                        работает на любых устройствах
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Технологический стек -->
+<section class="py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 mx-auto text-center mb-5">
+                <h2 class="display-5 fw-bold mb-3">Современные технологии</h2>
+                <p class="lead text-muted">
+                    Построено на проверенных технологиях для максимальной надежности
+                </p>
+            </div>
+        </div>
+        
+        <div class="row g-3">
+            <div class="col-md-3 col-6">
+                <div class="card border-0 shadow-soft text-center p-3">
+                    <div class="card-body">
+                        <i class="bi bi-code-slash text-primary fs-1 mb-2"></i>
+                        <h6 class="card-title">Django 5</h6>
+                        <small class="text-muted">Backend Framework</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3 col-6">
+                <div class="card border-0 shadow-soft text-center p-3">
+                    <div class="card-body">
+                        <i class="bi bi-database text-success fs-1 mb-2"></i>
+                        <h6 class="card-title">PostgreSQL</h6>
+                        <small class="text-muted">База данных</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3 col-6">
+                <div class="card border-0 shadow-soft text-center p-3">
+                    <div class="card-body">
+                        <i class="bi bi-bootstrap text-purple fs-1 mb-2"></i>
+                        <h6 class="card-title">Bootstrap 5</h6>
+                        <small class="text-muted">UI Framework</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3 col-6">
+                <div class="card border-0 shadow-soft text-center p-3">
+                    <div class="card-body">
+                        <i class="bi bi-cloud text-info fs-1 mb-2"></i>
+                        <h6 class="card-title">Docker</h6>
+                        <small class="text-muted">Контейнеризация</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA секция -->
+{% if not user.is_authenticated %}
+<section class="py-5 bg-primary text-white">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 mx-auto text-center">
+                <h2 class="display-5 fw-bold mb-3">Готовы начать?</h2>
+                <p class="lead mb-4">
+                    Присоединяйтесь к тысячам трейдеров, которые уже улучшили свою торговлю 
+                    с помощью нашего дневника
+                </p>
+                <div class="d-flex gap-3 justify-content-center">
+                    <a href="{% url 'accounts:register' %}" class="btn btn-light btn-lg">
+                        <i class="bi bi-person-plus me-2"></i>Создать аккаунт
+                    </a>
+                    <a href="{% url 'core:about' %}" class="btn btn-outline-light btn-lg">
+                        <i class="bi bi-info-circle me-2"></i>Узнать больше
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.hero-section {
+    margin-top: -20px;
+    padding-top: 80px !important;
+}
+
+.feature-icon {
+    transition: transform 0.3s ease;
+}
+
+.card:hover .feature-icon {
+    transform: scale(1.1);
+}
+
+.text-purple {
+    color: #6f42c1 !important;
+}
+</style>
+{% endblock %}

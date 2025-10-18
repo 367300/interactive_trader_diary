@@ -1,0 +1,189 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Статистика инструментов - Дневник трейдера{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="h2 mb-0">
+                    <i class="bi bi-bar-chart me-2"></i>Статистика инструментов
+                </h1>
+                <p class="text-muted">Анализ использования торговых инструментов</p>
+            </div>
+            <a href="{% url 'instruments:instrument_list' %}" class="btn btn-outline-primary">
+                <i class="bi bi-arrow-left me-2"></i>Назад к списку
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Общая статистика -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-soft">
+            <div class="card-body text-center">
+                <div class="h4 text-primary mb-1">{{ total_instruments }}</div>
+                <small class="text-muted">Всего инструментов</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-soft">
+            <div class="card-body text-center">
+                <div class="h4 text-success mb-1">{{ used_instruments }}</div>
+                <small class="text-muted">Используемых</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-soft">
+            <div class="card-body text-center">
+                <div class="h4 text-warning mb-1">{{ total_trades }}</div>
+                <small class="text-muted">Всего сделок</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-soft">
+            <div class="card-body text-center">
+                <div class="h4 text-info mb-1">{{ closed_trades }}</div>
+                <small class="text-muted">Закрытых сделок</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Топ инструментов -->
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-soft">
+            <div class="card-header bg-white border-0">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-trophy me-2"></i>Топ-10 инструментов по количеству сделок
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if top_instruments %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Инструмент</th>
+                                    <th>Тип</th>
+                                    <th>Всего сделок</th>
+                                    <th>Закрытых</th>
+                                    <th>% закрытых</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for instrument in top_instruments %}
+                                <tr>
+                                    <td>
+                                        <div>
+                                            <strong>{{ instrument.ticker }}</strong>
+                                            <div class="small text-muted">{{ instrument.name }}</div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{% if instrument.instrument_type == 'STOCK' %}primary{% else %}success{% endif %}">
+                                            {{ instrument.get_instrument_type_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="fw-bold text-primary">{{ instrument.trades_count }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="fw-bold text-success">{{ instrument.closed_trades_count }}</span>
+                                    </td>
+                                    <td>
+                                        {% if instrument.trades_count > 0 %}
+                                            {% widthratio instrument.closed_trades_count instrument.trades_count 100 as percentage %}
+                                            <span class="badge bg-{% if percentage >= 80 %}success{% elif percentage >= 60 %}warning{% else %}danger{% endif %}">
+                                                {{ percentage }}%
+                                            </span>
+                                        {% else %}
+                                            <span class="text-muted">—</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-bar-chart text-muted fs-1 mb-3"></i>
+                        <h5 class="text-muted">Нет данных</h5>
+                        <p class="text-muted">Начните торговать, чтобы увидеть статистику</p>
+                        <a href="{% url 'trades:trade_create' %}" class="btn btn-primary">
+                            <i class="bi bi-plus-circle me-2"></i>Добавить первую сделку
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-soft">
+            <div class="card-header bg-white border-0">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-pie-chart me-2"></i>Распределение по типам
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if type_distribution %}
+                    {% for type_name, count in type_distribution.items %}
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <span class="fw-bold">{{ type_name }}</span>
+                            </div>
+                            <div class="text-end">
+                                <div class="h6 mb-0 text-primary">{{ count }}</div>
+                            </div>
+                        </div>
+                        <div class="progress mb-3" style="height: 8px;">
+                            {% widthratio count total_instruments 100 as percentage %}
+                            <div class="progress-bar bg-primary" style="width: {{ percentage }}%"></div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-pie-chart text-muted fs-1 mb-3"></i>
+                        <p class="text-muted">Нет данных для отображения</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.card {
+    transition: transform 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.badge {
+    font-size: 0.875rem;
+}
+
+.table th {
+    border-top: none;
+    font-weight: 600;
+    color: #495057;
+}
+
+.progress {
+    border-radius: 4px;
+}
+</style>
+{% endblock %}

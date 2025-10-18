@@ -1,0 +1,224 @@
+/* Основные стили для дневника трейдера */
+
+:root {
+    --sidebar-width: 250px;
+    --navbar-height: 56px;
+    --footer-height: 60px;
+}
+
+body {
+    padding-top: var(--navbar-height);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Sidebar стили */
+.sidebar-wrapper {
+    position: fixed;
+    top: var(--navbar-height);
+    left: 0;
+    width: var(--sidebar-width);
+    height: calc(100vh - var(--navbar-height));
+    z-index: 1000;
+    transition: transform 0.3s ease;
+}
+
+.sidebar {
+    height: 100%;
+    overflow-y: auto;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+}
+
+.sidebar-nav .nav-link {
+    padding: 0.75rem 1rem;
+    color: #495057;
+    border-radius: 0;
+    transition: all 0.2s ease;
+}
+
+.sidebar-nav .nav-link:hover {
+    background-color: #e9ecef;
+    color: #0d6efd;
+}
+
+.sidebar-nav .nav-link.active {
+    background-color: #0d6efd;
+    color: white;
+}
+
+/* Main content стили */
+.main-content {
+    margin-top: 20px;
+    min-height: calc(100vh - var(--navbar-height) - var(--footer-height));
+}
+
+.main-content-with-sidebar {
+    margin-left: var(--sidebar-width);
+    margin-top: 20px;
+    min-height: calc(100vh - var(--navbar-height) - var(--footer-height));
+    transition: margin-left 0.3s ease;
+}
+
+/* Мобильная адаптация */
+@media (max-width: 991.98px) {
+    .sidebar-wrapper {
+        transform: translateX(-100%);
+    }
+    
+    .sidebar-wrapper.show {
+        transform: translateX(0);
+    }
+    
+    .main-content-with-sidebar {
+        margin-left: 0;
+    }
+}
+
+/* Кастомные стили для карточек */
+.card {
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    transition: box-shadow 0.15s ease-in-out;
+}
+
+.card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+/* Стили для статистики */
+.stat-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 10px;
+}
+
+.stat-card .stat-number {
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+/* Стили для таблиц */
+.table-responsive {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+/* Стили для форм */
+.form-floating > label {
+    padding: 1rem 0.75rem;
+}
+
+/* Анимации */
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Стили для кнопок */
+.btn {
+    border-radius: 6px;
+    font-weight: 500;
+}
+
+.btn-primary {
+    background: linear-gradient(45deg, #007bff, #0056b3);
+    border: none;
+}
+
+.btn-success {
+    background: linear-gradient(45deg, #28a745, #1e7e34);
+    border: none;
+}
+
+.btn-danger {
+    background: linear-gradient(45deg, #dc3545, #c82333);
+    border: none;
+}
+
+/* Стили для алертов */
+.alert {
+    border: none;
+    border-radius: 8px;
+}
+
+/* Стили для модальных окон */
+.modal-content {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+/* Стили для навигации */
+.navbar-brand {
+    font-size: 1.5rem;
+}
+
+.navbar-nav .nav-link {
+    border-radius: 6px;
+    margin: 0 2px;
+    transition: background-color 0.2s ease;
+}
+
+.navbar-nav .nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Стили для дашборда */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+/* Стили для графиков */
+.chart-container {
+    position: relative;
+    height: 300px;
+    width: 100%;
+}
+
+/* Стили для профиля */
+.profile-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+/* Стили для футера */
+.footer {
+    margin-top: auto;
+}
+
+/* Утилитарные классы */
+.text-gradient {
+    background: linear-gradient(45deg, #007bff, #0056b3);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.shadow-soft {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075) !important;
+}
+
+.border-soft {
+    border: 1px solid rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Адаптивные утилиты */
+@media (max-width: 576px) {
+    .container-fluid {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+    
+    .card {
+        margin-bottom: 1rem;
+    }
+}

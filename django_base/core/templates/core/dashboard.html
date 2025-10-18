@@ -1,0 +1,277 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Дашборд - Дневник трейдера{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="h2 mb-0">
+            <i class="bi bi-speedometer2 me-2"></i>Дашборд
+        </h1>
+        <p class="text-muted">Обзор вашей торговой активности</p>
+    </div>
+</div>
+
+<!-- Статистические карточки -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3 col-6">
+        <div class="card stat-card">
+            <div class="card-body text-center">
+                <div class="stat-number">{{ total_trades }}</div>
+                <div class="stat-label">Всего сделок</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 col-6">
+        <div class="card stat-card">
+            <div class="card-body text-center">
+                <div class="stat-number">{{ closed_trades }}</div>
+                <div class="stat-label">Закрытых сделок</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 col-6">
+        <div class="card stat-card">
+            <div class="card-body text-center">
+                <div class="stat-number">{{ open_trades }}</div>
+                <div class="stat-label">Открытых позиций</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 col-6">
+        <div class="card stat-card">
+            <div class="card-body text-center">
+                <div class="stat-number">
+                    {% if total_pnl >= 0 %}
+                        <span class="text-success">+{{ total_pnl|floatformat:2 }}</span>
+                    {% else %}
+                        <span class="text-danger">{{ total_pnl|floatformat:2 }}</span>
+                    {% endif %}
+                </div>
+                <div class="stat-label">P&L (руб.)</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Дополнительная статистика -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-soft">
+            <div class="card-body text-center">
+                <i class="bi bi-graph-up text-success fs-1 mb-2"></i>
+                <h5 class="card-title">Win Rate</h5>
+                <div class="display-6 text-success">{{ win_rate|floatformat:1 }}%</div>
+                <small class="text-muted">Процент прибыльных сделок</small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card border-0 shadow-soft">
+            <div class="card-body text-center">
+                <i class="bi bi-calculator text-info fs-1 mb-2"></i>
+                <h5 class="card-title">Средняя сделка</h5>
+                <div class="display-6 text-info">
+                    {% if avg_trade >= 0 %}
+                        <span class="text-success">+{{ avg_trade|floatformat:2 }}</span>
+                    {% else %}
+                        <span class="text-danger">{{ avg_trade|floatformat:2 }}</span>
+                    {% endif %}
+                </div>
+                <small class="text-muted">Рублей за сделку</small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card border-0 shadow-soft">
+            <div class="card-body text-center">
+                <i class="bi bi-wallet2 text-primary fs-1 mb-2"></i>
+                <h5 class="card-title">Депозит</h5>
+                <div class="display-6 text-primary">
+                    {% if profile.get_effective_deposit %}
+                        {{ profile.get_effective_deposit|floatformat:0 }} ₽
+                    {% else %}
+                        Не указан
+                    {% endif %}
+                </div>
+                <small class="text-muted">
+                    <a href="{% url 'accounts:profile' %}" class="text-decoration-none">Настроить</a>
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Активные стратегии -->
+    <div class="col-lg-6 mb-4">
+        <div class="card border-0 shadow-soft">
+            <div class="card-header bg-white border-0">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-diagram-3 me-2"></i>Активные стратегии
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if strategies %}
+                    {% for strategy in strategies %}
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <h6 class="mb-1">{{ strategy.name }}</h6>
+                                <small class="text-muted">{{ strategy.get_strategy_type_display }}</small>
+                            </div>
+                            <span class="badge bg-success">Активна</span>
+                        </div>
+                    {% endfor %}
+                    <div class="text-center mt-3">
+                        <a href="{% url 'strategies:strategy_list' %}" class="btn btn-outline-primary btn-sm">
+                            Все стратегии
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-diagram-3 text-muted fs-1 mb-3"></i>
+                        <p class="text-muted">У вас пока нет активных стратегий</p>
+                        <a href="{% url 'strategies:strategy_create' %}" class="btn btn-primary">
+                            <i class="bi bi-plus-circle me-2"></i>Создать стратегию
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Последние сделки -->
+    <div class="col-lg-6 mb-4">
+        <div class="card border-0 shadow-soft">
+            <div class="card-header bg-white border-0">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-clock-history me-2"></i>Последние сделки
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recent_trades %}
+                    {% for trade in recent_trades %}
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <h6 class="mb-1">{{ trade.instrument.ticker }}</h6>
+                                <small class="text-muted">
+                                    {{ trade.trade_date|date:"d.m.Y H:i" }} • 
+                                    {{ trade.get_direction_display }}
+                                </small>
+                            </div>
+                            <div class="text-end">
+                                <div class="fw-bold">
+                                    {% if trade.actual_result_rub %}
+                                        {% if trade.actual_result_rub >= 0 %}
+                                            <span class="text-success">+{{ trade.actual_result_rub|floatformat:2 }}</span>
+                                        {% else %}
+                                            <span class="text-danger">{{ trade.actual_result_rub|floatformat:2 }}</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-muted">—</span>
+                                    {% endif %}
+                                </div>
+                                <small class="text-muted">
+                                    {% if trade.is_closed %}
+                                        <span class="badge bg-success">Закрыта</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">Открыта</span>
+                                    {% endif %}
+                                </small>
+                            </div>
+                        </div>
+                    {% endfor %}
+                    <div class="text-center mt-3">
+                        <a href="{% url 'trades:trade_list' %}" class="btn btn-outline-primary btn-sm">
+                            Все сделки
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-clock-history text-muted fs-1 mb-3"></i>
+                        <p class="text-muted">У вас пока нет сделок</p>
+                        <a href="{% url 'trades:trade_create' %}" class="btn btn-primary">
+                            <i class="bi bi-plus-circle me-2"></i>Добавить сделку
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Быстрые действия -->
+<div class="row">
+    <div class="col-12">
+        <div class="card border-0 shadow-soft">
+            <div class="card-header bg-white border-0">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-lightning-charge me-2"></i>Быстрые действия
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3 col-6">
+                        <a href="{% url 'trades:trade_create' %}" class="btn btn-primary w-100">
+                            <i class="bi bi-plus-circle me-2"></i>Новая сделка
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <a href="{% url 'strategies:strategy_create' %}" class="btn btn-success w-100">
+                            <i class="bi bi-diagram-3 me-2"></i>Новая стратегия
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <a href="{% url 'trades:analytics' %}" class="btn btn-info w-100">
+                            <i class="bi bi-bar-chart me-2"></i>Аналитика
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <a href="{% url 'accounts:profile' %}" class="btn btn-secondary w-100">
+                            <i class="bi bi-person-gear me-2"></i>Профиль
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.stat-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 12px;
+    border: none;
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: bold;
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+    margin-top: 0.5rem;
+}
+
+.card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.15) !important;
+}
+</style>
+{% endblock %}
