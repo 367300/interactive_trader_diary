@@ -18,9 +18,13 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
+from django.http import HttpResponse
+from django.views.static import serve
+import os
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('favicon.ico', serve, {'document_root': os.path.join(settings.BASE_DIR, 'staticfiles'), 'path': 'favicon.ico'}),
     path('', include('core.urls', namespace='core')),
     path('accounts/', include('accounts.urls', namespace='accounts')),
     path('strategies/', include('strategies.urls', namespace='strategies')),
