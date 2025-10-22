@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.models import User
-from .models import Trade, TradeAnalysis
+from .models import Trade, TradeAnalysis, TradeScreenshot
 from strategies.models import TradingStrategy
 from instruments.models import Instrument
 
@@ -8,43 +8,75 @@ from instruments.models import Instrument
 class TradeForm(forms.ModelForm):
     """Форма для создания и редактирования сделки"""
     
+    # Поля для анализа сделки
+    analysis = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'rows': 4,
+            'placeholder': 'Опишите основание для сделки...'
+        }),
+        label='Основание для сделки'
+    )
+    
+    conclusions = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'rows': 3,
+            'placeholder': 'Сформулируйте выводы на будущее...'
+        }),
+        label='Выводы на будущее'
+    )
+    
+    emotional_state = forms.ChoiceField(
+        required=False,
+        choices=TradeAnalysis.EmotionalState.choices,
+        widget=forms.Select(attrs={'class': 'form-select'}),
+        label='Эмоциональное состояние'
+    )
+    
+    tags = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'ошибка, хорошая сделка, эмоции (через запятую)'
+        }),
+        label='Теги',
+        help_text='Введите теги через запятую для группировки сделок'
+    )
+    
+    # Поля для скриншотов
+    screenshots = forms.FileField(
+        required=False,
+        widget=forms.FileInput(attrs={
+            'class': 'form-control',
+            'accept': 'image/*'
+        }),
+        label='Скриншоты сделки'
+    )
+    
+    
     class Meta:
         model = Trade
         fields = [
-            'strategy', 'instrument', 'trade_date', 'trading_session',
-            'direction', 'entry_price', 'exit_price', 'quantity',
-            'leverage', 'commission', 'planned_stop_loss', 'planned_take_profit',
-            'actual_result_points', 'actual_result_rub', 'is_closed'
+            'strategy', 'instrument', 'trade_date', 'direction', 'trade_type',
+            'price', 'commission', 'planned_stop_loss', 'planned_take_profit'
         ]
         widgets = {
             'trade_date': forms.DateTimeInput(attrs={
                 'type': 'datetime-local',
-                'class': 'form-control'
+                'class': 'form-control',
+                'step': '1'
             }),
-            'trading_session': forms.Select(attrs={'class': 'form-select'}),
             'direction': forms.Select(attrs={'class': 'form-select'}),
+            'trade_type': forms.Select(attrs={'class': 'form-select'}),
             'strategy': forms.Select(attrs={'class': 'form-select'}),
             'instrument': forms.Select(attrs={'class': 'form-select'}),
-            'entry_price': forms.NumberInput(attrs={
+            'price': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
                 'placeholder': '0.00'
-            }),
-            'exit_price': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'step': '0.01',
-                'placeholder': '0.00'
-            }),
-            'quantity': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'min': '1',
-                'placeholder': '1'
-            }),
-            'leverage': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'step': '0.01',
-                'min': '1.0',
-                'value': '1.0'
             }),
             'commission': forms.NumberInput(attrs={
                 'class': 'form-control',
@@ -60,21 +92,10 @@ class TradeForm(forms.ModelForm):
                 'class': 'form-control',
                 'step': '0.01',
                 'placeholder': '0.00'
-            }),
-            'actual_result_points': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'step': '0.01',
-                'placeholder': '0.00'
-            }),
-            'actual_result_rub': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'step': '0.01',
-                'placeholder': '0.00'
-            }),
-            'is_closed': forms.CheckboxInput(attrs={'class': 'form-check-input'})
+            })
         }
     
-    def __init__(self, user=None, *args, **kwargs):
+    def __init__(self, user=None, parent_trade=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
         if user:
@@ -92,35 +113,48 @@ class TradeForm(forms.ModelForm):
         self.fields['instrument'].required = True
         self.fields['trade_date'].required = True
         self.fields['direction'].required = True
-        self.fields['entry_price'].required = True
-        self.fields['quantity'].required = True
+        self.fields['price'].required = True
+        
+        # Если это дочерняя сделка, копируем данные из родительской
+        if parent_trade:
+            self.fields['instrument'].initial = parent_trade.instrument
+            self.fields['strategy'].initial = parent_trade.strategy
+            self.fields['direction'].initial = parent_trade.direction
+            # Делаем поля только для чтения
+            self.fields['instrument'].widget.attrs['readonly'] = True
+            self.fields['strategy'].widget.attrs['readonly'] = True
+            self.fields['direction'].widget.attrs['readonly'] = True
+        
+        # Настройка полей анализа
+        self.fields['emotional_state'].empty_label = "Выберите эмоциональное состояние"
         
         # Добавляем help_text
-        self.fields['leverage'].help_text = "Плечо (1.0 = без плеча)"
-        self.fields['commission'].help_text = "Комиссия брокера в рублях"
-        self.fields['planned_stop_loss'].help_text = "Плановый стоп-лосс в пунктах"
-        self.fields['planned_take_profit'].help_text = "Плановый тейк-профит в пунктах"
-        self.fields['actual_result_points'].help_text = "Фактический результат в пунктах"
-        self.fields['actual_result_rub'].help_text = "Фактический результат в рублях"
+        self.fields['commission'].help_text = "Комиссия брокера в рублях (необязательно)"
+        self.fields['planned_stop_loss'].help_text = "Плановый стоп-лосс (цена)"
+        self.fields['planned_take_profit'].help_text = "Плановый тейк-профит (цена)"
+        
+        # Настройка поля даты только для новых сделок
+        if not (self.instance and self.instance.pk):
+            # Только при создании новой сделки устанавливаем текущую дату
+            from django.utils import timezone
+            now = timezone.now()
+            formatted_date = now.strftime('%Y-%m-%dT%H:%M')
+            self.fields['trade_date'].widget.attrs['value'] = formatted_date
     
     def clean(self):
         cleaned_data = super().clean()
-        entry_price = cleaned_data.get('entry_price')
-        exit_price = cleaned_data.get('exit_price')
-        is_closed = cleaned_data.get('is_closed')
+        price = cleaned_data.get('price')
         
-        # Если сделка закрыта, проверяем наличие цены выхода
-        if is_closed and not exit_price:
-            raise forms.ValidationError(
-                'Для закрытой сделки необходимо указать цену выхода'
-            )
+        # Проверяем, что цена положительная
+        if price and price <= 0:
+            raise forms.ValidationError('Цена должна быть положительной')
         
-        # Проверяем, что цены положительные
-        if entry_price and entry_price <= 0:
-            raise forms.ValidationError('Цена входа должна быть положительной')
-        
-        if exit_price and exit_price <= 0:
-            raise forms.ValidationError('Цена выхода должна быть положительной')
+        # Обработка тегов
+        tags = cleaned_data.get('tags')
+        if tags:
+            # Разделяем теги по запятым и очищаем от пробелов
+            tag_list = [tag.strip() for tag in tags.split(',') if tag.strip()]
+            cleaned_data['tags'] = tag_list
         
         return cleaned_data
 
@@ -131,24 +165,14 @@ class TradeAnalysisForm(forms.ModelForm):
     class Meta:
         model = TradeAnalysis
         fields = [
-            'entry_reason', 'exit_reason', 'analysis', 'conclusions',
+            'analysis', 'conclusions',
             'emotional_state', 'tags'
         ]
         widgets = {
-            'entry_reason': forms.Textarea(attrs={
-                'class': 'form-control',
-                'rows': 3,
-                'placeholder': 'Опишите основание для входа в сделку...'
-            }),
-            'exit_reason': forms.Textarea(attrs={
-                'class': 'form-control',
-                'rows': 3,
-                'placeholder': 'Опишите основание для закрытия сделки...'
-            }),
             'analysis': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': 4,
-                'placeholder': 'Проанализируйте свои действия и эмоции...'
+                'placeholder': 'Опишите основание для сделки...'
             }),
             'conclusions': forms.Textarea(attrs={
                 'class': 'form-control',
@@ -164,7 +188,6 @@ class TradeAnalysisForm(forms.ModelForm):
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['entry_reason'].required = True
         self.fields['emotional_state'].empty_label = "Выберите эмоциональное состояние"
         
         # Добавляем help_text

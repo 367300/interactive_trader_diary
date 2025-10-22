@@ -47,7 +47,7 @@ class InstrumentListView(ListView):
         for instrument in instruments:
             instrument_trades = Trade.objects.filter(user=user, instrument=instrument)
             instrument.trades_count = instrument_trades.count()
-            instrument.closed_trades_count = instrument_trades.filter(is_closed=True).count()
+            instrument.closed_trades_count = instrument_trades.filter(trade_type='CLOSE').count()
         
         context['instruments'] = instruments
         context['current_filter'] = instrument_type
@@ -71,7 +71,7 @@ class InstrumentStatsView(TemplateView):
             trades__user=user
         ).annotate(
             trades_count=Count('trades'),
-            closed_trades_count=Count('trades', filter=Q(trades__is_closed=True))
+            closed_trades_count=Count('trades', filter=Q(trades__trade_type='CLOSE'))
         ).order_by('-trades_count')[:10]
         
         context['top_instruments'] = top_instruments

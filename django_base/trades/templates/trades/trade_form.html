@@ -4,303 +4,340 @@
 {% block title %}{{ title }} - Дневник трейдера{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-lg-8 mx-auto">
-        <div class="card border-0 shadow-soft">
-            <div class="card-header bg-white border-0">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">
-                        <i class="bi bi-journal-text me-2"></i>{{ title }}
-                    </h5>
-                    <a href="{% url 'trades:trade_list' %}" class="btn btn-outline-secondary btn-sm">
-                        <i class="bi bi-arrow-left me-1"></i>Назад к списку
-                    </a>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        <i class="bi bi-{% if object %}pencil{% else %}plus-circle{% endif %} me-2"></i>
+                        {{ title }}
+                    </h4>
                 </div>
-            </div>
-            <div class="card-body">
-                <form method="post" class="needs-validation" novalidate>
-                    {% csrf_token %}
-                    
-                    <div class="row g-3">
-                        <!-- Основная информация -->
-                        <div class="col-12">
-                            <h6 class="text-primary mb-3">
-                                <i class="bi bi-info-circle me-2"></i>Основная информация
-                            </h6>
-                        </div>
-                        
-                        <div class="col-md-6">
-                            <div class="form-floating">
-                                {{ form.instrument }}
-                                <label for="{{ form.instrument.id_for_label }}">Инструмент *</label>
-                                {% if form.instrument.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.instrument.errors.0 }}
-                                    </div>
-                                {% endif %}
+                <div class="card-body">
+                    {% if parent_trade %}
+                    <div class="alert alert-info" id="parentTradeInfo">
+                        <h6 class="text-primary mb-3">
+                            <i class="bi bi-info-circle me-2"></i>Информация о родительской сделке
+                        </h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>Инструмент:</strong> {{ parent_trade.instrument.ticker }}<br>
+                                <strong>Стратегия:</strong> {{ parent_trade.strategy.name }}<br>
+                                <strong>Направление:</strong> {{ parent_trade.get_direction_display }}
                             </div>
-                        </div>
-                        
-                        <div class="col-md-6">
-                            <div class="form-floating">
-                                {{ form.strategy }}
-                                <label for="{{ form.strategy.id_for_label }}">Стратегия</label>
-                                {% if form.strategy.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.strategy.errors.0 }}
-                                    </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-6">
-                            <div class="form-floating">
-                                {{ form.trade_date }}
-                                <label for="{{ form.trade_date.id_for_label }}">Дата и время сделки *</label>
-                                {% if form.trade_date.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.trade_date.errors.0 }}
-                                    </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-6">
-                            <div class="form-floating">
-                                {{ form.trading_session }}
-                                <label for="{{ form.trading_session.id_for_label }}">Торговая сессия</label>
-                                {% if form.trading_session.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.trading_session.errors.0 }}
-                                    </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        
-                        <!-- Параметры сделки -->
-                        <div class="col-12 mt-4">
-                            <h6 class="text-success mb-3">
-                                <i class="bi bi-graph-up me-2"></i>Параметры сделки
-                            </h6>
-                        </div>
-                        
-                        <div class="col-md-6">
-                            <div class="form-floating">
-                                {{ form.direction }}
-                                <label for="{{ form.direction.id_for_label }}">Направление *</label>
-                                {% if form.direction.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.direction.errors.0 }}
-                                    </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-6">
-                            <div class="form-floating">
-                                {{ form.quantity }}
-                                <label for="{{ form.quantity.id_for_label }}">Количество *</label>
-                                {% if form.quantity.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.quantity.errors.0 }}
-                                    </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-6">
-                            <div class="form-floating">
-                                {{ form.entry_price }}
-                                <label for="{{ form.entry_price.id_for_label }}">Цена входа *</label>
-                                {% if form.entry_price.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.entry_price.errors.0 }}
-                                    </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-6">
-                            <div class="form-floating">
-                                {{ form.exit_price }}
-                                <label for="{{ form.exit_price.id_for_label }}">Цена выхода</label>
-                                {% if form.exit_price.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.exit_price.errors.0 }}
-                                    </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-6">
-                            <div class="form-floating">
-                                {{ form.leverage }}
-                                <label for="{{ form.leverage.id_for_label }}">Плечо</label>
-                                {% if form.leverage.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.leverage.errors.0 }}
-                                    </div>
-                                {% endif %}
-                                <div class="form-text">{{ form.leverage.help_text }}</div>
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-6">
-                            <div class="form-floating">
-                                {{ form.commission }}
-                                <label for="{{ form.commission.id_for_label }}">Комиссия</label>
-                                {% if form.commission.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.commission.errors.0 }}
-                                    </div>
-                                {% endif %}
-                                <div class="form-text">{{ form.commission.help_text }}</div>
-                            </div>
-                        </div>
-                        
-                        <!-- Планирование -->
-                        <div class="col-12 mt-4">
-                            <h6 class="text-warning mb-3">
-                                <i class="bi bi-target me-2"></i>Планирование
-                            </h6>
-                        </div>
-                        
-                        <div class="col-md-6">
-                            <div class="form-floating">
-                                {{ form.planned_stop_loss }}
-                                <label for="{{ form.planned_stop_loss.id_for_label }}">Плановый стоп-лосс</label>
-                                {% if form.planned_stop_loss.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.planned_stop_loss.errors.0 }}
-                                    </div>
-                                {% endif %}
-                                <div class="form-text">{{ form.planned_stop_loss.help_text }}</div>
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-6">
-                            <div class="form-floating">
-                                {{ form.planned_take_profit }}
-                                <label for="{{ form.planned_take_profit.id_for_label }}">Плановый тейк-профит</label>
-                                {% if form.planned_take_profit.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.planned_take_profit.errors.0 }}
-                                    </div>
-                                {% endif %}
-                                <div class="form-text">{{ form.planned_take_profit.help_text }}</div>
-                            </div>
-                        </div>
-                        
-                        <!-- Результаты -->
-                        <div class="col-12 mt-4">
-                            <h6 class="text-info mb-3">
-                                <i class="bi bi-calculator me-2"></i>Результаты
-                            </h6>
-                        </div>
-                        
-                        <div class="col-md-6">
-                            <div class="form-floating">
-                                {{ form.actual_result_points }}
-                                <label for="{{ form.actual_result_points.id_for_label }}">Результат в пунктах</label>
-                                {% if form.actual_result_points.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.actual_result_points.errors.0 }}
-                                    </div>
-                                {% endif %}
-                                <div class="form-text">{{ form.actual_result_points.help_text }}</div>
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-6">
-                            <div class="form-floating">
-                                {{ form.actual_result_rub }}
-                                <label for="{{ form.actual_result_rub.id_for_label }}">Результат в рублях</label>
-                                {% if form.actual_result_rub.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.actual_result_rub.errors.0 }}
-                                    </div>
-                                {% endif %}
-                                <div class="form-text">{{ form.actual_result_rub.help_text }}</div>
-                            </div>
-                        </div>
-                        
-                        <!-- Статус -->
-                        <div class="col-12 mt-3">
-                            <div class="form-check">
-                                {{ form.is_closed }}
-                                <label class="form-check-label" for="{{ form.is_closed.id_for_label }}">
-                                    Сделка закрыта
-                                </label>
+                            <div class="col-md-6">
+                                <strong>Цена:</strong> {{ parent_trade.price }} ₽<br>
+                                <strong>Объем:</strong> {{ parent_trade.volume }}<br>
+                                <strong>Дата:</strong> {{ parent_trade.trade_date|date:"d.m.Y H:i" }}
                             </div>
                         </div>
                     </div>
+                    {% endif %}
                     
-                    <div class="row mt-4">
-                        <div class="col-12">
-                            <div class="d-flex gap-2">
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="bi bi-check-lg me-2"></i>{{ button_text }}
-                                </button>
-                                <a href="{% url 'trades:trade_list' %}" class="btn btn-outline-secondary">
-                                    <i class="bi bi-x-lg me-2"></i>Отмена
-                                </a>
+                    <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- Скрытые поля для обновления описаний скриншотов -->
+                        <div id="screenshot-hidden-fields"></div>
+                        
+                        <div class="row g-3">
+                            <!-- Основная информация -->
+                            <div class="col-12">
+                                <h6 class="text-primary mb-3">
+                                    <i class="bi bi-info-circle me-2"></i>Основная информация
+                                </h6>
+                            </div>
+                            
+                            {% if not parent_trade and not is_average and not is_close and not is_update %}
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    {{ form.instrument }}
+                                    <label for="{{ form.instrument.id_for_label }}">Инструмент *</label>
+                                    {% if form.instrument.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.instrument.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    {{ form.strategy }}
+                                    <label for="{{ form.strategy.id_for_label }}">Стратегия</label>
+                                    {% if form.strategy.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.strategy.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% else %}
+                            <!-- Скрытые поля для инструмента и стратегии при усреднении/закрытии/редактировании -->
+                            <input type="hidden" name="instrument" value="{{ form.instrument.value }}">
+                            <input type="hidden" name="strategy" value="{{ form.strategy.value }}">
+                            {% endif %}
+                            
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    {{ form.trade_date }}
+                                    <label for="{{ form.trade_date.id_for_label }}">Дата и время сделки *</label>
+                                    {% if form.trade_date.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.trade_date.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                {% if object and object.trade_date %}
+                                <script>
+                                    document.addEventListener('DOMContentLoaded', function() {
+                                        const tradeDateField = document.getElementById('id_trade_date');
+                                        if (tradeDateField) {
+                                            tradeDateField.setAttribute('data-django-date', '{{ object.trade_date|date:"c" }}');
+                                        }
+                                    });
+                                </script>
+                                {% endif %}
+                            </div>
+                            
+                            {% if not parent_trade and not is_average and not is_close and not is_update %}
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    {{ form.trade_type }}
+                                    <label for="{{ form.trade_type.id_for_label }}">Тип операции</label>
+                                    {% if form.trade_type.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.trade_type.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% else %}
+                            <!-- Скрытое поле для типа операции при усреднении/закрытии/редактировании -->
+                            <input type="hidden" name="trade_type" value="{{ form.trade_type.value }}">
+                            {% endif %}
+                            
+                            <!-- Параметры сделки -->
+                            <div class="col-12 mt-4">
+                                <h6 class="text-success mb-3">
+                                    <i class="bi bi-graph-up me-2"></i>Параметры сделки
+                                </h6>
+                            </div>
+                            
+                            {% if not parent_trade and not is_average and not is_close and not is_update %}
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    {{ form.direction }}
+                                    <label for="{{ form.direction.id_for_label }}">Направление *</label>
+                                    {% if form.direction.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.direction.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% else %}
+                            <!-- Скрытое поле для направления при усреднении/закрытии/редактировании -->
+                            <input type="hidden" name="direction" value="{{ form.direction.value }}">
+                            {% endif %}
+                            
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    {{ form.price }}
+                                    <label for="{{ form.price.id_for_label }}">Цена совершения сделки *</label>
+                                    {% if form.price.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.price.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Кнопки для закрытия по тейку/стопу (только для закрытия) -->
+                                {% if is_close %}
+                                <div class="mt-3">
+                                    <div class="btn-group w-100" role="group">
+                                        <button type="button" 
+                                                class="btn btn-outline-success" 
+                                                id="closeByTakeProfitBtn"
+                                                onclick="toggleCloseByTakeProfit()">
+                                            <i class="bi bi-check-circle me-2"></i>Закрыта по тейку
+                                        </button>
+                                        <button type="button" 
+                                                class="btn btn-outline-danger" 
+                                                id="closeByStopLossBtn"
+                                                onclick="toggleCloseByStopLoss()">
+                                            <i class="bi bi-x-circle me-2"></i>Закрыта по стопу
+                                        </button>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    {{ form.planned_stop_loss }}
+                                    <label for="{{ form.planned_stop_loss.id_for_label }}">Плановый стоп-лосс (цена)</label>
+                                    {% if form.planned_stop_loss.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.planned_stop_loss.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    {{ form.planned_take_profit }}
+                                    <label for="{{ form.planned_take_profit.id_for_label }}">Плановый тейк-профит (цена)</label>
+                                    {% if form.planned_take_profit.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.planned_take_profit.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            
+                            <!-- Анализ сделки -->
+                            <div class="col-12 mt-4">
+                                <h6 class="text-warning mb-3">
+                                    <i class="bi bi-chart-line me-2"></i>Анализ сделки
+                                </h6>
+                            </div>
+                            
+                            <div class="col-12">
+                                <div class="form-floating">
+                                    {{ form.analysis }}
+                                    <label for="{{ form.analysis.id_for_label }}">Основание для сделки</label>
+                                    {% if form.analysis.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.analysis.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-12">
+                                <div class="form-floating">
+                                    {{ form.conclusions }}
+                                    <label for="{{ form.conclusions.id_for_label }}">{{ form.conclusions.label }}</label>
+                                    {% if form.conclusions.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.conclusions.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    {{ form.emotional_state }}
+                                    <label for="{{ form.emotional_state.id_for_label }}">Эмоциональное состояние</label>
+                                    {% if form.emotional_state.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.emotional_state.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    {{ form.tags }}
+                                    <label for="{{ form.tags.id_for_label }}">Теги (через запятую)</label>
+                                    {% if form.tags.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.tags.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <!-- Скриншоты -->
+                            <div class="col-12 mt-4">
+                                <h6 class="text-secondary mb-3">
+                                    <i class="bi bi-image me-2"></i>Скриншоты сделки
+                                </h6>
+                            </div>
+                            
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <label for="{{ form.screenshots.id_for_label }}" class="form-label">{{ form.screenshots.label }}</label>
+                                    {{ form.screenshots }}
+                                    {% if form.screenshots.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.screenshots.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            
+                            <!-- Существующие скриншоты (только при редактировании) -->
+                            {% if object and object.screenshots.exists %}
+                            <div class="col-12">
+                                <h6 class="text-secondary mb-3">
+                                    <i class="bi bi-images me-2"></i>Существующие скриншоты
+                                </h6>
+                                <div id="existingScreenshots">
+                                    {% include 'trades/includes/screenshot_thumbnails.html' with screenshots=object.screenshots.all show_actions=True delete_action=True %}
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            <!-- Drag & Drop область для скриншотов -->
+                            <div class="col-12">
+                                <h6 class="text-secondary mb-3">
+                                    <i class="bi bi-plus-circle me-2"></i>Добавить новые скриншоты
+                                </h6>
+                                <div class="drag-drop-area" id="dragDropArea">
+                                    <div class="drag-drop-content">
+                                        <i class="bi bi-cloud-upload fs-1 text-muted"></i>
+                                        <p class="text-muted mb-0">Перетащите изображения сюда или нажмите для выбора</p>
+                                        <small class="text-muted">Поддерживается вставка из буфера обмена (Ctrl+V)</small>
+                                    </div>
+                                </div>
+                                <div id="imagePreview" class="row mt-3"></div>
+                            </div>
+                            
+                        </div>
+                        
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-check-lg me-2"></i>{{ button_text }}
+                                    </button>
+                                    <a href="{% url 'trades:trade_list' %}" class="btn btn-outline-secondary">
+                                        <i class="bi bi-x-lg me-2"></i>Отмена
+                                    </a>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </form>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Модальные окна для скриншотов -->
+{% if object and object.screenshots.all %}
+<!-- DEBUG: Including screenshot modals for {{ object.screenshots.count }} screenshots -->
+{% include 'trades/includes/screenshot_modals.html' with screenshots=object.screenshots.all is_edit_page=True %}
+{% else %}
+<!-- DEBUG: No screenshots found or no object -->
+{% endif %}
 {% endblock %}
 
 {% block extra_css %}
-<style>
-.form-floating > label {
-    padding: 1rem 0.75rem;
-}
-
-.btn {
-    border-radius: 8px;
-    font-weight: 500;
-}
-
-.card {
-    border-radius: 12px;
-}
-
-.form-check-input {
-    margin-top: 0.25rem;
-}
-
-.invalid-feedback {
-    font-size: 0.875rem;
-}
-</style>
+<link rel="stylesheet" href="{% static 'trades/css/trade_forms.css' %}">
+<link rel="stylesheet" href="{% static 'trades/css/screenshots.css' %}">
 {% endblock %}
 
 {% block extra_js %}
-<script>
-// Автоматическое заполнение текущей даты и времени
-document.addEventListener('DOMContentLoaded', function() {
-    const tradeDateField = document.getElementById('id_trade_date');
-    if (tradeDateField && !tradeDateField.value) {
-        const now = new Date();
-        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-        tradeDateField.value = now.toISOString().slice(0, 16);
-    }
-    
-    // Валидация формы
-    const form = document.querySelector('.needs-validation');
-    if (form) {
-        form.addEventListener('submit', function(event) {
-            if (!form.checkValidity()) {
-                event.preventDefault();
-                event.stopPropagation();
-            }
-            form.classList.add('was-validated');
-        });
-    }
-});
-</script>
+<script src="{% static 'trades/js/trade_forms.js' %}"></script>
+<script src="{% static 'trades/js/screenshots.js' %}"></script>
 {% endblock %}

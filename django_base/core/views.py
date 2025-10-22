@@ -43,26 +43,25 @@ class DashboardView(TemplateView):
         total_trades = trades.count()
         
         # Закрытые сделки
-        closed_trades = trades.filter(is_closed=True)
+        closed_trades = trades.filter(trade_type='CLOSE')
         closed_count = closed_trades.count()
         
         # Открытые позиции
-        open_trades = trades.filter(is_closed=False)
+        open_trades = trades.filter(
+            parent_trade__isnull=True
+        ).exclude(
+            child_trades__trade_type='CLOSE'
+        ).distinct()
         open_count = open_trades.count()
         
-        # Прибыль/убыток
-        total_pnl = closed_trades.aggregate(
-            total=Sum('actual_result_rub')
-        )['total'] or 0
+        # Win rate (пока не можем рассчитать без результатов)
+        win_rate = 0
         
-        # Win rate
-        winning_trades = closed_trades.filter(actual_result_rub__gt=0).count()
-        win_rate = (winning_trades / closed_count * 100) if closed_count > 0 else 0
+        # Средняя сделка (пока не можем рассчитать без результатов)
+        avg_trade = 0
         
-        # Средняя сделка
-        avg_trade = closed_trades.aggregate(
-            avg=Avg('actual_result_rub')
-        )['avg'] or 0
+        # Total P&L (пока не можем рассчитать без результатов)
+        total_pnl = 0
         
         # Стратегии
         strategies = TradingStrategy.objects.filter(user=user, is_active=True)
@@ -108,23 +107,14 @@ def get_dashboard_stats(request):
     recent_trades = Trade.objects.filter(
         user=user,
         trade_date__gte=thirty_days_ago,
-        is_closed=True
+        trade_type='CLOSE'
     )
     
     stats = {
         'trades_count': recent_trades.count(),
-        'total_pnl': float(recent_trades.aggregate(
-            total=Sum('actual_result_rub')
-        )['total'] or 0),
-        'win_rate': 0,
-        'avg_trade': float(recent_trades.aggregate(
-            avg=Avg('actual_result_rub')
-        )['avg'] or 0),
+        'total_pnl': 0,  # Пока не можем рассчитать без результатов
+        'win_rate': 0,   # Пока не можем рассчитать без результатов
+        'avg_trade': 0,  # Пока не можем рассчитать без результатов
     }
-    
-    # Win rate
-    winning_trades = recent_trades.filter(actual_result_rub__gt=0).count()
-    if recent_trades.count() > 0:
-        stats['win_rate'] = round(winning_trades / recent_trades.count() * 100, 2)
     
     return JsonResponse(stats)

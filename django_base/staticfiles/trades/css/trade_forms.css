@@ -1,0 +1,252 @@
+/* Стили для форм сделок */
+
+/* Стили для полей формы */
+.form-floating > label {
+    padding: 1rem 0.75rem;
+}
+
+/* Исправление проблем с отображением полей */
+.form-floating > .form-control {
+    padding: 1rem 0.75rem;
+}
+
+.form-floating > .form-control:focus {
+    padding-top: 1.625rem;
+    padding-bottom: 0.625rem;
+}
+
+.form-floating > .form-control:not(:placeholder-shown) {
+    padding-top: 1.625rem;
+    padding-bottom: 0.625rem;
+}
+
+/* Стили для текстовых областей */
+.form-floating > textarea.form-control {
+    height: auto;
+    min-height: 100px;
+}
+
+/* Стили для секций формы */
+.form-section {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid #e9ecef;
+}
+
+.form-section h6 {
+    color: #495057;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.btn {
+    transition: all 0.2s ease;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* Стили для drag & drop области */
+.drag-drop-area {
+    border: 2px dashed #dee2e6;
+    border-radius: 8px;
+    padding: 2rem;
+    text-align: center;
+    background: #f8f9fa;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    min-height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.drag-drop-area:hover {
+    border-color: #0d6efd;
+    background: #e7f3ff;
+}
+
+.drag-drop-area.dragover {
+    border-color: #0d6efd;
+    background: #e7f3ff;
+    transform: scale(1.02);
+}
+
+.drag-drop-content {
+    pointer-events: none;
+}
+
+/* Стили для превью изображений */
+.image-preview {
+    position: relative;
+    display: inline-block;
+    margin: 0.5rem;
+    overflow: visible;
+}
+
+.image-preview img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Стили для контейнера изображений */
+.col-md-3 {
+    overflow: visible;
+}
+
+.col-md-3 .image-preview {
+    overflow: visible;
+}
+
+.remove-image {
+    position: absolute;
+    top: -12px;
+    right: -12px;
+    background: #dc3545;
+    color: white;
+    border: 2px solid white;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 14px;
+    z-index: 1000;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    transition: all 0.2s ease;
+}
+
+.remove-image:hover {
+    background: #c82333;
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+/* Стили для информации о родительской сделке */
+.parent-trade-info {
+    border: 2px solid #0d6efd;
+    background: #e7f3ff;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.parent-trade-info h6 {
+    color: #0d6efd;
+    font-weight: 600;
+}
+
+.parent-trade-info .badge {
+    font-size: 0.8rem;
+}
+
+/* Стили для секций формы */
+.form-section {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid #e9ecef;
+}
+
+.form-section h6 {
+    color: #495057;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #dee2e6;
+}
+
+/* Стили для валидации */
+.is-invalid {
+    border-color: #dc3545;
+}
+
+.invalid-feedback {
+    display: block;
+    color: #dc3545;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+/* Стили для кнопок действий */
+.btn-group .btn {
+    margin: 0 2px;
+}
+
+.btn-outline-primary:hover {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+    color: white;
+}
+
+.btn-outline-danger:hover {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    color: white;
+}
+
+/* Дополнительные стили для исправления проблем с отображением */
+.row.g-3 > [class*="col-"] {
+    margin-bottom: 1rem;
+}
+
+.form-floating {
+    position: relative;
+}
+
+.form-floating > .form-control {
+    height: calc(3.5rem + 2px);
+    line-height: 1.25;
+}
+
+.form-floating > textarea.form-control {
+    height: auto;
+    min-height: calc(3.5rem + 2px);
+}
+
+/* Исправление для полей анализа */
+.col-12 .form-floating > textarea.form-control {
+    min-height: 120px;
+}
+
+/* Исправление для полей в полную ширину */
+.col-12 .form-floating {
+    width: 100%;
+}
+
+.col-12 .form-floating > textarea {
+    width: 100%;
+    resize: vertical;
+}
+
+/* Адаптивные стили */
+@media (max-width: 768px) {
+    .drag-drop-area {
+        padding: 1rem;
+        min-height: 100px;
+    }
+    
+    .form-section {
+        padding: 1rem;
+    }
+    
+    .btn {
+        font-size: 0.875rem;
+        padding: 0.5rem 1rem;
+    }
+    
+    .row.g-3 > [class*="col-"] {
+        margin-bottom: 0.5rem;
+    }
+}

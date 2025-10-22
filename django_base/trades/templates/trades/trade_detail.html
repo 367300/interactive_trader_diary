@@ -1,283 +1,423 @@
 {% extends 'core/base.html' %}
 {% load static %}
 
-{% block title %}Сделка {{ trade.instrument.ticker }} - Дневник трейдера{% endblock %}
+{% block title %}{{ object.instrument.ticker }} - {{ object.get_trade_type_display }} - Дневник трейдера{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-12">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <h1 class="h2 mb-0">
-                    <i class="bi bi-journal-text me-2"></i>Сделка {{ trade.instrument.ticker }}
-                </h1>
-                <p class="text-muted">{{ trade.trade_date|date:"d.m.Y H:i" }} • {{ trade.get_direction_display }}</p>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Краткое резюме -->
+            <div class="brief-summary">
+                <h5 class="mb-3">
+                    <i class="bi bi-info-circle me-2"></i>Краткое резюме
+                </h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>Инструмент:</strong> {{ object.instrument.ticker }}<br>
+                        <strong>Тип операции:</strong> {{ object.get_trade_type_display }}<br>
+                        <strong>Направление:</strong> {{ object.get_direction_display }}
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Цена:</strong> {{ object.price }} ₽<br>
+                        <strong>Дата:</strong> {{ object.trade_date|date:"d.m.Y H:i" }}
+                    </div>
+                </div>
             </div>
-            <div class="btn-group">
-                <a href="{% url 'trades:trade_update' trade.pk %}" class="btn btn-outline-primary">
-                    <i class="bi bi-pencil me-2"></i>Редактировать
-                </a>
-                <a href="{% url 'trades:trade_list' %}" class="btn btn-outline-secondary">
-                    <i class="bi bi-arrow-left me-2"></i>Назад к списку
-                </a>
+
+            <!-- Финансовые параметры -->
+            <div class="financial-params">
+                <h6 class="mb-3">
+                    <i class="bi bi-calculator me-2"></i>Финансовые параметры
+                </h6>
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h6 class="text-muted mb-1">Цена сделки</h6>
+                            <h5 class="text-primary mb-0">{{ object.price }} ₽</h5>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h6 class="text-muted mb-1">Стоп-лосс</h6>
+                            <h5 class="text-danger mb-0">
+                                {% if object.planned_stop_loss %}{{ object.planned_stop_loss }} ₽{% else %}—{% endif %}
+                            </h5>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h6 class="text-muted mb-1">Тейк-профит</h6>
+                            <h5 class="text-success mb-0">
+                                {% if object.planned_take_profit %}{{ object.planned_take_profit }} ₽{% else %}—{% endif %}
+                            </h5>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Вкладки -->
+            <div class="card">
+                <div class="card-header">
+                    <ul class="nav nav-tabs card-header-tabs" id="tradeTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="main-tab" data-bs-toggle="tab" data-bs-target="#main" type="button" role="tab">
+                                <i class="bi bi-info-circle me-2"></i>Основная информация
+                            </button>
+                        </li>
+                        {% if object.child_trades.exists %}
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="children-tab" data-bs-toggle="tab" data-bs-target="#children" type="button" role="tab">
+                                <i class="bi bi-diagram-3 me-2"></i>Дочерние сделки
+                                <span class="badge bg-primary ms-2">{{ object.child_trades.count }}</span>
+                            </button>
+                        </li>
+                        {% endif %}
+                        {% if object.analysis %}
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="analysis-tab" data-bs-toggle="tab" data-bs-target="#analysis" type="button" role="tab">
+                                <i class="bi bi-clipboard-data me-2"></i>Анализ
+                            </button>
+                        </li>
+                        {% endif %}
+                        {% if object.screenshots.exists %}
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="screenshots-tab" data-bs-toggle="tab" data-bs-target="#screenshots" type="button" role="tab">
+                                <i class="bi bi-images me-2"></i>Скриншоты
+                                <span class="badge bg-secondary ms-2">{{ object.screenshots.count }}</span>
+                            </button>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+                <div class="card-body">
+                    <div class="tab-content" id="tradeTabsContent">
+                        <!-- Основная информация -->
+                        <div class="tab-pane fade show active" id="main" role="tabpanel">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="text-primary mb-3">Детали сделки</h6>
+                                    <table class="table table-borderless">
+                                        <tr>
+                                            <td><strong>Инструмент:</strong></td>
+                                            <td>{{ object.instrument.ticker }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Стратегия:</strong></td>
+                                            <td>{{ object.strategy.name|default:"—" }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Тип операции:</strong></td>
+                                            <td>{{ object.get_trade_type_display }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Направление:</strong></td>
+                                            <td>
+                                                <span class="badge bg-{% if object.direction == 'long' %}success{% else %}danger{% endif %}">
+                                                    {{ object.get_direction_display }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Дата и время:</strong></td>
+                                            <td>{{ object.trade_date|date:"d.m.Y H:i" }}</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="text-success mb-3">Финансовые данные</h6>
+                                    <table class="table table-borderless">
+                                        <tr>
+                                            <td><strong>Цена:</strong></td>
+                                            <td>{{ object.price }} ₽</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Плановый стоп-лосс:</strong></td>
+                                            <td>{{ object.planned_stop_loss|default:"—" }} ₽</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Плановый тейк-профит:</strong></td>
+                                            <td>{{ object.planned_take_profit|default:"—" }} ₽</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Основание:</strong></td>
+                                            <td>{{ object.reason|default:"—" }}</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Дочерние сделки -->
+                        {% if object.child_trades.exists %}
+                        <div class="tab-pane fade" id="children" role="tabpanel">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="text-warning mb-0">
+                                    <i class="bi bi-diagram-3 me-2"></i>Дочерние сделки ({{ object.child_trades.count }})
+                                </h6>
+                                <div class="btn-group btn-group-sm">
+                                    <button type="button" class="btn btn-outline-primary btn-sm" id="expandAllBtn" onclick="toggleAllAccordions()">
+                                        <i class="bi bi-arrows-expand me-1"></i>Развернуть все
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" id="collapseAllBtn" onclick="toggleAllAccordions()" style="display: none;">
+                                        <i class="bi bi-arrows-collapse me-1"></i>Свернуть все
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="accordion" id="childTradesAccordion">
+                                {% for child_trade in object.child_trades.all %}
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="heading{{ child_trade.pk }}">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ child_trade.pk }}" aria-expanded="false" aria-controls="collapse{{ child_trade.pk }}">
+                                            <div class="d-flex align-items-center w-100">
+                                                <div class="me-3">
+                                                    <i class="bi bi-{% if child_trade.trade_type == 'average' %}plus-circle{% else %}x-circle{% endif %} text-{% if child_trade.trade_type == 'average' %}warning{% else %}danger{% endif %}"></i>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <strong>{{ child_trade.get_trade_type_display }}</strong>
+                                                    <span class="text-muted ms-2">{{ child_trade.trade_date|date:"d.m.Y H:i" }}</span>
+                                                </div>
+                                                <div class="text-end">
+                                                    <span class="badge bg-{% if child_trade.direction == 'long' %}success{% else %}danger{% endif %} me-2">
+                                                        {{ child_trade.get_direction_display }}
+                                                    </span>
+                                                    <strong>{{ child_trade.price }} ₽</strong>
+                                                </div>
+                                            </div>
+                                        </button>
+                                    </h2>
+                                    <div id="collapse{{ child_trade.pk }}" class="accordion-collapse collapse" aria-labelledby="heading{{ child_trade.pk }}" data-bs-parent="#childTradesAccordion">
+                                        <div class="accordion-body">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <h6 class="text-primary mb-3">Детали сделки</h6>
+                                                    <table class="table table-sm table-borderless">
+                                                        <tr>
+                                                            <td><strong>Тип:</strong></td>
+                                                            <td>{{ child_trade.get_trade_type_display }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td><strong>Направление:</strong></td>
+                                                            <td>
+                                                                <span class="badge bg-{% if child_trade.direction == 'long' %}success{% else %}danger{% endif %}">
+                                                                    {{ child_trade.get_direction_display }}
+                                                                </span>
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td><strong>Цена:</strong></td>
+                                                            <td>{{ child_trade.price }} ₽</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td><strong>Дата:</strong></td>
+                                                            <td>{{ child_trade.trade_date|date:"d.m.Y H:i" }}</td>
+                                                        </tr>
+                                                    </table>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <h6 class="text-success mb-3">Планирование</h6>
+                                                    <table class="table table-sm table-borderless">
+                                                        <tr>
+                                                            <td><strong>Стоп-лосс:</strong></td>
+                                                            <td>{{ child_trade.planned_stop_loss|default:"—" }} ₽</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td><strong>Тейк-профит:</strong></td>
+                                                            <td>{{ child_trade.planned_take_profit|default:"—" }} ₽</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td><strong>Основание:</strong></td>
+                                                            <td>{{ child_trade.reason|default:"—" }}</td>
+                                                        </tr>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Анализ дочерней сделки -->
+                                            {% if child_trade.analysis %}
+                                            <div class="mt-3">
+                                                <h6 class="text-info mb-2">Анализ сделки</h6>
+                                                <div class="bg-light p-3 rounded">
+                                                    {% if child_trade.analysis.analysis %}
+                                                    <p><strong>Анализ:</strong> {{ child_trade.analysis.analysis }}</p>
+                                                    {% endif %}
+                                                    {% if child_trade.analysis.conclusions %}
+                                                    <p><strong>Выводы:</strong> {{ child_trade.analysis.conclusions }}</p>
+                                                    {% endif %}
+                                                    {% if child_trade.analysis.emotional_state %}
+                                                    <p><strong>Эмоциональное состояние:</strong> {{ child_trade.analysis.get_emotional_state_display }}</p>
+                                                    {% endif %}
+                                                    {% if child_trade.analysis.tags %}
+                                                    <p><strong>Теги:</strong> {{ child_trade.analysis.tags|join:", " }}</p>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            {% endif %}
+                                            
+                                            <!-- Скриншоты дочерней сделки -->
+                                            {% if child_trade.screenshots.exists %}
+                                            <div class="mt-3">
+                                                <h6 class="text-secondary mb-2">Скриншоты</h6>
+                                                <div class="row">
+                                                    {% for screenshot in child_trade.screenshots.all|dictsort:"uploaded_at" %}
+                                                    <div class="col-md-3 mb-2">
+                                                        <div class="card screenshot-card">
+                                                            <img src="{{ screenshot.image.url }}" class="card-img-top screenshot-thumbnail" alt="Скриншот" data-bs-toggle="modal" data-bs-target="#screenshotModal{{ screenshot.id }}">
+                                                            {% if screenshot.description %}
+                                                            <div class="card-body p-2">
+                                                                <small class="text-muted">{{ screenshot.description }}</small>
+                                                            </div>
+                                                            {% endif %}
+                                                        </div>
+                                                    </div>
+                                                    {% endfor %}
+                                                </div>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Кнопки действий для дочерней сделки -->
+                                    <div class="accordion-actions-row">
+                                        <div class="d-flex justify-content-end">
+                                            <div class="btn-group btn-group-sm">
+                                                <a href="{% url 'trades:trade_update' child_trade.pk %}" 
+                                                   class="btn btn-outline-primary btn-sm" 
+                                                   title="Редактировать сделку">
+                                                    <i class="bi bi-pencil me-1"></i>Редактировать
+                                                </a>
+                                                <button type="button" 
+                                                        class="btn btn-outline-danger btn-sm" 
+                                                        title="Удалить сделку"
+                                                        onclick="confirmDeleteChildTrade('{{ child_trade.pk }}', '{{ child_trade.get_trade_type_display }}', '{{ child_trade.trade_date|date:"d.m.Y H:i" }}')">
+                                                    <i class="bi bi-trash me-1"></i>Удалить
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Анализ -->
+                        {% if object.analysis %}
+                        <div class="tab-pane fade" id="analysis" role="tabpanel">
+                            <h6 class="text-info mb-3">
+                                <i class="bi bi-clipboard-data me-2"></i>Анализ сделки
+                            </h6>
+                            <div class="bg-light p-4 rounded">
+                                {% if object.analysis.analysis %}
+                                <div class="mb-3">
+                                    <h6 class="text-primary">Анализ</h6>
+                                    <p>{{ object.analysis.analysis }}</p>
+                                </div>
+                                {% endif %}
+                                
+                                {% if object.analysis.conclusions %}
+                                <div class="mb-3">
+                                    <h6 class="text-success">Выводы</h6>
+                                    <p>{{ object.analysis.conclusions }}</p>
+                                </div>
+                                {% endif %}
+                                
+                                <div class="row">
+                                    {% if object.analysis.emotional_state %}
+                                    <div class="col-md-6">
+                                        <h6 class="text-warning">Эмоциональное состояние</h6>
+                                        <p>{{ object.analysis.get_emotional_state_display }}</p>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    {% if object.analysis.tags %}
+                                    <div class="col-md-6">
+                                        <h6 class="text-secondary">Теги</h6>
+                                        <p>
+                                            {% for tag in object.analysis.tags %}
+                                            <span class="badge bg-secondary me-1">{{ tag }}</span>
+                                            {% endfor %}
+                                        </p>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Скриншоты -->
+                        {% if object.screenshots.exists %}
+                        <div class="tab-pane fade" id="screenshots" role="tabpanel">
+                            <h6 class="text-secondary mb-3">
+                                <i class="bi bi-images me-2"></i>Скриншоты сделки ({{ object.screenshots.count }})
+                            </h6>
+                            <div class="screenshot-gallery">
+                                {% for screenshot in object.screenshots.all|dictsort:"uploaded_at" %}
+                                <div class="card screenshot-card">
+                                    <img src="{{ screenshot.image.url }}" class="card-img-top screenshot-thumbnail" alt="Скриншот" data-bs-toggle="modal" data-bs-target="#screenshotModal{{ screenshot.id }}">
+                                    {% if screenshot.description %}
+                                    <div class="card-body">
+                                        <p class="card-text">{{ screenshot.description }}</p>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Кнопки действий -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'trades:trade_update' object.pk %}" class="btn btn-primary">
+                            <i class="bi bi-pencil me-2"></i>Редактировать
+                        </a>
+                        <a href="{% url 'trades:trade_list' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-2"></i>Назад к списку
+                        </a>
+                        {% if object.trade_type == 'open' %}
+                        <a href="{% url 'trades:trade_average' object.pk %}" class="btn btn-outline-warning">
+                            <i class="bi bi-plus-circle me-2"></i>Усреднить
+                        </a>
+                        <a href="{% url 'trades:trade_close' object.pk %}" class="btn btn-outline-danger">
+                            <i class="bi bi-x-circle me-2"></i>Закрыть
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="row g-4">
-    <!-- Основная информация -->
-    <div class="col-lg-6">
-        <div class="card border-0 shadow-soft">
-            <div class="card-header bg-white border-0">
-                <h5 class="card-title mb-0">
-                    <i class="bi bi-info-circle me-2"></i>Основная информация
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="row g-3">
-                    <div class="col-sm-6">
-                        <strong>Инструмент:</strong>
-                        <div class="text-muted">{{ trade.instrument.name }}</div>
-                    </div>
-                    <div class="col-sm-6">
-                        <strong>Стратегия:</strong>
-                        <div class="text-muted">
-                            {% if trade.strategy %}
-                                {{ trade.strategy.name }}
-                            {% else %}
-                                Не указана
-                            {% endif %}
-                        </div>
-                    </div>
-                    <div class="col-sm-6">
-                        <strong>Дата и время:</strong>
-                        <div class="text-muted">{{ trade.trade_date|date:"d.m.Y H:i" }}</div>
-                    </div>
-                    <div class="col-sm-6">
-                        <strong>Сессия:</strong>
-                        <div class="text-muted">{{ trade.get_trading_session_display }}</div>
-                    </div>
-                    <div class="col-sm-6">
-                        <strong>Направление:</strong>
-                        <div>
-                            {% if trade.direction == 'LONG' %}
-                                <span class="badge bg-success fs-6">Лонг</span>
-                            {% else %}
-                                <span class="badge bg-danger fs-6">Шорт</span>
-                            {% endif %}
-                        </div>
-                    </div>
-                    <div class="col-sm-6">
-                        <strong>Статус:</strong>
-                        <div>
-                            {% if trade.is_closed %}
-                                <span class="badge bg-success fs-6">Закрыта</span>
-                            {% else %}
-                                <span class="badge bg-warning fs-6">Открыта</span>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Финансовые параметры -->
-    <div class="col-lg-6">
-        <div class="card border-0 shadow-soft">
-            <div class="card-header bg-white border-0">
-                <h5 class="card-title mb-0">
-                    <i class="bi bi-calculator me-2"></i>Финансовые параметры
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="row g-3">
-                    <div class="col-sm-6">
-                        <strong>Цена входа:</strong>
-                        <div class="h5 text-primary">{{ trade.entry_price }} ₽</div>
-                    </div>
-                    <div class="col-sm-6">
-                        <strong>Цена выхода:</strong>
-                        <div class="h5 text-secondary">
-                            {% if trade.exit_price %}
-                                {{ trade.exit_price }} ₽
-                            {% else %}
-                                <span class="text-muted">—</span>
-                            {% endif %}
-                        </div>
-                    </div>
-                    <div class="col-sm-6">
-                        <strong>Количество:</strong>
-                        <div class="h5">{{ trade.quantity }}</div>
-                    </div>
-                    <div class="col-sm-6">
-                        <strong>Плечо:</strong>
-                        <div class="h5">{{ trade.leverage }}x</div>
-                    </div>
-                    <div class="col-sm-6">
-                        <strong>Комиссия:</strong>
-                        <div class="h5 text-warning">{{ trade.commission }} ₽</div>
-                    </div>
-                    <div class="col-sm-6">
-                        <strong>Результат:</strong>
-                        <div class="h4 {% if trade.actual_result_rub >= 0 %}text-success{% else %}text-danger{% endif %}">
-                            {% if trade.actual_result_rub %}
-                                {% if trade.actual_result_rub >= 0 %}+{% endif %}{{ trade.actual_result_rub|floatformat:2 }} ₽
-                            {% else %}
-                                <span class="text-muted">—</span>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Планирование -->
-    {% if trade.planned_stop_loss or trade.planned_take_profit %}
-    <div class="col-lg-6">
-        <div class="card border-0 shadow-soft">
-            <div class="card-header bg-white border-0">
-                <h5 class="card-title mb-0">
-                    <i class="bi bi-target me-2"></i>Планирование
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="row g-3">
-                    {% if trade.planned_stop_loss %}
-                    <div class="col-sm-6">
-                        <strong>Плановый стоп-лосс:</strong>
-                        <div class="h5 text-danger">{{ trade.planned_stop_loss }} пунктов</div>
-                    </div>
-                    {% endif %}
-                    {% if trade.planned_take_profit %}
-                    <div class="col-sm-6">
-                        <strong>Плановый тейк-профит:</strong>
-                        <div class="h5 text-success">{{ trade.planned_take_profit }} пунктов</div>
-                    </div>
-                    {% endif %}
-                    {% if trade.actual_result_points %}
-                    <div class="col-sm-6">
-                        <strong>Фактический результат:</strong>
-                        <div class="h5 {% if trade.actual_result_points >= 0 %}text-success{% else %}text-danger{% endif %}">
-                            {% if trade.actual_result_points >= 0 %}+{% endif %}{{ trade.actual_result_points }} пунктов
-                        </div>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
-    {% endif %}
-    
-    <!-- Анализ сделки -->
-    {% if analysis %}
-    <div class="col-lg-6">
-        <div class="card border-0 shadow-soft">
-            <div class="card-header bg-white border-0">
-                <h5 class="card-title mb-0">
-                    <i class="bi bi-lightbulb me-2"></i>Анализ сделки
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="mb-3">
-                    <strong>Основание для входа:</strong>
-                    <div class="text-muted mt-1">{{ analysis.entry_reason|linebreaks }}</div>
-                </div>
-                
-                {% if analysis.exit_reason %}
-                <div class="mb-3">
-                    <strong>Основание для закрытия:</strong>
-                    <div class="text-muted mt-1">{{ analysis.exit_reason|linebreaks }}</div>
-                </div>
-                {% endif %}
-                
-                {% if analysis.analysis %}
-                <div class="mb-3">
-                    <strong>Анализ действий:</strong>
-                    <div class="text-muted mt-1">{{ analysis.analysis|linebreaks }}</div>
-                </div>
-                {% endif %}
-                
-                {% if analysis.conclusions %}
-                <div class="mb-3">
-                    <strong>Выводы:</strong>
-                    <div class="text-muted mt-1">{{ analysis.conclusions|linebreaks }}</div>
-                </div>
-                {% endif %}
-                
-                {% if analysis.emotional_state %}
-                <div class="mb-3">
-                    <strong>Эмоциональное состояние:</strong>
-                    <div>
-                        <span class="badge bg-info">{{ analysis.get_emotional_state_display }}</span>
-                    </div>
-                </div>
-                {% endif %}
-                
-                {% if analysis.tags %}
-                <div class="mb-0">
-                    <strong>Теги:</strong>
-                    <div class="mt-1">
-                        {% for tag in analysis.tags %}
-                            <span class="badge bg-secondary me-1">{{ tag }}</span>
-                        {% endfor %}
-                    </div>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-    {% endif %}
-    
-    <!-- Скриншоты -->
-    {% if screenshots %}
-    <div class="col-12">
-        <div class="card border-0 shadow-soft">
-            <div class="card-header bg-white border-0">
-                <h5 class="card-title mb-0">
-                    <i class="bi bi-image me-2"></i>Скриншоты
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="row g-3">
-                    {% for screenshot in screenshots %}
-                    <div class="col-md-4">
-                        <div class="card border">
-                            <img src="{{ screenshot.image.url }}" class="card-img-top" alt="{{ screenshot.description }}">
-                            <div class="card-body p-2">
-                                <small class="text-muted">
-                                    {% if screenshot.description %}
-                                        {{ screenshot.description }}
-                                    {% else %}
-                                        Скриншот от {{ screenshot.uploaded_at|date:"d.m.Y H:i" }}
-                                    {% endif %}
-                                </small>
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
-    </div>
-    {% endif %}
-</div>
+<!-- Модальные окна для скриншотов основной сделки -->
+{% if object.screenshots.exists %}
+{% include 'trades/includes/screenshot_modals.html' with screenshots=object.screenshots.all|dictsort:"uploaded_at" is_edit_page=False %}
+{% endif %}
+
+<!-- Модальные окна для скриншотов дочерних сделок -->
+{% if object.child_trades.exists %}
+{% for child_trade in object.child_trades.all %}
+{% if child_trade.screenshots.exists %}
+{% include 'trades/includes/screenshot_modals.html' with screenshots=child_trade.screenshots.all|dictsort:"uploaded_at" is_edit_page=False %}
+{% endif %}
+{% endfor %}
+{% endif %}
+
+<!-- CSRF токен для AJAX запросов -->
+{% csrf_token %}
 {% endblock %}
 
 {% block extra_css %}
-<style>
-.card {
-    transition: transform 0.2s ease;
-}
+<link rel="stylesheet" href="{% static 'trades/css/trade_detail.css' %}">
+<link rel="stylesheet" href="{% static 'trades/css/screenshots.css' %}">
+{% endblock %}
 
-.card:hover {
-    transform: translateY(-2px);
-}
-
-.badge {
-    font-size: 0.875rem;
-}
-</style>
+{% block extra_js %}
+<script src="{% static 'trades/js/trade_detail.js' %}"></script>
+<script src="{% static 'trades/js/screenshots.js' %}"></script>
 {% endblock %}

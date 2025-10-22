@@ -1,0 +1,91 @@
+{% load static %}
+
+<!-- Модальные окна для скриншотов -->
+{% if screenshots %}
+{% for screenshot in screenshots %}
+<div class="modal fade" id="screenshotModal{{ screenshot.id }}" tabindex="-1" aria-labelledby="screenshotModalLabel{{ screenshot.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="screenshotModalLabel{{ screenshot.id }}">
+                    <i class="bi bi-image me-2"></i>
+                    {% if screenshot.description %}
+                        {{ screenshot.description }}
+                    {% else %}
+                        Скриншот от {{ screenshot.uploaded_at|date:"d.m.Y H:i" }}
+                    {% endif %}
+                    {% if screenshot.trade_type %}
+                        <small class="text-muted ms-2">({{ screenshot.trade_type }})</small>
+                    {% endif %}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-3">
+                    <img src="{{ screenshot.image.url }}" 
+                         class="img-fluid screenshot-fullsize" 
+                         alt="{{ screenshot.description }}"
+                         style="max-height: 70vh; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                </div>
+                
+                <!-- Поле для описания скриншота -->
+                <div class="row">
+                    <div class="col-12">
+                        <label for="screenshotDescription{{ screenshot.id }}" class="form-label">
+                            <i class="bi bi-pencil me-2"></i>Описание скриншота
+                        </label>
+                        
+                        {% if is_edit_page %}
+                        <!-- Редактируемое поле для страницы редактирования -->
+                        <textarea class="form-control screenshot-description-field" 
+                                  id="screenshotDescription{{ screenshot.id }}" 
+                                  rows="3" 
+                                  placeholder="Введите описание для этого скриншота..."
+                                  data-screenshot-id="{{ screenshot.id }}">{{ screenshot.description }}</textarea>
+                        <div class="form-text">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Описание поможет вам лучше запомнить детали этого скриншота
+                        </div>
+                        
+                        {% else %}
+                        <!-- Только для чтения для страницы просмотра -->
+                        <div class="form-control-plaintext bg-light p-3 rounded" 
+                             style="min-height: 80px; border: 1px solid #dee2e6;">
+                            {% if screenshot.description %}
+                                {{ screenshot.description }}
+                            {% else %}
+                                <em class="text-muted">Описание не добавлено</em>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="d-flex justify-content-between align-items-center w-100">
+                    <small class="text-muted">
+                        Загружен: {{ screenshot.uploaded_at|date:"d.m.Y H:i" }}
+                        {% if screenshot.trade_type %}
+                            • Сделка: {{ screenshot.trade_type }} от {{ screenshot.trade_date|date:"d.m.Y H:i" }}
+                        {% endif %}
+                    </small>
+                    <div class="btn-group">
+                        {% if is_edit_page %}
+                        <button type="button" 
+                                class="btn btn-success btn-sm" 
+                                onclick="saveScreenshotDescription({{ screenshot.id }})"
+                                id="saveBtn{{ screenshot.id }}">
+                            <i class="bi bi-check-lg me-1"></i>Сохранить
+                        </button>
+                        {% endif %}
+                        <a href="{{ screenshot.image.url }}" target="_blank" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-box-arrow-up-right me-1"></i>Открыть в новой вкладке
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endif %}

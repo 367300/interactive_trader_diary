@@ -1,0 +1,88 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Доступ запрещен - Дневник трейдера{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8">
+            <div class="card border-0 shadow-soft">
+                <div class="card-body text-center py-5">
+                    <!-- Иконка запрета -->
+                    <div class="mb-4">
+                        <i class="bi bi-shield-exclamation text-danger" style="font-size: 4rem;"></i>
+                    </div>
+                    
+                    <!-- Заголовок -->
+                    <h2 class="text-danger mb-3">Доступ запрещен</h2>
+                    
+                    <!-- Сообщение -->
+                    <p class="text-muted mb-4 fs-5">
+                        {{ message|default:"Эта операция недоступна." }}
+                    </p>
+                    
+                    <!-- Дополнительная информация -->
+                    <div class="alert alert-warning" role="alert">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Причина:</strong> {{ reason|default:"Операция недоступна для данного объекта." }}
+                    </div>
+                    
+                    <!-- Кнопки действий -->
+                    <div class="d-flex gap-3 justify-content-center">
+                        {% if back_url %}
+                        <a href="{{ back_url }}" class="btn btn-primary">
+                            <i class="bi bi-arrow-left me-2"></i>{{ back_text|default:"Назад" }}
+                        </a>
+                        {% endif %}
+                        
+                        {% if detail_url %}
+                        <a href="{{ detail_url }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-eye me-2"></i>{{ detail_text|default:"Просмотр" }}
+                        </a>
+                        {% endif %}
+                        
+                        {% if home_url %}
+                        <a href="{{ home_url }}" class="btn btn-outline-primary">
+                            <i class="bi bi-house me-2"></i>{{ home_text|default:"На главную" }}
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.shadow-soft {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+.card {
+    border-radius: 1rem;
+}
+
+.btn {
+    border-radius: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+}
+
+.alert {
+    border-radius: 0.75rem;
+    border: none;
+    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+}
+
+.text-danger {
+    color: #dc3545 !important;
+}
+
+.text-muted {
+    color: #6c757d !important;
+}
+</style>
+{% endblock %}

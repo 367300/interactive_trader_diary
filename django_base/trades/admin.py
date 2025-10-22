@@ -5,7 +5,7 @@ from .models import Trade, TradeAnalysis, TradeScreenshot, MarketContext
 class TradeAnalysisInline(admin.StackedInline):
     model = TradeAnalysis
     extra = 0
-    fields = ('entry_reason', 'exit_reason', 'analysis', 'conclusions', 'emotional_state', 'tags')
+    fields = ('analysis', 'conclusions', 'emotional_state', 'tags')
 
 
 class TradeScreenshotInline(admin.TabularInline):
@@ -25,10 +25,10 @@ class MarketContextInline(admin.StackedInline):
 class TradeAdmin(admin.ModelAdmin):
     list_display = (
         'id', 'user', 'instrument', 'trade_date', 'direction', 
-        'entry_price', 'exit_price', 'quantity', 'actual_result_rub', 'is_closed'
+        'trade_type', 'price', 'parent_trade'
     )
     list_filter = (
-        'direction', 'trading_session', 'is_closed', 'strategy__strategy_type',
+        'direction', 'trade_type', 'strategy__strategy_type',
         'instrument__instrument_type', 'trade_date', 'created_at'
     )
     search_fields = (
@@ -41,20 +41,19 @@ class TradeAdmin(admin.ModelAdmin):
     
     fieldsets = (
         ('Основная информация', {
-            'fields': ('id', 'user', 'strategy', 'instrument', 'trade_date', 'trading_session')
+            'fields': ('id', 'user', 'strategy', 'instrument', 'trade_date')
         }),
         ('Параметры сделки', {
             'fields': (
-                'direction', 'entry_price', 'exit_price', 'quantity', 
-                'leverage', 'commission'
+                'direction', 'trade_type', 'price', 'commission'
             )
         }),
         ('Планирование', {
             'fields': ('planned_stop_loss', 'planned_take_profit'),
             'classes': ('collapse',)
         }),
-        ('Результаты', {
-            'fields': ('actual_result_points', 'actual_result_rub', 'is_closed')
+        ('Связи', {
+            'fields': ('parent_trade',)
         }),
         ('Системная информация', {
             'fields': ('created_at', 'updated_at'),
@@ -74,7 +73,7 @@ class TradeAdmin(admin.ModelAdmin):
 class TradeAnalysisAdmin(admin.ModelAdmin):
     list_display = ('trade', 'emotional_state', 'created_at')
     list_filter = ('emotional_state', 'created_at')
-    search_fields = ('trade__instrument__ticker', 'entry_reason', 'analysis')
+    search_fields = ('trade__instrument__ticker', 'analysis')
     readonly_fields = ('created_at', 'updated_at')
     
     fieldsets = (
@@ -82,7 +81,7 @@ class TradeAnalysisAdmin(admin.ModelAdmin):
             'fields': ('trade',)
         }),
         ('Анализ сделки', {
-            'fields': ('entry_reason', 'exit_reason', 'analysis', 'conclusions')
+            'fields': ('analysis', 'conclusions')
         }),
         ('Эмоциональное состояние', {
             'fields': ('emotional_state', 'tags')

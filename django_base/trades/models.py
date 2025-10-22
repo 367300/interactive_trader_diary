@@ -8,15 +8,14 @@ from strategies.models import TradingStrategy
 class Trade(models.Model):
     """Основная модель торговых сделок"""
     
-    class TradingSession(models.TextChoices):
-        OPENING = 'OPENING', 'Утренняя сессия'
-        LUNCH = 'LUNCH', 'Обеденная сессия'
-        EVENING = 'EVENING', 'Вечерняя сессия'
-        CLOSING = 'CLOSING', 'Закрытие'
-    
     class Direction(models.TextChoices):
         LONG = 'LONG', 'Длинная позиция'
         SHORT = 'SHORT', 'Короткая позиция'
+    
+    class TradeType(models.TextChoices):
+        OPEN = 'OPEN', 'Открытие позиции'
+        AVERAGE = 'AVERAGE', 'Усреднение'
+        CLOSE = 'CLOSE', 'Закрытие позиции'
     
     id = models.UUIDField(
         primary_key=True,
@@ -52,47 +51,32 @@ class Trade(models.Model):
         verbose_name='Дата и время сделки'
     )
     
-    trading_session = models.CharField(
-        max_length=20,
-        choices=TradingSession.choices,
-        verbose_name='Торговая сессия'
-    )
-    
     direction = models.CharField(
         max_length=10,
         choices=Direction.choices,
         verbose_name='Направление'
     )
     
-    entry_price = models.DecimalField(
+    trade_type = models.CharField(
+        max_length=10,
+        choices=TradeType.choices,
+        default=TradeType.OPEN,
+        verbose_name='Тип операции'
+    )
+    
+    price = models.DecimalField(
         max_digits=15,
         decimal_places=2,
-        verbose_name='Цена входа'
-    )
-    
-    exit_price = models.DecimalField(
-        max_digits=15,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        verbose_name='Цена выхода'
-    )
-    
-    quantity = models.PositiveIntegerField(
-        verbose_name='Количество'
-    )
-    
-    leverage = models.DecimalField(
-        max_digits=5,
-        decimal_places=2,
-        default=1.0,
-        verbose_name='Плечо'
+        default=0.0,
+        verbose_name='Цена'
     )
     
     commission = models.DecimalField(
         max_digits=15,
         decimal_places=2,
         default=0,
+        null=True,
+        blank=True,
         verbose_name='Комиссия'
     )
     
@@ -101,7 +85,7 @@ class Trade(models.Model):
         decimal_places=2,
         null=True,
         blank=True,
-        verbose_name='Плановый стоп-лосс (в пунктах)'
+        verbose_name='Плановый стоп-лосс (цена)'
     )
     
     planned_take_profit = models.DecimalField(
@@ -109,28 +93,17 @@ class Trade(models.Model):
         decimal_places=2,
         null=True,
         blank=True,
-        verbose_name='Плановый тейк-профит (в пунктах)'
+        verbose_name='Плановый тейк-профит (цена)'
     )
     
-    actual_result_points = models.DecimalField(
-        max_digits=15,
-        decimal_places=2,
+    # Связи между сделками
+    parent_trade = models.ForeignKey(
+        'self',
+        on_delete=models.CASCADE,
         null=True,
         blank=True,
-        verbose_name='Фактический результат (в пунктах)'
-    )
-    
-    actual_result_rub = models.DecimalField(
-        max_digits=15,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        verbose_name='Результат в рублях'
-    )
-    
-    is_closed = models.BooleanField(
-        default=False,
-        verbose_name='Сделка закрыта'
+        related_name='child_trades',
+        verbose_name='Родительская сделка'
     )
     
     created_at = models.DateTimeField(
@@ -151,6 +124,10 @@ class Trade(models.Model):
     
     def __str__(self):
         return f'{self.instrument.ticker} {self.get_direction_display()} - {self.trade_date.strftime("%d.%m.%Y %H:%M")}'
+    
+    def is_closed(self):
+        """Проверяет, закрыта ли сделка (есть ли дочерние сделки типа CLOSE)"""
+        return self.child_trades.filter(trade_type=self.TradeType.CLOSE).exists()
 
 
 class TradeAnalysis(models.Model):
@@ -170,18 +147,9 @@ class TradeAnalysis(models.Model):
         verbose_name='Сделка'
     )
     
-    entry_reason = models.TextField(
-        verbose_name='Основание для входа'
-    )
-    
-    exit_reason = models.TextField(
-        blank=True,
-        verbose_name='Основание для закрытия'
-    )
-    
     analysis = models.TextField(
         blank=True,
-        verbose_name='Анализ действий и эмоций'
+        verbose_name='Основание'
     )
     
     conclusions = models.TextField(

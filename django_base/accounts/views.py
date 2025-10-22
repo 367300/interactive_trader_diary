@@ -9,7 +9,8 @@ from django.views.generic import TemplateView
 from django.urls import reverse_lazy
 from django.contrib.auth.views import LoginView
 from .models import TraderProfile
-
+from trades.models import Trade
+from strategies.models import TradingStrategy
 
 class CustomLoginView(LoginView):
     """Кастомная страница входа"""
@@ -66,10 +67,7 @@ def register_view(request):
             )
             
             # Создаем профиль трейдера
-            TraderProfile.objects.create(
-                user=user,
-                use_default_deposit=True  # По умолчанию используем дефолтный депозит
-            )
+            TraderProfile.objects.create(user=user)
             
             # Авторизуем пользователя
             login(request, user)
@@ -104,36 +102,18 @@ class ProfileView(TemplateView):
             profile = user.trader_profile
         except TraderProfile.DoesNotExist:
             profile = TraderProfile.objects.create(user=user)
+
+        # Статистика
+        trades = Trade.objects.filter(user=user)
+        context['total_trades'] = trades.count()
+        context['closed_trades'] = trades.filter(trade_type='CLOSE').count()
+        context['open_trades'] = context['total_trades'] - context['closed_trades']
+
+        context['count_strategies'] = TradingStrategy.objects.filter(user=user, is_active=True).count()
         
         context['profile'] = profile
         return context
     
     def post(self, request, *args, **kwargs):
-        profile = request.user.trader_profile
-        
-        # Обновляем данные профиля
-        initial_deposit = request.POST.get('initial_deposit')
-        current_deposit = request.POST.get('current_deposit')
-        use_default_deposit = request.POST.get('use_default_deposit') == 'on'
-        
-        if initial_deposit:
-            try:
-                profile.initial_deposit = float(initial_deposit)
-            except ValueError:
-                messages.error(request, 'Неверный формат начального депозита')
-        else:
-            profile.initial_deposit = None
-        
-        if current_deposit:
-            try:
-                profile.current_deposit = float(current_deposit)
-            except ValueError:
-                messages.error(request, 'Неверный формат текущего депозита')
-        else:
-            profile.current_deposit = None
-        
-        profile.use_default_deposit = use_default_deposit
-        profile.save()
-        
         messages.success(request, 'Профиль успешно обновлен')
         return redirect('accounts:profile')

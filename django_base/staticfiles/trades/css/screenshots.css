@@ -1,0 +1,264 @@
+/* Стили для скриншотов и модальных окон */
+
+/* Стили для миниатюр скриншотов */
+.screenshot-thumbnail {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    cursor: pointer;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.screenshot-thumbnail:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Стили для карточек скриншотов */
+.screenshot-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: none;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.screenshot-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.screenshot-card img {
+    transition: transform 0.3s ease;
+}
+
+.screenshot-card:hover img {
+    transform: scale(1.05);
+}
+
+/* Стили для модальных окон */
+.modal-content {
+    border: none;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    overflow: hidden;
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-bottom: 1px solid #dee2e6;
+    border-radius: 16px 16px 0 0;
+    padding: 1.5rem;
+}
+
+.modal-body {
+    padding: 2rem;
+    background: #f8f9fa;
+    text-align: center;
+}
+
+.modal-footer {
+    background: linear-gradient(135deg, #e9ecef 0%, #f8f9fa 100%);
+    border-top: 1px solid #dee2e6;
+    border-radius: 0 0 16px 16px;
+    padding: 1.5rem;
+}
+
+/* Анимации для модальных окон */
+.modal.fade .modal-dialog {
+    transition: transform 0.3s ease-out;
+    transform: translate(0, -50px);
+}
+
+.modal.show .modal-dialog {
+    transform: none;
+}
+
+/* Стили для полноразмерных изображений */
+.screenshot-fullsize {
+    max-height: 90vh;
+    max-width: 95vw;
+    width: auto;
+    height: auto;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    transition: transform 0.3s ease;
+}
+
+.screenshot-fullsize:hover {
+    transform: scale(1.02);
+}
+
+/* Стили для галереи скриншотов */
+.screenshot-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.screenshot-gallery .screenshot-card {
+    position: relative;
+    overflow: hidden;
+}
+
+/* Анимации появления */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.fade-in-up {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.scale-in {
+    animation: scaleIn 0.4s ease-out;
+}
+
+/* Стили для кнопок действий */
+.screenshot-actions {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.screenshot-card:hover .screenshot-actions {
+    opacity: 1;
+}
+
+.screenshot-actions .btn {
+    margin: 0 0.25rem;
+    border-radius: 50%;
+    width: 2.5rem;
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease;
+}
+
+.screenshot-actions .btn:hover {
+    transform: scale(1.1);
+}
+
+/* Стили для больших экранов */
+@media (min-width: 1200px) {
+    .screenshot-fullsize {
+        max-height: 95vh;
+        max-width: 98vw;
+    }
+}
+
+/* Адаптивные стили */
+@media (max-width: 768px) {
+    .screenshot-gallery {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+    
+    .modal-body {
+        padding: 1rem;
+    }
+    
+    .screenshot-fullsize {
+        max-height: 70vh;
+        max-width: 90vw;
+    }
+    
+    .screenshot-actions {
+        opacity: 1;
+        position: static;
+        margin-top: 0.5rem;
+    }
+}
+
+/* Стили для превью изображений */
+.image-preview {
+    position: relative;
+    display: inline-block;
+    margin: 0.5rem;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+}
+
+.image-preview:hover {
+    transform: scale(1.05);
+}
+
+.image-preview img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+.remove-image {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s ease;
+}
+
+.remove-image:hover {
+    background: #c82333;
+    transform: scale(1.1);
+}
+
+/* Плавная анимация для аккордеона */
+.accordion-collapse {
+    transition: height 0.35s ease;
+}
+
+.accordion-button {
+    transition: all 0.3s ease;
+}
+
+.accordion-button:not(.collapsed) {
+    background-color: #e7f1ff;
+    border-color: #b3d7ff;
+}
+
+.accordion-button:focus {
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* Анимация для кнопок управления аккордеоном */
+#expandAllBtn, #collapseAllBtn {
+    transition: all 0.3s ease;
+}
+
+#expandAllBtn:hover, #collapseAllBtn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}

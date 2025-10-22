@@ -41,12 +41,14 @@ function initTooltips() {
 
 // Автоматическое скрытие алертов
 function initAlerts() {
-    const alerts = document.querySelectorAll('.alert');
+    const alerts = document.querySelectorAll('.alert:not(.alert-info):not([id*="parentTradeInfo"])');
     alerts.forEach(function(alert) {
-        setTimeout(function() {
-            const bsAlert = new bootstrap.Alert(alert);
-            bsAlert.close();
-        }, 5000);
+        // Проверяем, что это не информационный блок о родительской сделке
+        if (!alert.id.includes('parentTradeInfo') && 
+            !alert.querySelector('.alert-heading')?.textContent.includes('родительской сделке') &&
+            !alert.querySelector('.alert-heading')?.textContent.includes('Усреднение позиции') &&
+            !alert.querySelector('.alert-heading')?.textContent.includes('Закрытие позиции')) {
+        }
     });
 }
 

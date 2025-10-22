@@ -33,10 +33,7 @@ class TradingStrategyListView(ListView):
         # Добавляем статистику по сделкам для каждой стратегии
         for strategy in context['strategies']:
             strategy_trades = Trade.objects.filter(user=user, strategy=strategy)
-            strategy.closed_trades_count = strategy_trades.filter(is_closed=True).count()
-            strategy.total_pnl = strategy_trades.filter(is_closed=True).aggregate(
-                total=Sum('actual_result_rub')
-            )['total'] or 0
+            strategy.closed_trades_count = strategy_trades.filter(trade_type='CLOSE').count()
         
         return context
 
@@ -58,25 +55,21 @@ class TradingStrategyDetailView(DetailView):
         
         # Статистика по сделкам этой стратегии
         trades = Trade.objects.filter(user=user, strategy=strategy)
-        closed_trades = trades.filter(is_closed=True)
+        closed_trades = trades.filter(trade_type='CLOSE')
         
-        context['total_trades'] = trades.count()
+        context['total_trades'] = trades.filter(parent_trade__isnull=True).count()
         context['closed_trades'] = closed_trades.count()
-        context['open_trades'] = trades.filter(is_closed=False).count()
+        context['open_trades'] = trades.filter(
+            parent_trade__isnull=True
+        ).exclude(
+            child_trades__trade_type='CLOSE'
+        ).distinct().count()
         
-        # P&L
-        context['total_pnl'] = closed_trades.aggregate(
-            total=Sum('actual_result_rub')
-        )['total'] or 0
+        # Win rate (пока не можем рассчитать без результатов)
+        context['win_rate'] = 0
         
-        # Win rate
-        winning_trades = closed_trades.filter(actual_result_rub__gt=0).count()
-        context['win_rate'] = (winning_trades / closed_trades.count() * 100) if closed_trades.count() > 0 else 0
-        
-        # Средняя сделка
-        context['avg_trade'] = closed_trades.aggregate(
-            avg=Sum('actual_result_rub') / Count('id')
-        )['avg'] or 0
+        # Средняя сделка (пока не можем рассчитать без результатов)
+        context['avg_trade'] = 0
         
         # Последние сделки
         context['recent_trades'] = trades.order_by('-trade_date')[:5]

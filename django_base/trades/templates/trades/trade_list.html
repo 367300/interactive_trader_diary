@@ -46,16 +46,6 @@
             </div>
         </div>
     </div>
-    <div class="col-md-3 col-6">
-        <div class="card border-0 shadow-soft">
-            <div class="card-body text-center">
-                <div class="h4 {% if total_pnl >= 0 %}text-success{% else %}text-danger{% endif %} mb-1">
-                    {% if total_pnl >= 0 %}+{% endif %}{{ total_pnl|floatformat:2 }}
-                </div>
-                <small class="text-muted">P&L (руб.)</small>
-            </div>
-        </div>
-    </div>
 </div>
 
 <!-- Список сделок -->
@@ -66,9 +56,6 @@
                 <h5 class="card-title mb-0">
                     <i class="bi bi-table me-2"></i>Список сделок
                 </h5>
-            </div>
-            <div class="col-auto">
-                <span class="text-muted">Win Rate: {{ win_rate|floatformat:1 }}%</span>
             </div>
         </div>
     </div>
@@ -81,10 +68,7 @@
                             <th>Дата</th>
                             <th>Инструмент</th>
                             <th>Направление</th>
-                            <th>Цена входа</th>
-                            <th>Цена выхода</th>
-                            <th>Количество</th>
-                            <th>Результат</th>
+                            <th>Цена</th>
                             <th>Статус</th>
                             <th>Действия</th>
                         </tr>
@@ -107,31 +91,12 @@
                                         <span class="badge bg-danger">Шорт</span>
                                     {% endif %}
                                 </td>
-                                <td class="fw-bold">{{ trade.entry_price }}</td>
-                                <td>
-                                    {% if trade.exit_price %}
-                                        {{ trade.exit_price }}
-                                    {% else %}
-                                        <span class="text-muted">—</span>
-                                    {% endif %}
-                                </td>
-                                <td>{{ trade.quantity }}</td>
-                                <td>
-                                    {% if trade.actual_result_rub %}
-                                        {% if trade.actual_result_rub >= 0 %}
-                                            <span class="text-success fw-bold">+{{ trade.actual_result_rub|floatformat:2 }}</span>
-                                        {% else %}
-                                            <span class="text-danger fw-bold">{{ trade.actual_result_rub|floatformat:2 }}</span>
-                                        {% endif %}
-                                    {% else %}
-                                        <span class="text-muted">—</span>
-                                    {% endif %}
-                                </td>
+                                <td class="fw-bold">{{ trade.price }}</td>
                                 <td>
                                     {% if trade.is_closed %}
                                         <span class="badge bg-success">Закрыта</span>
                                     {% else %}
-                                        <span class="badge bg-warning">Открыта</span>
+                                        <span class="badge bg-warning">Активна</span>
                                     {% endif %}
                                 </td>
                                 <td>
@@ -148,6 +113,20 @@
                                            title="Редактировать">
                                             <i class="bi bi-pencil"></i>
                                         </a>
+                                        {% if not trade.is_closed %}
+                                        <a href="{% url 'trades:trade_average' trade.pk %}" 
+                                           class="btn btn-outline-info" 
+                                           data-bs-toggle="tooltip" 
+                                           title="Усреднить">
+                                            <i class="bi bi-plus-circle"></i>
+                                        </a>
+                                        <a href="{% url 'trades:trade_close' trade.pk %}" 
+                                           class="btn btn-outline-success" 
+                                           data-bs-toggle="tooltip" 
+                                           title="Закрыть">
+                                            <i class="bi bi-x-circle"></i>
+                                        </a>
+                                        {% endif %}
                                         <a href="{% url 'trades:trade_delete' trade.pk %}" 
                                            class="btn btn-outline-danger" 
                                            data-bs-toggle="tooltip" 
