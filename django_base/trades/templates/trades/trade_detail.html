@@ -178,16 +178,34 @@
                                                     <strong>{{ child_trade.get_trade_type_display }}</strong>
                                                     <span class="text-muted ms-2">{{ child_trade.trade_date|date:"d.m.Y H:i" }}</span>
                                                 </div>
-                                                <div class="text-end">
+                                                <div class="text-end d-flex align-items-center">
                                                     <span class="badge bg-{% if child_trade.direction == 'long' %}success{% else %}danger{% endif %} me-2">
                                                         {{ child_trade.get_direction_display }}
                                                     </span>
-                                                    <strong>{{ child_trade.price }} ₽</strong>
+                                                    <strong class="me-3">{{ child_trade.price }} ₽</strong>
                                                 </div>
                                             </div>
                                         </button>
+                                        <!-- Иконки действий (появляются при наведении) -->
+                                        <div class="accordion-actions">
+                                            <a href="{% url 'trades:trade_update' child_trade.pk %}" 
+                                               class="btn btn-outline-primary btn-sm" 
+                                               title="Редактировать сделку"
+                                               onclick="event.stopPropagation();">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            <button type="button" 
+                                                    class="btn btn-outline-danger btn-sm delete-child-trade-btn" 
+                                                    title="Удалить сделку"
+                                                    data-trade-id="{{ child_trade.pk }}"
+                                                    data-trade-type="{{ child_trade.get_trade_type_display }}"
+                                                    data-trade-date="{{ child_trade.trade_date|date:"d.m.Y H:i" }}"
+                                                    onclick="event.stopPropagation();">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
                                     </h2>
-                                    <div id="collapse{{ child_trade.pk }}" class="accordion-collapse collapse" aria-labelledby="heading{{ child_trade.pk }}" data-bs-parent="#childTradesAccordion">
+                                    <div id="collapse{{ child_trade.pk }}" class="accordion-collapse collapse" aria-labelledby="heading{{ child_trade.pk }}">
                                         <div class="accordion-body">
                                             <div class="row">
                                                 <div class="col-md-6">
@@ -275,25 +293,6 @@
                                                 </div>
                                             </div>
                                             {% endif %}
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- Кнопки действий для дочерней сделки -->
-                                    <div class="accordion-actions-row">
-                                        <div class="d-flex justify-content-end">
-                                            <div class="btn-group btn-group-sm">
-                                                <a href="{% url 'trades:trade_update' child_trade.pk %}" 
-                                                   class="btn btn-outline-primary btn-sm" 
-                                                   title="Редактировать сделку">
-                                                    <i class="bi bi-pencil me-1"></i>Редактировать
-                                                </a>
-                                                <button type="button" 
-                                                        class="btn btn-outline-danger btn-sm" 
-                                                        title="Удалить сделку"
-                                                        onclick="confirmDeleteChildTrade('{{ child_trade.pk }}', '{{ child_trade.get_trade_type_display }}', '{{ child_trade.trade_date|date:"d.m.Y H:i" }}')">
-                                                    <i class="bi bi-trash me-1"></i>Удалить
-                                                </button>
-                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -416,9 +415,59 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'trades/css/trade_detail.css' %}">
 <link rel="stylesheet" href="{% static 'trades/css/screenshots.css' %}">
+<style>
+/* Стили для иконок действий в аккордеоне */
+.accordion-actions {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: none;
+    gap: 5px;
+    transition: opacity 0.2s ease;
+    z-index: 10;
+}
+
+.accordion-item:hover .accordion-actions {
+    display: flex !important;
+}
+
+.accordion-header {
+    position: relative;
+    min-height: 60px;
+}
+
+.accordion-button {
+    padding-right: 120px !important; /* Оставляем место для иконок */
+}
+
+.accordion-actions .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+}
+</style>
 {% endblock %}
 
 {% block extra_js %}
 <script src="{% static 'trades/js/trade_detail.js' %}"></script>
 <script src="{% static 'trades/js/screenshots.js' %}"></script>
+<script>
+// Обработчик для кнопок удаления дочерних сделок
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.delete-child-trade-btn').forEach(function(button) {
+        button.addEventListener('click', function() {
+            const tradeId = this.getAttribute('data-trade-id');
+            const tradeType = this.getAttribute('data-trade-type');
+            const tradeDate = this.getAttribute('data-trade-date');
+            confirmDeleteChildTrade(tradeId, tradeType, tradeDate);
+        });
+    });
+});
+</script>
 {% endblock %}
