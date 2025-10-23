@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'strategies',
     'instruments',
     'trades',
+    'easy_thumbnails',
 ]
 
 MIDDLEWARE = [
@@ -161,3 +162,17 @@ CHANNEL_LAYERS = {
         },
     },
 }
+
+# Easy Thumbnails settings
+THUMBNAIL_ALIASES = {
+    '': {
+        'thumbnail': {'size': (150, 150), 'crop': False, 'quality': 85},
+        'medium': {'size': (300, 300), 'crop': False, 'quality': 85},
+        'large': {'size': (600, 600), 'crop': False, 'quality': 90},
+        'gallery': {'size': (200, 200), 'crop': False, 'quality': 85},
+    },
+}
+
+THUMBNAIL_BASEDIR = 'thumbnails'
+THUMBNAIL_QUALITY = 85
+THUMBNAIL_PRESERVE_EXTENSIONS = ('png', 'gif', 'jpg', 'jpeg')

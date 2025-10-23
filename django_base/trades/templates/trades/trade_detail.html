@@ -1,5 +1,6 @@
 {% extends 'core/base.html' %}
 {% load static %}
+{% load thumbnail %}
 
 {% block title %}{{ object.instrument.ticker }} - {{ object.get_trade_type_display }} - Дневник трейдера{% endblock %}
 
@@ -262,7 +263,7 @@
                                                     {% for screenshot in child_trade.screenshots.all|dictsort:"uploaded_at" %}
                                                     <div class="col-md-3 mb-2">
                                                         <div class="card screenshot-card">
-                                                            <img src="{{ screenshot.image.url }}" class="card-img-top screenshot-thumbnail" alt="Скриншот" data-bs-toggle="modal" data-bs-target="#screenshotModal{{ screenshot.id }}">
+                                                            <img src="{% thumbnail screenshot.image 'gallery' %}" class="card-img-top screenshot-thumbnail" alt="Скриншот" data-bs-toggle="modal" data-bs-target="#screenshotModal{{ screenshot.id }}">
                                                             {% if screenshot.description %}
                                                             <div class="card-body p-2">
                                                                 <small class="text-muted">{{ screenshot.description }}</small>
@@ -354,7 +355,7 @@
                             <div class="screenshot-gallery">
                                 {% for screenshot in object.screenshots.all|dictsort:"uploaded_at" %}
                                 <div class="card screenshot-card">
-                                    <img src="{{ screenshot.image.url }}" class="card-img-top screenshot-thumbnail" alt="Скриншот" data-bs-toggle="modal" data-bs-target="#screenshotModal{{ screenshot.id }}">
+                                    <img src="{% thumbnail screenshot.image 'gallery' %}" class="card-img-top screenshot-thumbnail" alt="Скриншот" data-bs-toggle="modal" data-bs-target="#screenshotModal{{ screenshot.id }}">
                                     {% if screenshot.description %}
                                     <div class="card-body">
                                         <p class="card-text">{{ screenshot.description }}</p>

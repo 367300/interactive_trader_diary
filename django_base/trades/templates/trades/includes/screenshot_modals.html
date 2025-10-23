@@ -1,4 +1,5 @@
 {% load static %}
+{% load thumbnail %}
 
 <!-- Модальные окна для скриншотов -->
 {% if screenshots %}
@@ -22,7 +23,7 @@
             </div>
             <div class="modal-body">
                 <div class="text-center mb-3">
-                    <img src="{{ screenshot.image.url }}" 
+                    <img src="{% thumbnail screenshot.image 'large' %}" 
                          class="img-fluid screenshot-fullsize" 
                          alt="{{ screenshot.description }}"
                          style="max-height: 70vh; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
