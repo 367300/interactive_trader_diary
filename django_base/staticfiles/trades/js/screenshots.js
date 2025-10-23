@@ -90,6 +90,25 @@ class ScreenshotManager {
                     }, 10);
                 }
             });
+
+            // Увеличение изображения при клике
+            const image = modal.querySelector('.screenshot-fullsize');
+            if (image) {
+                const originalSrc = image.src;
+                const fullSizeSrc = image.src.replace(/\.\d+x\d+_q\d+\.png$/, '.600x600_q90.png');
+                
+                image.addEventListener('click', () => {
+                    if (image.style.transform === 'scale(2.5)') {
+                        image.style.transform = 'scale(1)';
+                        image.src = originalSrc;
+                        modal.querySelector('.modal-content').style.overflow = 'hidden';
+                    } else {
+                        image.style.transform = 'scale(2.5)';
+                        image.src = fullSizeSrc;
+                        modal.querySelector('.modal-content').style.overflow = 'visible';
+                    }
+                });
+            }
         });
     }
 
