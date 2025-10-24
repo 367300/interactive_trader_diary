@@ -9,6 +9,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from .models import Trade, TradeAnalysis, TradeScreenshot, MarketContext
 from .forms import TradeForm, TradeAnalysisForm
+from .utils import calculate_trade_stats
 from strategies.models import TradingStrategy
 from instruments.models import Instrument
 
@@ -72,8 +73,15 @@ class TradeDetailView(DetailView):
         
         context['screenshots'] = trade.screenshots.all()
         
-        # Получаем дочерние сделки (усреднения и закрытия)
-        context['child_trades'] = trade.child_trades.all().order_by('trade_date')
+        if trade.trade_type == Trade.TradeType.OPEN:
+            self.template_name = 'trades/main_trade_detail.html'
+            # Получаем все связанные сделки (дочерние + главная) и сортируем по дате
+            child_trades = list(trade.child_trades.all())
+            child_trades.append(trade)  # Добавляем главную сделку
+            child_trades.sort(key=lambda x: x.trade_date, reverse=True)  # Сортируем весь список по дате
+            context['child_trades'] = child_trades
+            # Добавляем агрегированную статистику
+            context['trade_stats'] = calculate_trade_stats(trade)
         
         return context
 

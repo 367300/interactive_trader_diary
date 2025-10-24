@@ -146,7 +146,7 @@ class TradeDetailManager {
      * Подтверждение удаления дочерней сделки
      */
     static confirmDeleteChildTrade(tradeId, tradeType, tradeDate) {
-        const message = `Вы уверены, что хотите удалить ${tradeType} от ${tradeDate}?\n\nЭто действие нельзя отменить!`;
+        const message = `Вы уверены, что хотите удалить ${tradeType} от ${tradeDate}?\n\nЭто действие нельзя отменить! Удаление сделки приведет к удалению всех связанных сделок, а также скриншотов (если имеются).`;
         
         if (confirm(message)) {
             // Создаем форму для отправки DELETE запроса

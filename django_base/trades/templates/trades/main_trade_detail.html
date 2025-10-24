@@ -8,54 +8,6 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
-            <!-- Краткое резюме -->
-            <div class="brief-summary">
-                <h5 class="mb-3">
-                    <i class="bi bi-info-circle me-2"></i>Краткое резюме
-                </h5>
-                <div class="row">
-                    <div class="col-md-6">
-                        <strong>Инструмент:</strong> {{ object.instrument.ticker }}<br>
-                        <strong>Тип операции:</strong> {{ object.get_trade_type_display }}<br>
-                        <strong>Направление:</strong> {{ object.get_direction_display }}
-                    </div>
-                    <div class="col-md-6">
-                        <strong>Цена:</strong> {{ object.price }} ₽<br>
-                        <strong>Дата:</strong> {{ object.trade_date|date:"d.m.Y H:i" }}
-                    </div>
-                </div>
-            </div>
-
-            <!-- Финансовые параметры -->
-            <div class="financial-params">
-                <h6 class="mb-3">
-                    <i class="bi bi-calculator me-2"></i>Финансовые параметры
-                </h6>
-                <div class="row">
-                    <div class="col-md-3">
-                        <div class="text-center">
-                            <h6 class="text-muted mb-1">Цена сделки</h6>
-                            <h5 class="text-primary mb-0">{{ object.price }} ₽</h5>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="text-center">
-                            <h6 class="text-muted mb-1">Стоп-лосс</h6>
-                            <h5 class="text-danger mb-0">
-                                {% if object.planned_stop_loss %}{{ object.planned_stop_loss }} ₽{% else %}—{% endif %}
-                            </h5>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="text-center">
-                            <h6 class="text-muted mb-1">Тейк-профит</h6>
-                            <h5 class="text-success mb-0">
-                                {% if object.planned_take_profit %}{{ object.planned_take_profit }} ₽{% else %}—{% endif %}
-                            </h5>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             <!-- Вкладки -->
             <div class="card">
@@ -63,7 +15,7 @@
                     <ul class="nav nav-tabs card-header-tabs" id="tradeTabs" role="tablist">
                         <li class="nav-item" role="presentation">
                             <button class="nav-link active" id="main-tab" data-bs-toggle="tab" data-bs-target="#main" type="button" role="tab">
-                                <i class="bi bi-info-circle me-2"></i>Основная информация
+                                <i class="bi bi-info-circle me-2"></i>Общая информация
                             </button>
                         </li>
                         {% if child_trades %}
@@ -71,21 +23,6 @@
                             <button class="nav-link" id="children-tab" data-bs-toggle="tab" data-bs-target="#children" type="button" role="tab">
                                 <i class="bi bi-diagram-3 me-2"></i>Связанные сделки
                                 <span class="badge bg-primary ms-2">{{ child_trades|length }}</span>
-                            </button>
-                        </li>
-                        {% endif %}
-                        {% if object.analysis %}
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="analysis-tab" data-bs-toggle="tab" data-bs-target="#analysis" type="button" role="tab">
-                                <i class="bi bi-clipboard-data me-2"></i>Анализ сделки
-                            </button>
-                        </li>
-                        {% endif %}
-                        {% if object.screenshots.exists %}
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="screenshots-tab" data-bs-toggle="tab" data-bs-target="#screenshots" type="button" role="tab">
-                                <i class="bi bi-images me-2"></i>Скриншоты сделки
-                                <span class="badge bg-secondary ms-2">{{ object.screenshots.count }}</span>
                             </button>
                         </li>
                         {% endif %}
@@ -97,56 +34,113 @@
                         <div class="tab-pane fade show active" id="main" role="tabpanel">
                             <div class="row">
                                 <div class="col-md-6">
-                                    <h6 class="text-primary mb-3">Детали сделки</h6>
+                                    <h6 class="text-primary mb-3">Общие данные</h6>
                                     <table class="table table-borderless">
                                         <tr>
                                             <td><strong>Инструмент:</strong></td>
-                                            <td>{{ object.instrument.ticker }}</td>
+                                            <td>{{ object.instrument.ticker }} - {{ object.instrument.name }}</td>
                                         </tr>
                                         <tr>
                                             <td><strong>Стратегия:</strong></td>
                                             <td>{{ object.strategy.name|default:"—" }}</td>
                                         </tr>
                                         <tr>
-                                            <td><strong>Тип операции:</strong></td>
-                                            <td>{{ object.get_trade_type_display }}</td>
-                                        </tr>
-                                        <tr>
                                             <td><strong>Направление:</strong></td>
                                             <td>
-                                                <span class="badge bg-{% if object.direction == Trade.Direction.LONG %}success{% else %}danger{% endif %}">
+                                                <span class="badge bg-{% if trade_stats.direction == Trade.Direction.LONG %}success{% else %}danger{% endif %}">
                                                     {{ object.get_direction_display }}
                                                 </span>
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td><strong>Дата и время:</strong></td>
+                                            <td><strong>Дата открытия:</strong></td>
                                             <td>{{ object.trade_date|date:"d.m.Y H:i" }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Статус позиции:</strong></td>
+                                            <td>
+                                                <span class="badge bg-{% if trade_stats.is_closed %}secondary{% else %}warning{% endif %}">
+                                                    {% if trade_stats.is_closed %}Закрыта{% else %}Открыта{% endif %}
+                                                </span>
+                                            </td>
                                         </tr>
                                     </table>
                                 </div>
                                 <div class="col-md-6">
-                                    <h6 class="text-success mb-3">Финансовые данные</h6>
+                                    <h6 class="text-success mb-3">Статистика по сделкам</h6>
                                     <table class="table table-borderless">
                                         <tr>
-                                            <td><strong>Цена:</strong></td>
-                                            <td>{{ object.price }} ₽</td>
+                                            <td><strong>Всего сделок:</strong></td>
+                                            <td>{{ trade_stats.total_trades }}</td>
                                         </tr>
                                         <tr>
-                                            <td><strong>Плановый стоп-лосс:</strong></td>
-                                            <td>{{ object.planned_stop_loss|default:"—" }} ₽</td>
+                                            <td><strong>Усреднений:</strong></td>
+                                            <td>{{ trade_stats.averages_count }}</td>
                                         </tr>
                                         <tr>
-                                            <td><strong>Плановый тейк-профит:</strong></td>
-                                            <td>{{ object.planned_take_profit|default:"—" }} ₽</td>
+                                            <td><strong>Средний стоп-лосс:</strong></td>
+                                            <td>{% if trade_stats.avg_stop %}{{ trade_stats.avg_stop|floatformat:2 }} ₽{% else %}—{% endif %}</td>
                                         </tr>
                                         <tr>
-                                            <td><strong>Основание:</strong></td>
-                                            <td>{{ object.reason|default:"—" }}</td>
+                                            <td><strong>Средний тейк-профит:</strong></td>
+                                            <td>{% if trade_stats.avg_take %}{{ trade_stats.avg_take|floatformat:2 }} ₽{% else %}—{% endif %}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Минимальный шаг цены:</strong></td>
+                                            <td>{{ object.instrument.min_price_step }} ₽</td>
                                         </tr>
                                     </table>
                                 </div>
                             </div>
+                            
+                            {% if trade_stats.is_closed %}
+                            <hr class="my-4">
+                            <div class="row">
+                                <div class="col-12">
+                                    <h6 class="text-info mb-3">Результаты позиции</h6>
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <div class="card text-center">
+                                                <div class="card-body">
+                                                    <h6 class="text-muted">Средняя цена входа</h6>
+                                                    <h4>{{ trade_stats.entry_price|floatformat:2 }} ₽</h4>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="card text-center">
+                                                <div class="card-body">
+                                                    <h6 class="text-muted">Цена закрытия</h6>
+                                                    <h4>{{ trade_stats.close_price|floatformat:2 }} ₽</h4>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="card text-center">
+                                                <div class="card-body">
+                                                    <h6 class="text-muted">Множитель (усреднения)</h6>
+                                                    <h4>×{{ trade_stats.multiplier|floatformat:0 }}</h4>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="card text-center bg-{% if trade_stats.pips > 0 %}success{% elif trade_stats.pips < 0 %}danger{% else %}secondary{% endif %} text-white">
+                                                <div class="card-body">
+                                                    <h6 class="text-white">Результат в пипсах</h6>
+                                                    <h3>{% if trade_stats.pips > 0 %}+{% endif %}{{ trade_stats.pips|floatformat:1 }}</h3>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% else %}
+                            <hr class="my-4">
+                            <div class="alert alert-warning">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                Позиция еще не закрыта. Результаты будут доступны после закрытия всей позиции.
+                            </div>
+                            {% endif %}
                         </div>
 
                         <!-- Связанные сделки (включая главную) -->
@@ -172,7 +166,7 @@
                                         <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ child_trade.pk }}" aria-expanded="false" aria-controls="collapse{{ child_trade.pk }}">
                                             <div class="d-flex align-items-center w-100">
                                                 <div class="me-3">
-                                                    <i class="bi bi-{% if child_trade.trade_type == Trade.TradeType.AVERAGE %}plus-circle{% elif child_trade.trade_type == Trade.TradeType.CLOSE %}x-circle{% else %}play-circle{% endif %} text-{% if child_trade.trade_type == Trade.TradeType.AVERAGE %}warning{% elif child_trade.trade_type == Trade.TradeType.CLOSE %}danger{% else %}primary{% endif %}"></i>
+                                                    <i class="bi bi-{% if child_trade.trade_type == 'average' %}plus-circle{% elif child_trade.trade_type == 'close' %}x-circle{% else %}play-circle{% endif %} text-{% if child_trade.trade_type == 'average' %}warning{% elif child_trade.trade_type == 'close' %}danger{% else %}primary{% endif %}"></i>
                                                 </div>
                                                 <div class="flex-grow-1">
                                                     <strong>{{ child_trade.get_trade_type_display }}</strong>
@@ -188,6 +182,14 @@
                                         </button>
                                         <!-- Иконки действий (появляются при наведении) -->
                                         <div class="accordion-actions">
+                                            <!-- кнопка просмотра сделки -->
+                                            <a href="{% url 'trades:trade_detail' child_trade.pk %}" 
+                                               class="btn btn-outline-primary btn-sm" 
+                                               title="Просмотреть сделку"
+                                               onclick="event.stopPropagation();">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            <!-- кнопка редактирования сделки -->
                                             <a href="{% url 'trades:trade_update' child_trade.pk %}" 
                                                class="btn btn-outline-primary btn-sm" 
                                                title="Редактировать сделку"
@@ -302,71 +304,6 @@
                             </div>
                         </div>
                         {% endif %}
-
-                        <!-- Анализ -->
-                        {% if object.analysis %}
-                        <div class="tab-pane fade" id="analysis" role="tabpanel">
-                            <h6 class="text-info mb-3">
-                                <i class="bi bi-clipboard-data me-2"></i>Анализ сделки
-                            </h6>
-                            <div class="bg-light p-4 rounded">
-                                {% if object.analysis.analysis %}
-                                <div class="mb-3">
-                                    <h6 class="text-primary">Анализ</h6>
-                                    <p>{{ object.analysis.analysis }}</p>
-                                </div>
-                                {% endif %}
-                                
-                                {% if object.analysis.conclusions %}
-                                <div class="mb-3">
-                                    <h6 class="text-success">Выводы</h6>
-                                    <p>{{ object.analysis.conclusions }}</p>
-                                </div>
-                                {% endif %}
-                                
-                                <div class="row">
-                                    {% if object.analysis.emotional_state %}
-                                    <div class="col-md-6">
-                                        <h6 class="text-warning">Эмоциональное состояние</h6>
-                                        <p>{{ object.analysis.get_emotional_state_display }}</p>
-                                    </div>
-                                    {% endif %}
-                                    
-                                    {% if object.analysis.tags %}
-                                    <div class="col-md-6">
-                                        <h6 class="text-secondary">Теги</h6>
-                                        <p>
-                                            {% for tag in object.analysis.tags %}
-                                            <span class="badge bg-secondary me-1">{{ tag }}</span>
-                                            {% endfor %}
-                                        </p>
-                                    </div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                        {% endif %}
-
-                        <!-- Скриншоты -->
-                        {% if object.screenshots.exists %}
-                        <div class="tab-pane fade" id="screenshots" role="tabpanel">
-                            <h6 class="text-secondary mb-3">
-                                <i class="bi bi-images me-2"></i>Скриншоты сделки ({{ object.screenshots.count }})
-                            </h6>
-                            <div class="screenshot-gallery">
-                                {% for screenshot in object.screenshots.all|dictsort:"uploaded_at" %}
-                                <div class="card screenshot-card">
-                                    <img src="{% thumbnail screenshot.image 'gallery' %}" class="card-img-top screenshot-thumbnail" alt="Скриншот" data-bs-toggle="modal" data-bs-target="#screenshotModal{{ screenshot.id }}">
-                                    {% if screenshot.description %}
-                                    <div class="card-body">
-                                        <p class="card-text">{{ screenshot.description }}</p>
-                                    </div>
-                                    {% endif %}
-                                </div>
-                                {% endfor %}
-                            </div>
-                        </div>
-                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -380,9 +317,6 @@
                         </a>
                         <a href="{% url 'trades:trade_list' %}" class="btn btn-outline-secondary">
                             <i class="bi bi-arrow-left me-2"></i>Назад к списку
-                        </a>
-                        <a href="{% url 'trades:trade_detail' object.parent_trade.pk %}" class="btn btn-outline-secondary">
-                            <i class="bi bi-arrow-left me-2"></i>Назад к родительской сделке
                         </a>
                     </div>
                 </div>
