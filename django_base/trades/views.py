@@ -313,12 +313,16 @@ class TradeAverageView(CreateView):
         # Копируем анализ из родительской сделки, если он существует
         try:
             parent_analysis = self.parent_trade.analysis
-            initial['analysis'] = parent_analysis.analysis
-            initial['conclusions'] = parent_analysis.conclusions
-            initial['emotional_state'] = parent_analysis.emotional_state
-            initial['tags'] = ', '.join(parent_analysis.tags) if parent_analysis.tags else ''
+            # Сохраняем данные родительского анализа для JavaScript
+            initial['parent_analysis'] = parent_analysis.analysis or ''
+            initial['parent_conclusions'] = parent_analysis.conclusions or ''
+            initial['parent_emotional_state'] = parent_analysis.emotional_state or ''
+            initial['parent_tags'] = ', '.join(parent_analysis.tags) if parent_analysis.tags else ''
         except TradeAnalysis.DoesNotExist:
-            pass
+            initial['parent_analysis'] = ''
+            initial['parent_conclusions'] = ''
+            initial['parent_emotional_state'] = ''
+            initial['parent_tags'] = ''
         
         return initial
     
@@ -417,12 +421,16 @@ class TradeCloseView(CreateView):
         # Копируем анализ из родительской сделки, если он существует
         try:
             parent_analysis = self.parent_trade.analysis
-            initial['analysis'] = parent_analysis.analysis
-            initial['conclusions'] = parent_analysis.conclusions
-            initial['emotional_state'] = parent_analysis.emotional_state
-            initial['tags'] = ', '.join(parent_analysis.tags) if parent_analysis.tags else ''
+            # Сохраняем данные родительского анализа для JavaScript
+            initial['parent_analysis'] = parent_analysis.analysis or ''
+            initial['parent_conclusions'] = parent_analysis.conclusions or ''
+            initial['parent_emotional_state'] = parent_analysis.emotional_state or ''
+            initial['parent_tags'] = ', '.join(parent_analysis.tags) if parent_analysis.tags else ''
         except TradeAnalysis.DoesNotExist:
-            pass
+            initial['parent_analysis'] = ''
+            initial['parent_conclusions'] = ''
+            initial['parent_emotional_state'] = ''
+            initial['parent_tags'] = ''
         
         return initial
     
