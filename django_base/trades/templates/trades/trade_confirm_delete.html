@@ -20,7 +20,8 @@
             <div class="card-body">
                 <div class="alert alert-warning" role="alert">
                     <i class="bi bi-exclamation-triangle me-2"></i>
-                    <strong>Внимание!</strong> Вы собираетесь удалить сделку. Это действие нельзя отменить.
+                    <strong>Внимание!</strong> Вы собираетесь удалить сделку. Это действие нельзя отменить.<br><br>
+                    Удаление сделки приведет к удалению всех связанных сделок, а также скриншотов (если имеются).
                 </div>
                 
                 <div class="mb-4">
@@ -45,8 +46,8 @@
                             <div class="text-muted">{{ trade.trade_date|date:"d.m.Y H:i" }}</div>
                         </div>
                         <div class="col-sm-6">
-                            <strong>Цена входа:</strong>
-                            <div class="text-muted">{{ trade.entry_price }} ₽</div>
+                            <strong>Цена:</strong>
+                            <div class="text-muted">{{ trade.price }} ₽</div>
                         </div>
                         {% if trade.strategy %}
                         <div class="col-sm-6">

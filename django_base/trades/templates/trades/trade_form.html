@@ -101,22 +101,8 @@
                                 {% endif %}
                             </div>
                             
-                            {% if not parent_trade and not is_average and not is_close and not is_update %}
-                            <div class="col-md-6">
-                                <div class="form-floating">
-                                    {{ form.trade_type }}
-                                    <label for="{{ form.trade_type.id_for_label }}">Тип операции</label>
-                                    {% if form.trade_type.errors %}
-                                        <div class="invalid-feedback d-block">
-                                            {{ form.trade_type.errors.0 }}
-                                        </div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            {% else %}
-                            <!-- Скрытое поле для типа операции при усреднении/закрытии/редактировании -->
-                            <input type="hidden" name="trade_type" value="{{ form.trade_type.value }}">
-                            {% endif %}
+                            <!-- Скрытое поле для типа операции - всегда OPEN по умолчанию -->
+                            {{ form.trade_type }}
                             
                             <!-- Параметры сделки -->
                             <div class="col-12 mt-4">

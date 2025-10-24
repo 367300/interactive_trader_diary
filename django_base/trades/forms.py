@@ -31,7 +31,7 @@ class TradeForm(forms.ModelForm):
     
     emotional_state = forms.ChoiceField(
         required=False,
-        choices=TradeAnalysis.EmotionalState.choices,
+        choices=[('', 'Не выбрано')] + list(TradeAnalysis.EmotionalState.choices),
         widget=forms.Select(attrs={'class': 'form-select'}),
         label='Эмоциональное состояние'
     )
@@ -60,7 +60,7 @@ class TradeForm(forms.ModelForm):
     class Meta:
         model = Trade
         fields = [
-            'strategy', 'instrument', 'trade_date', 'direction', 'trade_type',
+            'strategy', 'instrument', 'trade_date', 'direction',
             'price', 'commission', 'planned_stop_loss', 'planned_take_profit'
         ]
         widgets = {
@@ -70,7 +70,6 @@ class TradeForm(forms.ModelForm):
                 'step': '1'
             }),
             'direction': forms.Select(attrs={'class': 'form-select'}),
-            'trade_type': forms.Select(attrs={'class': 'form-select'}),
             'strategy': forms.Select(attrs={'class': 'form-select'}),
             'instrument': forms.Select(attrs={'class': 'form-select'}),
             'price': forms.NumberInput(attrs={
@@ -125,8 +124,7 @@ class TradeForm(forms.ModelForm):
             self.fields['strategy'].widget.attrs['readonly'] = True
             self.fields['direction'].widget.attrs['readonly'] = True
         
-        # Настройка полей анализа
-        self.fields['emotional_state'].empty_label = "Выберите эмоциональное состояние"
+        # Настройка полей анализа - пустое значение уже добавлено в choices
         
         # Добавляем help_text
         self.fields['commission'].help_text = "Комиссия брокера в рублях (необязательно)"
@@ -140,6 +138,12 @@ class TradeForm(forms.ModelForm):
             now = timezone.now()
             formatted_date = now.strftime('%Y-%m-%dT%H:%M')
             self.fields['trade_date'].widget.attrs['value'] = formatted_date
+            
+            # Устанавливаем значение по умолчанию для trade_type
+            self.fields['trade_type'] = forms.CharField(
+                initial=Trade.TradeType.OPEN,
+                widget=forms.HiddenInput()
+            )
     
     def clean(self):
         cleaned_data = super().clean()
@@ -188,7 +192,9 @@ class TradeAnalysisForm(forms.ModelForm):
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['emotional_state'].empty_label = "Выберите эмоциональное состояние"
+        
+        # Добавляем пустое значение для emotional_state
+        self.fields['emotional_state'].choices = [('', 'Не выбрано')] + list(TradeAnalysis.EmotionalState.choices)
         
         # Добавляем help_text
         self.fields['tags'].help_text = "Введите теги через запятую для группировки сделок"
