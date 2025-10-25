@@ -45,7 +45,7 @@ class TradeAdmin(admin.ModelAdmin):
         }),
         ('Параметры сделки', {
             'fields': (
-                'direction', 'trade_type', 'price', 'commission'
+                'direction', 'trade_type', 'price', 'commission', 'volume_from_capital'
             )
         }),
         ('Планирование', {

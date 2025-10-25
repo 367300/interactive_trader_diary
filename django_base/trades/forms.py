@@ -61,7 +61,7 @@ class TradeForm(forms.ModelForm):
         model = Trade
         fields = [
             'strategy', 'instrument', 'trade_date', 'direction',
-            'price', 'commission', 'planned_stop_loss', 'planned_take_profit'
+            'price', 'commission', 'planned_stop_loss', 'planned_take_profit', 'volume_from_capital'
         ]
         widgets = {
             'trade_date': forms.DateTimeInput(attrs={
@@ -91,6 +91,11 @@ class TradeForm(forms.ModelForm):
                 'class': 'form-control',
                 'step': '0.01',
                 'placeholder': '0.00'
+            }),
+            'volume_from_capital': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '1',
+                'placeholder': '10'
             })
         }
     
@@ -103,7 +108,7 @@ class TradeForm(forms.ModelForm):
                 user=user, 
                 is_active=True
             )
-            self.fields['strategy'].empty_label = "Выберите стратегию (необязательно)"
+            self.fields['strategy'].empty_label = "Выберите стратегию (обязательно)"
         
         # Фильтруем только активные инструменты
         self.fields['instrument'].queryset = Instrument.objects.filter(is_active=True)
@@ -113,12 +118,14 @@ class TradeForm(forms.ModelForm):
         self.fields['trade_date'].required = True
         self.fields['direction'].required = True
         self.fields['price'].required = True
+        self.fields['volume_from_capital'].required = True
         
         # Если это дочерняя сделка, копируем данные из родительской
         if parent_trade:
             self.fields['instrument'].initial = parent_trade.instrument
             self.fields['strategy'].initial = parent_trade.strategy
             self.fields['direction'].initial = parent_trade.direction
+            self.fields['volume_from_capital'].initial = parent_trade.volume_from_capital
             # Делаем поля только для чтения
             self.fields['instrument'].widget.attrs['readonly'] = True
             self.fields['strategy'].widget.attrs['readonly'] = True
@@ -130,6 +137,7 @@ class TradeForm(forms.ModelForm):
         self.fields['commission'].help_text = "Комиссия брокера в рублях (необязательно)"
         self.fields['planned_stop_loss'].help_text = "Плановый стоп-лосс (цена)"
         self.fields['planned_take_profit'].help_text = "Плановый тейк-профит (цена)"
+        self.fields['volume_from_capital'].help_text = "Объем сделки от капитала в процентах"
         
         # Настройка поля даты только для новых сделок
         if not (self.instance and self.instance.pk):
@@ -148,10 +156,15 @@ class TradeForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
         price = cleaned_data.get('price')
+        volume_from_capital = cleaned_data.get('volume_from_capital')
         
         # Проверяем, что цена положительная
         if price and price <= 0:
             raise forms.ValidationError('Цена должна быть положительной')
+        
+        # Проверяем, что объем сделки от капитала положительный
+        if volume_from_capital and volume_from_capital <= 0:
+            raise forms.ValidationError('Объем сделки от капитала должен быть положительным')
         
         # Обработка тегов
         tags = cleaned_data.get('tags')

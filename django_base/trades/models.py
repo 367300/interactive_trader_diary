@@ -95,6 +95,14 @@ class Trade(models.Model):
         blank=True,
         verbose_name='Плановый тейк-профит (цена)'
     )
+
+    # Объем сделки от капитала
+    volume_from_capital = models.IntegerField(
+        null=False,
+        blank=False,
+        default=10,
+        verbose_name='Объем сделки от капитала'
+    )
     
     # Связи между сделками
     parent_trade = models.ForeignKey(

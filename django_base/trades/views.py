@@ -115,7 +115,7 @@ class TradeCreateView(CreateView):
                 analysis=analysis_data or '',
                 conclusions=conclusions_data or '',
                 emotional_state=emotional_state_data or '',
-                tags=tags_data or []
+                tags=tags_data or [],
             )
         
         # Обрабатываем скриншоты
@@ -190,7 +190,7 @@ class TradeUpdateView(UpdateView):
                     'analysis': analysis_data or '',
                     'conclusions': conclusions_data or '',
                     'emotional_state': emotional_state_data or '',
-                    'tags': tags_data or []
+                    'tags': tags_data or [],
                 }
             )
             if not created:
@@ -317,6 +317,7 @@ class TradeAverageView(CreateView):
         # Копируем данные из родительской сделки
         initial['planned_stop_loss'] = self.parent_trade.planned_stop_loss
         initial['planned_take_profit'] = self.parent_trade.planned_take_profit
+        initial['volume_from_capital'] = self.parent_trade.volume_from_capital
         
         # Копируем анализ из родительской сделки, если он существует
         try:
@@ -341,6 +342,7 @@ class TradeAverageView(CreateView):
         form.instance.direction = self.parent_trade.direction
         form.instance.instrument = self.parent_trade.instrument
         form.instance.strategy = self.parent_trade.strategy
+        form.instance.volume_from_capital = self.parent_trade.volume_from_capital
         trade = form.save()
         
         # Создаем анализ сделки, если заполнены поля
@@ -425,7 +427,8 @@ class TradeCloseView(CreateView):
         # Копируем данные из родительской сделки
         initial['planned_stop_loss'] = self.parent_trade.planned_stop_loss
         initial['planned_take_profit'] = self.parent_trade.planned_take_profit
-        
+        initial['volume_from_capital'] = self.parent_trade.volume_from_capital
+
         # Копируем анализ из родительской сделки, если он существует
         try:
             parent_analysis = self.parent_trade.analysis
@@ -449,6 +452,7 @@ class TradeCloseView(CreateView):
         form.instance.direction = self.parent_trade.direction
         form.instance.instrument = self.parent_trade.instrument
         form.instance.strategy = self.parent_trade.strategy
+        form.instance.volume_from_capital = self.parent_trade.volume_from_capital
         trade = form.save()
         
         # Создаем анализ сделки, если заполнены поля

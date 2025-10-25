@@ -28,7 +28,7 @@
                             </div>
                             <div class="col-md-6">
                                 <strong>Цена:</strong> {{ parent_trade.price }} ₽<br>
-                                <strong>Объем:</strong> {{ parent_trade.volume }}<br>
+                                <strong>Объем на сделку:</strong> {{ parent_trade.volume_from_capital }}%<br>
                                 <strong>Дата:</strong> {{ parent_trade.trade_date|date:"d.m.Y H:i" }}
                             </div>
                         </div>
@@ -135,6 +135,17 @@
                                     {% if form.price.errors %}
                                         <div class="invalid-feedback d-block">
                                             {{ form.price.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    {{ form.volume_from_capital }}
+                                    <label for="{{ form.volume_from_capital.id_for_label }}">Объем на сделку (в % от капитала) *</label>
+                                    {% if form.volume_from_capital.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.volume_from_capital.errors.0 }}
                                         </div>
                                     {% endif %}
                                 </div>
