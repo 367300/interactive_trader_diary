@@ -11,6 +11,7 @@ def calculate_trade_stats(main_trade):
     stats = {
         'total_trades': len(all_trades),
         'averages_count': sum(1 for t in all_trades if t.trade_type == Trade.TradeType.AVERAGE),
+        'partial_closes_count': sum(1 for t in all_trades if t.trade_type == Trade.TradeType.PARTIAL_CLOSE),
         'is_closed': any(t.trade_type == Trade.TradeType.CLOSE for t in all_trades),
         'direction': main_trade.direction,
     }

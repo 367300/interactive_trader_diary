@@ -46,6 +46,14 @@
             </div>
         </div>
     </div>
+    <div class="col-md-3 col-6">
+        <div class="card border-0 shadow-soft">
+            <div class="card-body text-center">
+                <div class="h4 text-info mb-1">{{ partial_closed_trades }}</div>
+                <small class="text-muted">Частично закрытых</small>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Список сделок -->
@@ -100,7 +108,8 @@
                                     {% endif %}
                                 </td>
                                 <td>
-                                    <div class="btn-group btn-group-sm">
+                                    <!-- Первая строка кнопок (всегда доступны) -->
+                                    <div class="btn-group btn-group-sm mb-1">
                                         <a href="{% url 'trades:trade_detail' trade.pk %}" 
                                            class="btn btn-outline-primary" 
                                            data-bs-toggle="tooltip" 
@@ -113,27 +122,39 @@
                                            title="Редактировать">
                                             <i class="bi bi-pencil"></i>
                                         </a>
-                                        {% if not trade.is_closed %}
-                                        <a href="{% url 'trades:trade_average' trade.pk %}" 
-                                           class="btn btn-outline-info" 
-                                           data-bs-toggle="tooltip" 
-                                           title="Усреднить">
-                                            <i class="bi bi-plus-circle"></i>
-                                        </a>
-                                        <a href="{% url 'trades:trade_close' trade.pk %}" 
-                                           class="btn btn-outline-success" 
-                                           data-bs-toggle="tooltip" 
-                                           title="Закрыть">
-                                            <i class="bi bi-x-circle"></i>
-                                        </a>
-                                        {% endif %}
                                         <a href="{% url 'trades:trade_delete' trade.pk %}" 
                                            class="btn btn-outline-danger" 
                                            data-bs-toggle="tooltip" 
                                            title="Удалить">
                                             <i class="bi bi-trash"></i>
                                         </a>
+                                    </div><br>
+                                    
+                                    <!-- Вторая строка кнопок (только для активных сделок) -->
+                                    {% if not trade.is_closed %}
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'trades:trade_average' trade.pk %}" 
+                                           class="btn btn-outline-warning" 
+                                           data-bs-toggle="tooltip" 
+                                           title="Усреднить">
+                                            <i class="bi bi-plus-circle"></i>
+                                        </a>
+                                        {% if trade.can_partial_close %}
+                                        <a href="{% url 'trades:trade_partial_close' trade.pk %}" 
+                                           class="btn btn-outline-info" 
+                                           data-bs-toggle="tooltip" 
+                                           title="Частично закрыть">
+                                            <i class="bi bi-scissors"></i>
+                                        </a>
+                                        {% endif %}
+                                        <a href="{% url 'trades:trade_close' trade.pk %}" 
+                                           class="btn btn-outline-danger" 
+                                           data-bs-toggle="tooltip" 
+                                           title="Закрыть позицию">
+                                            <i class="bi bi-x-circle"></i>
+                                        </a>
                                     </div>
+                                    {% endif %}
                                 </td>
                             </tr>
                         {% endfor %}

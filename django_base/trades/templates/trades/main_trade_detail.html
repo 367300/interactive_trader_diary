@@ -64,6 +64,14 @@
                                                 </span>
                                             </td>
                                         </tr>
+                                        {% if not trade_stats.is_closed and object.can_partial_close %}
+                                        <tr>
+                                            <td><strong>Объем сделки:</strong></td>
+                                            <td>
+                                                <span class="text-info fw-bold">{{ object.get_available_volume }}%</span> от капитала
+                                            </td>
+                                        </tr>
+                                        {% endif %}
                                     </table>
                                 </div>
                                 <div class="col-md-6">
@@ -76,6 +84,10 @@
                                         <tr>
                                             <td><strong>Усреднений:</strong></td>
                                             <td>{{ trade_stats.averages_count }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Частичных закрытий:</strong></td>
+                                            <td>{{ trade_stats.partial_closes_count }}</td>
                                         </tr>
                                         <tr>
                                             <td><strong>Средний стоп-лосс:</strong></td>
@@ -166,7 +178,7 @@
                                         <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ child_trade.pk }}" aria-expanded="false" aria-controls="collapse{{ child_trade.pk }}">
                                             <div class="d-flex align-items-center w-100">
                                                 <div class="me-3">
-                                                    <i class="bi bi-{% if child_trade.trade_type == 'average' %}plus-circle{% elif child_trade.trade_type == 'close' %}x-circle{% else %}play-circle{% endif %} text-{% if child_trade.trade_type == 'average' %}warning{% elif child_trade.trade_type == 'close' %}danger{% else %}primary{% endif %}"></i>
+                                                    <i class="bi bi-{% if child_trade.trade_type == 'average' %}plus-circle{% elif child_trade.trade_type == 'close' %}x-circle{% elif child_trade.trade_type == 'partial_close' %}scissors{% else %}play-circle{% endif %} text-{% if child_trade.trade_type == 'average' %}warning{% elif child_trade.trade_type == 'close' %}danger{% elif child_trade.trade_type == 'partial_close' %}info{% else %}primary{% endif %}"></i>
                                                 </div>
                                                 <div class="flex-grow-1">
                                                     <strong>{{ child_trade.get_trade_type_display }}</strong>
@@ -249,8 +261,10 @@
                                                             <td>{{ child_trade.planned_take_profit|default:"—" }} ₽</td>
                                                         </tr>
                                                         <tr>
-                                                            <td><strong>Основание:</strong></td>
-                                                            <td>{{ child_trade.reason|default:"—" }}</td>
+                                                            <td><strong>Объем сделки:</strong></td>
+                                                            <td>
+                                                                <span class="text-info fw-bold">{{ child_trade.get_current_volume }}%</span> от капитала
+                                                            </td>
                                                         </tr>
                                                     </table>
                                                 </div>
@@ -311,10 +325,28 @@
             <!-- Кнопки действий -->
             <div class="row mt-4">
                 <div class="col-12">
-                    <div class="d-flex gap-2">
+                    <div class="d-flex gap-2 flex-wrap">
                         <a href="{% url 'trades:trade_update' object.pk %}" class="btn btn-primary">
                             <i class="bi bi-pencil me-2"></i>Редактировать
                         </a>
+                        
+                        <!-- Кнопки для работы с позицией (только для открытых позиций) -->
+                        {% if not trade_stats.is_closed %}
+                        <div class="btn-group" role="group">
+                            <a href="{% url 'trades:trade_average' object.pk %}" class="btn btn-warning">
+                                <i class="bi bi-plus-circle me-2"></i>Усреднить
+                            </a>
+                            {% if object.can_partial_close %}
+                            <a href="{% url 'trades:trade_partial_close' object.pk %}" class="btn btn-info">
+                                <i class="bi bi-scissors me-2"></i>Частично закрыть
+                            </a>
+                            {% endif %}
+                            <a href="{% url 'trades:trade_close' object.pk %}" class="btn btn-danger">
+                                <i class="bi bi-x-circle me-2"></i>Закрыть позицию
+                            </a>
+                        </div>
+                        {% endif %}
+                        
                         <a href="{% url 'trades:trade_list' %}" class="btn btn-outline-secondary">
                             <i class="bi bi-arrow-left me-2"></i>Назад к списку
                         </a>

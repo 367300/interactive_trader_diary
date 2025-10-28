@@ -49,7 +49,7 @@
                                 </h6>
                             </div>
                             
-                            {% if not parent_trade and not is_average and not is_close and not is_update %}
+                            {% if not parent_trade and not is_average and not is_partial_close and not is_close and not is_update %}
                             <div class="col-md-6">
                                 <div class="form-floating">
                                     {{ form.instrument }}
@@ -74,7 +74,7 @@
                                 </div>
                             </div>
                             {% else %}
-                            <!-- Скрытые поля для инструмента и стратегии при усреднении/закрытии/редактировании -->
+                            <!-- Скрытые поля для инструмента и стратегии при усреднении/частичном закрытии/закрытии/редактировании -->
                             <input type="hidden" name="instrument" value="{{ form.instrument.value }}">
                             <input type="hidden" name="strategy" value="{{ form.strategy.value }}">
                             {% endif %}
@@ -111,7 +111,7 @@
                                 </h6>
                             </div>
                             
-                            {% if not parent_trade and not is_average and not is_close and not is_update %}
+                            {% if not parent_trade and not is_average and not is_partial_close and not is_close and not is_update %}
                             <div class="col-md-6">
                                 <div class="form-floating">
                                     {{ form.direction }}
@@ -124,7 +124,7 @@
                                 </div>
                             </div>
                             {% else %}
-                            <!-- Скрытое поле для направления при усреднении/закрытии/редактировании -->
+                            <!-- Скрытое поле для направления при усреднении/частичном закрытии/закрытии/редактировании -->
                             <input type="hidden" name="direction" value="{{ form.direction.value }}">
                             {% endif %}
                             
@@ -140,18 +140,39 @@
                                 </div>
                             </div>
                             <div class="col-md-6">
+                                {% if not is_close %}
                                 <div class="form-floating">
                                     {{ form.volume_from_capital }}
-                                    <label for="{{ form.volume_from_capital.id_for_label }}">Объем на сделку (в % от капитала) *</label>
+                                    <label for="{{ form.volume_from_capital.id_for_label }}">
+                                        {% if is_partial_close %}
+                                            Объем для частичного закрытия (в % от капитала) *
+                                        {% else %}
+                                            Объем на сделку (в % от капитала) *
+                                        {% endif %}
+                                    </label>
                                     {% if form.volume_from_capital.errors %}
                                         <div class="invalid-feedback d-block">
                                             {{ form.volume_from_capital.errors.0 }}
                                         </div>
                                     {% endif %}
+                                    {% if is_partial_close and available_volume %}
+                                        <div class="form-text text-info">
+                                            <i class="bi bi-info-circle me-1"></i>
+                                            Доступно для закрытия: {{ available_volume }}% от капитала
+                                        </div>
+                                    {% endif %}
                                 </div>
+                                {% else %}
+                                <!-- Скрытое поле для полного закрытия - используем весь доступный объем -->
+                                <input type="hidden" name="volume_from_capital" value="{{ available_volume }}">
+                                <div class="alert alert-info">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    Будет закрыт весь доступный объем: {{ available_volume }}% от капитала
+                                </div>
+                                {% endif %}
                                 
-                                <!-- Кнопки для закрытия по тейку/стопу (только для закрытия) -->
-                                {% if is_close %}
+                                <!-- Кнопки для закрытия по тейку/стопу (только для полного закрытия) -->
+                                {% if is_close and not is_partial_close %}
                                 <div class="mt-3">
                                     <div class="btn-group w-100" role="group">
                                         <button type="button" 

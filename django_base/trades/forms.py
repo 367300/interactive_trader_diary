@@ -137,7 +137,13 @@ class TradeForm(forms.ModelForm):
         self.fields['commission'].help_text = "Комиссия брокера в рублях (необязательно)"
         self.fields['planned_stop_loss'].help_text = "Плановый стоп-лосс (цена)"
         self.fields['planned_take_profit'].help_text = "Плановый тейк-профит (цена)"
-        self.fields['volume_from_capital'].help_text = "Объем сделки от капитала в процентах"
+        
+        # Настройка help_text для volume_from_capital в зависимости от типа сделки
+        if parent_trade:
+            available_volume = parent_trade.get_available_volume()
+            self.fields['volume_from_capital'].help_text = f"Объем сделки от капитала в процентах (доступно: {available_volume}%)"
+        else:
+            self.fields['volume_from_capital'].help_text = "Объем сделки от капитала в процентах"
         
         # Настройка поля даты только для новых сделок
         if not (self.instance and self.instance.pk):

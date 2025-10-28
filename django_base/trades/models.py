@@ -15,6 +15,7 @@ class Trade(models.Model):
     class TradeType(models.TextChoices):
         OPEN = 'OPEN', 'Открытие позиции'
         AVERAGE = 'AVERAGE', 'Усреднение'
+        PARTIAL_CLOSE = 'PARTIAL_CLOSE', 'Частичное закрытие'
         CLOSE = 'CLOSE', 'Закрытие позиции'
     
     id = models.UUIDField(
@@ -58,7 +59,7 @@ class Trade(models.Model):
     )
     
     trade_type = models.CharField(
-        max_length=10,
+        max_length=15,
         choices=TradeType.choices,
         default=TradeType.OPEN,
         verbose_name='Тип операции'
@@ -136,6 +137,56 @@ class Trade(models.Model):
     def is_closed(self):
         """Проверяет, закрыта ли сделка (есть ли дочерние сделки типа CLOSE)"""
         return self.child_trades.filter(trade_type=self.TradeType.CLOSE).exists()
+    
+    def get_available_volume(self):
+        """Возвращает доступный объем для частичного закрытия"""
+        if self.trade_type != self.TradeType.OPEN:
+            return 0
+        
+        # Получаем все дочерние сделки
+        child_trades = self.child_trades.all()
+        
+        # Считаем общий объем открытий и усреднений
+        total_open_volume = self.volume_from_capital
+        for child in child_trades:
+            if child.trade_type in [self.TradeType.OPEN, self.TradeType.AVERAGE]:
+                total_open_volume += child.volume_from_capital
+        
+        # Считаем общий объем закрытий (полных и частичных)
+        total_close_volume = 0
+        for child in child_trades:
+            if child.trade_type in [self.TradeType.CLOSE, self.TradeType.PARTIAL_CLOSE]:
+                total_close_volume += child.volume_from_capital
+        
+        # Доступный объем = общий открытый объем - общий закрытый объем
+        available_volume = total_open_volume - total_close_volume
+        return max(0, available_volume)
+    
+    def can_partial_close(self):
+        """Проверяет, можно ли сделать частичное закрытие"""
+        return (self.trade_type == self.TradeType.OPEN and 
+                not self.is_closed() and 
+                self.get_available_volume() > 0)
+    
+    def get_total_volume(self):
+        """Возвращает общий суммарный объем всех сделок (открытие + усреднения)"""
+        if self.trade_type != self.TradeType.OPEN:
+            return 0
+        
+        # Получаем все дочерние сделки
+        child_trades = self.child_trades.all()
+        
+        # Считаем общий объем открытий и усреднений
+        total_volume = self.volume_from_capital
+        for child in child_trades:
+            if child.trade_type in [self.TradeType.OPEN, self.TradeType.AVERAGE]:
+                total_volume += child.volume_from_capital
+        
+        return total_volume
+    
+    def get_current_volume(self):
+        """Возвращает объем конкретно этой сделки"""
+        return self.volume_from_capital
 
 
 class TradeAnalysis(models.Model):

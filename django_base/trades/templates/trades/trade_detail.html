@@ -141,8 +141,14 @@
                                             <td>{{ object.planned_take_profit|default:"—" }} ₽</td>
                                         </tr>
                                         <tr>
-                                            <td><strong>Основание:</strong></td>
-                                            <td>{{ object.reason|default:"—" }}</td>
+                                            <td><strong>Объем сделки:</strong></td>
+                                            <td>
+                                                {% if object.trade_type == Trade.TradeType.OPEN %}
+                                                    <span class="text-primary fw-bold">{{ object.get_total_volume }}%</span> от капитала (общий)
+                                                {% else %}
+                                                    <span class="text-info fw-bold">{{ object.get_current_volume }}%</span> от капитала
+                                                {% endif %}
+                                            </td>
                                         </tr>
                                     </table>
                                 </div>
@@ -247,8 +253,10 @@
                                                             <td>{{ child_trade.planned_take_profit|default:"—" }} ₽</td>
                                                         </tr>
                                                         <tr>
-                                                            <td><strong>Основание:</strong></td>
-                                                            <td>{{ child_trade.reason|default:"—" }}</td>
+                                                            <td><strong>Объем сделки:</strong></td>
+                                                            <td>
+                                                                <span class="text-info fw-bold">{{ child_trade.get_current_volume }}%</span> от капитала
+                                                            </td>
                                                         </tr>
                                                     </table>
                                                 </div>

@@ -37,6 +37,7 @@ class TradeListView(ListView):
         trades = Trade.objects.filter(user=user)
         context['total_trades'] = trades.filter(parent_trade__isnull=True).count()
         context['closed_trades'] = trades.filter(trade_type='CLOSE').count()
+        context['partial_closed_trades'] = trades.filter(trade_type='PARTIAL_CLOSE').count()
         context['open_trades'] = context['total_trades'] - context['closed_trades']
         
         # Фильтры
@@ -427,7 +428,7 @@ class TradeCloseView(CreateView):
         # Копируем данные из родительской сделки
         initial['planned_stop_loss'] = self.parent_trade.planned_stop_loss
         initial['planned_take_profit'] = self.parent_trade.planned_take_profit
-        initial['volume_from_capital'] = self.parent_trade.volume_from_capital
+        # Не устанавливаем volume_from_capital для полного закрытия - будет использован весь доступный объем
 
         # Копируем анализ из родительской сделки, если он существует
         try:
@@ -446,13 +447,16 @@ class TradeCloseView(CreateView):
         return initial
     
     def form_valid(self, form):
+        # Для полного закрытия используем весь доступный объем
+        available_volume = self.parent_trade.get_available_volume()
+        
         form.instance.user = self.request.user
         form.instance.parent_trade = self.parent_trade
         form.instance.trade_type = Trade.TradeType.CLOSE
         form.instance.direction = self.parent_trade.direction
         form.instance.instrument = self.parent_trade.instrument
         form.instance.strategy = self.parent_trade.strategy
-        form.instance.volume_from_capital = self.parent_trade.volume_from_capital
+        form.instance.volume_from_capital = available_volume
         trade = form.save()
         
         # Создаем анализ сделки, если заполнены поля
@@ -491,6 +495,145 @@ class TradeCloseView(CreateView):
         context['button_text'] = 'Закрыть позицию'
         context['parent_trade'] = self.parent_trade
         context['is_close'] = True
+        context['available_volume'] = self.parent_trade.get_available_volume()
+        return context
+    
+    def get_success_url(self):
+        return reverse_lazy('trades:trade_detail', kwargs={'pk': self.parent_trade.pk})
+
+
+@method_decorator(login_required, name='dispatch')
+class TradePartialCloseView(CreateView):
+    """Частичное закрытие позиции"""
+    model = Trade
+    form_class = TradeForm
+    template_name = 'trades/trade_form.html'
+    
+    def dispatch(self, request, *args, **kwargs):
+        self.parent_trade = get_object_or_404(
+            Trade,
+            pk=self.kwargs['parent_id'],
+            user=request.user
+        )
+        
+        # Проверяем, что родительская сделка не закрыта
+        if self.parent_trade.is_closed():
+            return render(request, 'core/forbidden.html', {
+                'message': 'Нельзя частично закрыть уже закрытую позицию!',
+                'reason': 'Сделка уже закрыта и не может быть частично закрыта.',
+                'back_url': reverse_lazy('trades:trade_list'),
+                'back_text': 'Вернуться к списку сделок',
+                'detail_url': reverse_lazy('trades:trade_detail', kwargs={'pk': self.parent_trade.pk}),
+                'detail_text': 'Просмотр сделки'
+            })
+        
+        # Проверяем, что можно сделать частичное закрытие
+        if not self.parent_trade.can_partial_close():
+            return render(request, 'core/forbidden.html', {
+                'message': 'Нельзя сделать частичное закрытие!',
+                'reason': 'Нет доступного объема для частичного закрытия.',
+                'back_url': reverse_lazy('trades:trade_list'),
+                'back_text': 'Вернуться к списку сделок',
+                'detail_url': reverse_lazy('trades:trade_detail', kwargs={'pk': self.parent_trade.pk}),
+                'detail_text': 'Просмотр сделки'
+            })
+        
+        return super().dispatch(request, *args, **kwargs)
+    
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        kwargs['parent_trade'] = self.parent_trade
+        return kwargs
+    
+    def get_initial(self):
+        """Инициализация формы данными из родительской сделки"""
+        initial = super().get_initial()
+        
+        # Копируем данные из родительской сделки
+        initial['planned_stop_loss'] = self.parent_trade.planned_stop_loss
+        initial['planned_take_profit'] = self.parent_trade.planned_take_profit
+        
+        # Устанавливаем максимальный доступный объем для частичного закрытия
+        available_volume = self.parent_trade.get_available_volume()
+        initial['volume_from_capital'] = min(available_volume, 50)  # По умолчанию 50% от доступного объема
+
+        # Копируем анализ из родительской сделки, если он существует
+        try:
+            parent_analysis = self.parent_trade.analysis
+            # Сохраняем данные родительского анализа для JavaScript
+            initial['parent_analysis'] = parent_analysis.analysis or ''
+            initial['parent_conclusions'] = parent_analysis.conclusions or ''
+            initial['parent_emotional_state'] = parent_analysis.emotional_state or ''
+            initial['parent_tags'] = ', '.join(parent_analysis.tags) if parent_analysis.tags else ''
+        except TradeAnalysis.DoesNotExist:
+            initial['parent_analysis'] = ''
+            initial['parent_conclusions'] = ''
+            initial['parent_emotional_state'] = ''
+            initial['parent_tags'] = ''
+        
+        return initial
+    
+    def form_valid(self, form):
+        # Валидация объема для частичного закрытия
+        volume_to_close = form.cleaned_data.get('volume_from_capital')
+        available_volume = self.parent_trade.get_available_volume()
+        
+        if volume_to_close <= 0:
+            form.add_error('volume_from_capital', 'Объем должен быть положительным')
+            return self.form_invalid(form)
+        
+        if volume_to_close >= available_volume:
+            form.add_error('volume_from_capital', 
+                          f'Для частичного закрытия объем должен быть меньше доступного ({available_volume}%). '
+                          f'Для полного закрытия используйте "Закрытие позиции"')
+            return self.form_invalid(form)
+        
+        form.instance.user = self.request.user
+        form.instance.parent_trade = self.parent_trade
+        form.instance.trade_type = Trade.TradeType.PARTIAL_CLOSE
+        form.instance.direction = self.parent_trade.direction
+        form.instance.instrument = self.parent_trade.instrument
+        form.instance.strategy = self.parent_trade.strategy
+        trade = form.save()
+        
+        # Создаем анализ сделки, если заполнены поля
+        analysis_data = form.cleaned_data.get('analysis')
+        conclusions_data = form.cleaned_data.get('conclusions')
+        emotional_state_data = form.cleaned_data.get('emotional_state')
+        tags_data = form.cleaned_data.get('tags')
+        
+        if any([analysis_data, conclusions_data, emotional_state_data, tags_data]):
+            TradeAnalysis.objects.create(
+                trade=trade,
+                analysis=analysis_data or '',
+                conclusions=conclusions_data or '',
+                emotional_state=emotional_state_data or '',
+                tags=tags_data or []
+            )
+        
+        # Обрабатываем скриншоты (новые для частичного закрытия)
+        screenshots = self.request.FILES.getlist('screenshots')
+        descriptions = self.request.POST.getlist('screenshot_descriptions')
+        
+        for i, screenshot in enumerate(screenshots):
+            description = descriptions[i] if i < len(descriptions) else ''
+            TradeScreenshot.objects.create(
+                trade=trade,
+                image=screenshot,
+                description=description
+            )
+        
+        messages.success(self.request, f'Частичное закрытие на {volume_to_close}% успешно добавлено!')
+        return super().form_valid(form)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = f'Частичное закрытие позиции {self.parent_trade.instrument.ticker}'
+        context['button_text'] = 'Частично закрыть позицию'
+        context['parent_trade'] = self.parent_trade
+        context['is_partial_close'] = True
+        context['available_volume'] = self.parent_trade.get_available_volume()
         return context
     
     def get_success_url(self):
@@ -513,6 +656,7 @@ class TradeAnalyticsView(TemplateView):
         # Общая статистика
         context['total_trades'] = trades.filter(parent_trade__isnull=True).count()
         context['closed_trades'] = trades.filter(trade_type='CLOSE').count()
+        context['partial_closed_trades'] = trades.filter(trade_type='PARTIAL_CLOSE').count()
         context['open_trades'] = trades.filter(
             trade_type='OPEN',
             child_trades__trade_type='CLOSE'
