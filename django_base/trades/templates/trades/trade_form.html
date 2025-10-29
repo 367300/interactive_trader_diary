@@ -224,10 +224,12 @@
                                     <h6 class="text-warning mb-0">
                                         <i class="bi bi-chart-line me-2"></i>Анализ сделки (необязательно)
                                     </h6>
+                                    {% if parent_trade %}
                                     <button type="button" class="btn btn-sm btn-outline-warning autofill-all-btn" 
                                             title="Заполнить все поля из родительской сделки">
                                         <i class="bi bi-arrow-down-circle me-1"></i>Заполнить все
                                     </button>
+                                    {% endif %}
                                 </div>
                             </div>
                             
@@ -240,11 +242,13 @@
                                             {{ form.analysis.errors.0 }}
                                         </div>
                                     {% endif %}
+                                    {% if parent_trade %}
                                     <button type="button" class="btn btn-sm btn-outline-secondary autofill-btn" 
                                             data-field="analysis" data-parent="analysis" 
                                             title="Заполнить из родительской сделки">
                                         <i class="bi bi-arrow-down-circle"></i>
                                     </button>
+                                    {% endif %}
                                 </div>
                             </div>
                             
@@ -257,11 +261,13 @@
                                             {{ form.conclusions.errors.0 }}
                                         </div>
                                     {% endif %}
+                                    {% if parent_trade %}
                                     <button type="button" class="btn btn-sm btn-outline-secondary autofill-btn" 
                                             data-field="conclusions" data-parent="conclusions" 
                                             title="Заполнить из родительской сделки">
                                         <i class="bi bi-arrow-down-circle"></i>
                                     </button>
+                                    {% endif %}
                                 </div>
                             </div>
                             
@@ -274,11 +280,13 @@
                                             {{ form.emotional_state.errors.0 }}
                                         </div>
                                     {% endif %}
+                                    {% if parent_trade %}
                                     <button type="button" class="btn btn-sm btn-outline-secondary autofill-btn" 
                                             data-field="emotional_state" data-parent="emotional_state" 
                                             title="Заполнить из родительской сделки">
                                         <i class="bi bi-arrow-down-circle"></i>
                                     </button>
+                                    {% endif %}
                                 </div>
                             </div>
                             
@@ -291,11 +299,13 @@
                                             {{ form.tags.errors.0 }}
                                         </div>
                                     {% endif %}
+                                    {% if parent_trade %}
                                     <button type="button" class="btn btn-sm btn-outline-secondary autofill-btn" 
                                             data-field="tags" data-parent="tags" 
                                             title="Заполнить из родительской сделки">
                                         <i class="bi bi-arrow-down-circle"></i>
                                     </button>
+                                    {% endif %}
                                 </div>
                             </div>
                             

@@ -158,9 +158,16 @@ class TradeUpdateView(UpdateView):
         return kwargs
     
     def get_initial(self):
+        """Инициализация формы данными из сделки"""
         initial = super().get_initial()
         trade = self.get_object()
-        
+
+        if trade.parent_trade:
+            initial['parent_analysis'] = trade.parent_trade.analysis.analysis or ''
+            initial['parent_conclusions'] = trade.parent_trade.analysis.conclusions or ''
+            initial['parent_emotional_state'] = trade.parent_trade.analysis.emotional_state or ''
+            initial['parent_tags'] = ', '.join(trade.parent_trade.analysis.tags) if trade.parent_trade.analysis.tags else ''
+            
         try:
             analysis = trade.analysis
             initial.update({
@@ -179,28 +186,44 @@ class TradeUpdateView(UpdateView):
         trade = form.save()
         
         # Обновляем или создаем анализ сделки
-        analysis_data = form.cleaned_data.get('analysis')
-        conclusions_data = form.cleaned_data.get('conclusions')
-        emotional_state_data = form.cleaned_data.get('emotional_state')
-        tags_data = form.cleaned_data.get('tags')
+        analysis_data = form.cleaned_data.get('analysis', '').strip()
+        conclusions_data = form.cleaned_data.get('conclusions', '').strip()
+        emotional_state_data = form.cleaned_data.get('emotional_state', '')
+        tags_data = form.cleaned_data.get('tags', [])
+        if isinstance(tags_data, str):
+            tags_data = [tag.strip() for tag in tags_data.split(',') if tag.strip()] if tags_data else []
         
-        if any([analysis_data, conclusions_data, emotional_state_data, tags_data]):
+        # Проверяем, существует ли анализ
+        try:
+            analysis = trade.analysis
+            has_existing_analysis = True
+        except TradeAnalysis.DoesNotExist:
+            has_existing_analysis = False
+        
+        # Проверяем, есть ли хоть одно заполненное поле
+        has_data = bool(analysis_data or conclusions_data or emotional_state_data or tags_data)
+        
+        if has_data:
+            # Создаем или обновляем анализ
             analysis, created = TradeAnalysis.objects.get_or_create(
                 trade=trade,
                 defaults={
-                    'analysis': analysis_data or '',
-                    'conclusions': conclusions_data or '',
-                    'emotional_state': emotional_state_data or '',
-                    'tags': tags_data or [],
+                    'analysis': analysis_data,
+                    'conclusions': conclusions_data,
+                    'emotional_state': emotional_state_data,
+                    'tags': tags_data,
                 }
             )
             if not created:
                 # Обновляем существующий анализ
-                analysis.analysis = analysis_data or ''
-                analysis.conclusions = conclusions_data or ''
-                analysis.emotional_state = emotional_state_data or ''
-                analysis.tags = tags_data or []
+                analysis.analysis = analysis_data
+                analysis.conclusions = conclusions_data
+                analysis.emotional_state = emotional_state_data
+                analysis.tags = tags_data
                 analysis.save()
+        elif has_existing_analysis:
+            # Если все поля пустые и анализ существует - удаляем его
+            analysis.delete()
         
         # Обрабатываем удаление существующих скриншотов
         delete_screenshots = self.request.POST.getlist('delete_screenshots')
@@ -257,6 +280,7 @@ class TradeUpdateView(UpdateView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context['parent_trade'] = self.get_object().parent_trade
         context['title'] = 'Редактирование сделки'
         context['button_text'] = 'Сохранить изменения'
         context['is_update'] = True
