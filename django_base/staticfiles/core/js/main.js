@@ -1,198 +1,151 @@
-// Основной JavaScript для дневника трейдера
+// Динамическое изменение цвета навбара
+(function() {
+    // Конфигурация
+    const config = {
+        colorMixRatio: 0.25,        // Доля найденного цвета (0.05 = 5%)
+        whiteMixRatio: 0.75,        // Доля белого цвета (0.95 = 95%)
+        opacity: 0.85,              // Непрозрачность фона
+        samplePoints: 3,            // Количество точек для проверки
+        pointOffsetY: 5,            // Смещение точек по Y от нижнего края навбара (px)
+        maxDepth: 10,               // Максимальная глубина поиска по родительским элементам
+        initDelay: 200              // Задержка инициализации (ms)
+    };
 
-document.addEventListener('DOMContentLoaded', function() {
-    // Инициализация компонентов
-    initSidebar();
-    initTooltips();
-    initAlerts();
-    initForms();
-});
+    const navbar = document.querySelector('.navbar-container');
+    if (!navbar) return;
 
-// Инициализация сайдбара для мобильных устройств
-function initSidebar() {
-    const sidebarToggle = document.querySelector('[data-bs-target="#navbarNav"]');
-    const sidebar = document.querySelector('.sidebar-wrapper');
-    
-    if (sidebarToggle && sidebar) {
-        sidebarToggle.addEventListener('click', function() {
-            if (window.innerWidth < 992) {
-                sidebar.classList.toggle('show');
+    function getColorFromPoint(x, y) {
+        const navElement = navbar.closest('nav');
+        const temp = navbar.style.pointerEvents;
+        navbar.style.pointerEvents = 'none';
+        const elements = document.elementsFromPoint(x, y);
+        navbar.style.pointerEvents = temp;
+        
+        if (!elements || elements.length === 0) return null;
+        
+        for (const el of elements) {
+            if (el === navbar || el === navElement || navbar.contains(el) || (navElement && navElement.contains(el))) {
+                continue;
+            }
+            
+            let current = el;
+            let depth = 0;
+            while (current && current !== document.body && depth < config.maxDepth) {
+                if (current === navbar || current === navElement || navbar.contains(current) || (navElement && navElement.contains(current))) {
+                    current = current.parentElement;
+                    depth++;
+                    continue;
+                }
+                
+                const style = window.getComputedStyle(current);
+                const bgImage = style.backgroundImage;
+                
+                if (bgImage && bgImage !== 'none' && bgImage.includes('gradient')) {
+                    const gradientMatch = bgImage.match(/(?:rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*[\d.]+)?\)|rgb\((\d+),\s*(\d+),\s*(\d+)\)|#([0-9a-fA-F]{3,6}))/);
+                    if (gradientMatch) {
+                        let r, g, b;
+                        if (gradientMatch[1]) {
+                            r = parseInt(gradientMatch[1]);
+                            g = parseInt(gradientMatch[2]);
+                            b = parseInt(gradientMatch[3]);
+                        } else if (gradientMatch[4]) {
+                            r = parseInt(gradientMatch[4]);
+                            g = parseInt(gradientMatch[5]);
+                            b = parseInt(gradientMatch[6]);
+                        } else if (gradientMatch[7]) {
+                            const hex = gradientMatch[7];
+                            if (hex.length === 3) {
+                                r = parseInt(hex[0] + hex[0], 16);
+                                g = parseInt(hex[1] + hex[1], 16);
+                                b = parseInt(hex[2] + hex[2], 16);
+                            } else {
+                                r = parseInt(hex.substring(0, 2), 16);
+                                g = parseInt(hex.substring(2, 4), 16);
+                                b = parseInt(hex.substring(4, 6), 16);
+                            }
+                        }
+                        if (r !== undefined && g !== undefined && b !== undefined) {
+                            return [r, g, b];
+                        }
+                    }
+                }
+                
+                const bg = style.backgroundColor;
+                const match = bg.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+                if (match) {
+                    const r = parseInt(match[1]);
+                    const g = parseInt(match[2]);
+                    const b = parseInt(match[3]);
+                    if (r !== 0 || g !== 0 || b !== 0 || bg.includes('255')) {
+                        return [r, g, b];
+                    }
+                }
+                current = current.parentElement;
+                depth++;
+            }
+        }
+        return null;
+    }
+
+    function getAverageColor() {
+        const rect = navbar.getBoundingClientRect();
+        const points = [];
+        
+        // Генерируем точки в зависимости от конфигурации
+        if (config.samplePoints === 1) {
+            points.push([rect.left + rect.width / 2, rect.bottom + config.pointOffsetY]);
+        } else if (config.samplePoints === 2) {
+            points.push(
+                [rect.left + rect.width / 3, rect.bottom + config.pointOffsetY],
+                [rect.left + rect.width * 2 / 3, rect.bottom + config.pointOffsetY]
+            );
+        } else {
+            points.push(
+                [rect.left + rect.width / 2, rect.bottom + config.pointOffsetY],
+                [rect.left + rect.width / 4, rect.bottom + config.pointOffsetY],
+                [rect.left + rect.width * 3 / 4, rect.bottom + config.pointOffsetY]
+            );
+        }
+        
+        let r = 0, g = 0, b = 0, count = 0;
+        points.forEach(([x, y]) => {
+            const color = getColorFromPoint(x, y);
+            if (color) {
+                r += color[0];
+                g += color[1];
+                b += color[2];
+                count++;
             }
         });
         
-        // Закрытие сайдбара при клике вне его
-        document.addEventListener('click', function(e) {
-            if (window.innerWidth < 992 && 
-                !sidebar.contains(e.target) && 
-                !sidebarToggle.contains(e.target)) {
-                sidebar.classList.remove('show');
-            }
-        });
-    }
-}
-
-// Инициализация тултипов Bootstrap
-function initTooltips() {
-    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl);
-    });
-}
-
-// Автоматическое скрытие алертов
-function initAlerts() {
-    const alerts = document.querySelectorAll('.alert:not(.alert-info):not([id*="parentTradeInfo"])');
-    alerts.forEach(function(alert) {
-        // Проверяем, что это не информационный блок о родительской сделке
-        if (!alert.id.includes('parentTradeInfo') && 
-            !alert.querySelector('.alert-heading')?.textContent.includes('родительской сделке') &&
-            !alert.querySelector('.alert-heading')?.textContent.includes('Усреднение позиции') &&
-            !alert.querySelector('.alert-heading')?.textContent.includes('Закрытие позиции')) {
+        if (count > 0) {
+            const avgR = Math.round(r / count);
+            const avgG = Math.round(g / count);
+            const avgB = Math.round(b / count);
+            // Смешиваем с белым согласно конфигурации
+            const finalR = Math.round(255 * config.whiteMixRatio + avgR * config.colorMixRatio);
+            const finalG = Math.round(255 * config.whiteMixRatio + avgG * config.colorMixRatio);
+            const finalB = Math.round(255 * config.whiteMixRatio + avgB * config.colorMixRatio);
+            return `rgba(${finalR}, ${finalG}, ${finalB}, ${config.opacity})`;
         }
-    });
-}
+        return null;
+    }
 
-// Инициализация форм
-function initForms() {
-    // Автофокус на первое поле формы
-    const forms = document.querySelectorAll('form');
-    forms.forEach(function(form) {
-        const firstInput = form.querySelector('input[type="text"], input[type="email"], input[type="password"], select, textarea');
-        if (firstInput) {
-            firstInput.focus();
+    let ticking = false;
+    function update() {
+        if (!ticking) {
+            requestAnimationFrame(() => {
+                const color = getAverageColor();
+                if (color) {
+                    navbar.style.setProperty('background', color, 'important');
+                }
+                ticking = false;
+            });
+            ticking = true;
         }
-    });
-    
-    // Валидация форм
-    const formsToValidate = document.querySelectorAll('.needs-validation');
-    formsToValidate.forEach(function(form) {
-        form.addEventListener('submit', function(event) {
-            if (!form.checkValidity()) {
-                event.preventDefault();
-                event.stopPropagation();
-            }
-            form.classList.add('was-validated');
-        });
-    });
-}
-
-// Утилиты для работы с числами
-function formatCurrency(amount, currency = 'RUB') {
-    return new Intl.NumberFormat('ru-RU', {
-        style: 'currency',
-        currency: currency,
-        minimumFractionDigits: 2
-    }).format(amount);
-}
-
-function formatNumber(number, decimals = 2) {
-    return new Intl.NumberFormat('ru-RU', {
-        minimumFractionDigits: decimals,
-        maximumFractionDigits: decimals
-    }).format(number);
-}
-
-// Утилиты для работы с датами
-function formatDate(date, options = {}) {
-    const defaultOptions = {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-    };
-    return new Intl.DateTimeFormat('ru-RU', { ...defaultOptions, ...options }).format(new Date(date));
-}
-
-function formatDateTime(date) {
-    return formatDate(date, {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-}
-
-// AJAX утилиты
-function makeAjaxRequest(url, options = {}) {
-    const defaultOptions = {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': getCSRFToken()
-        }
-    };
-    
-    return fetch(url, { ...defaultOptions, ...options })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.json();
-        })
-        .catch(error => {
-            console.error('AJAX request failed:', error);
-            showNotification('Ошибка при выполнении запроса', 'danger');
-        });
-}
-
-// Получение CSRF токена
-function getCSRFToken() {
-    return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
-}
-
-// Показ уведомлений
-function showNotification(message, type = 'info') {
-    const alertDiv = document.createElement('div');
-    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
-    alertDiv.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    `;
-    
-    const container = document.querySelector('.container-fluid');
-    if (container) {
-        container.insertBefore(alertDiv, container.firstChild);
-        
-        // Автоматическое скрытие через 5 секунд
-        setTimeout(() => {
-            const bsAlert = new bootstrap.Alert(alertDiv);
-            bsAlert.close();
-        }, 5000);
     }
-}
 
-// Подтверждение удаления
-function confirmDelete(message = 'Вы уверены, что хотите удалить этот элемент?') {
-    return confirm(message);
-}
-
-// Анимация загрузки
-function showLoading(element) {
-    if (element) {
-        element.innerHTML = `
-            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-            Загрузка...
-        `;
-        element.disabled = true;
-    }
-}
-
-function hideLoading(element, originalText) {
-    if (element) {
-        element.innerHTML = originalText;
-        element.disabled = false;
-    }
-}
-
-// Экспорт функций для использования в других скриптах
-window.TraderDiary = {
-    formatCurrency,
-    formatNumber,
-    formatDate,
-    formatDateTime,
-    makeAjaxRequest,
-    showNotification,
-    confirmDelete,
-    showLoading,
-    hideLoading
-};
+    window.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update, { passive: true });
+    setTimeout(update, config.initDelay);
+})();
