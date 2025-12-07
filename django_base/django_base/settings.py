@@ -28,6 +28,12 @@ DEBUG = config('DJANGO_DEBUG', default=False, cast=bool)
 
 ALLOWED_HOSTS = config('DJANGO_ALLOWED_HOSTS', default='', cast=Csv())
 
+# CSRF trusted origins для работы через внешний домен
+CSRF_TRUSTED_ORIGINS = [
+    'https://cunningly-supreme-scorpion.cloudpub.ru',
+    'http://localhost:8000',
+]
+
 
 # Application definition
 
