@@ -320,6 +320,15 @@
                                 <div class="mb-3">
                                     <label for="{{ form.screenshots.id_for_label }}" class="form-label">{{ form.screenshots.label }}</label>
                                     {{ form.screenshots }}
+                                    {% if form.screenshots.help_text %}
+                                        <span 
+                                            class="bi bi-question-circle-fill text-muted"  data-bs-toggle="tooltip"
+                                            data-bs-placement="right" 
+                                            title="{{ form.screenshots.help_text }}"
+                                            style="cursor: pointer;"
+                                        >
+                                        </span>
+                                    {% endif %}
                                     {% if form.screenshots.errors %}
                                         <div class="invalid-feedback d-block">
                                             {{ form.screenshots.errors.0 }}
