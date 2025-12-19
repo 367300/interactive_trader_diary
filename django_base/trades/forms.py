@@ -3,6 +3,8 @@ from django.contrib.auth.models import User
 from .models import Trade, TradeAnalysis, TradeScreenshot
 from strategies.models import TradingStrategy
 from instruments.models import Instrument
+from .validations import validate_file_size
+from django_base import settings
 
 
 class TradeForm(forms.ModelForm):
@@ -49,14 +51,15 @@ class TradeForm(forms.ModelForm):
     # Поля для скриншотов
     screenshots = forms.FileField(
         required=False,
+        validators=[validate_file_size],
+        help_text=f'Фаил не должен превышать {settings.LIMIT_SIZE_MB} мб',
         widget=forms.FileInput(attrs={
             'class': 'form-control',
             'accept': 'image/*'
         }),
         label='Скриншоты сделки'
     )
-    
-    
+
     class Meta:
         model = Trade
         fields = [
