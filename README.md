@@ -224,6 +224,104 @@ docker compose exec web celery -A trader_diary worker --loglevel=info
 # Откройте http://localhost:5555
 ```
 
+## Отладка
+
+Проект поддерживает отладку через VS Code с использованием debugpy в Docker контейнерах.
+
+### Запуск в режиме отладки
+
+1. **Запустите контейнеры с отладкой:**
+   ```bash
+   docker compose -f docker-compose.debug.yml up --build
+   ```
+
+2. **Дождитесь полной загрузки сервисов** (debugpy должен быть готов к подключению)
+
+### Конфигурации отладки в VS Code
+
+В файле `.vscode/launch.json` доступны следующие конфигурации:
+
+#### Docker: Attach to Django (Web)
+- **Порт:** 5678
+- **Назначение:** Отладка Django веб-приложения
+- **Особенности:**
+  - Поддержка Django-специфичных функций (шаблоны, ORM)
+  - Маппинг путей между локальной файловой системой и контейнером
+  - Отладка библиотечного кода включена
+
+#### Docker: Attach to Celery Worker
+- **Порт:** 5679
+- **Назначение:** Отладка Celery воркера и фоновых задач
+- **Особенности:**
+  - Отладка задач Celery
+  - Маппинг путей для корректной работы точек останова
+  - Отладка библиотечного кода включена
+
+### Использование
+
+1. **Запустите контейнеры в режиме отладки** (см. выше)
+
+2. **В VS Code:**
+   - Откройте панель отладки (F5 или `View > Run and Debug`)
+   - Выберите нужную конфигурацию из списка:
+     - `Docker: Attach to Django (Web)` — для отладки веб-приложения
+     - `Docker: Attach to Celery Worker` — для отладки фоновых задач
+   - Нажмите F5 или кнопку "Start Debugging"
+
+3. **Установите точки останова** в коде и используйте их как обычно
+
+**Файл для vscode launch.json**
+
+```json
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Docker: Attach to Django (Web)",
+            "type": "debugpy",
+            "request": "attach",
+            "connect": {
+                "host": "localhost",
+                "port": 5678
+            },
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}/django_base",
+                    "remoteRoot": "/app/django_base"
+                }
+            ],
+            "django": true,
+            "justMyCode": false
+        },
+        {
+            "name": "Docker: Attach to Celery Worker",
+            "type": "debugpy",
+            "request": "attach",
+            "connect": {
+                "host": "localhost",
+                "port": 5679
+            },
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}/django_base",
+                    "remoteRoot": "/app/django_base"
+                }
+            ],
+            "justMyCode": false
+        }
+    ]
+}
+```
+
+### Примечания
+
+- Убедитесь, что порты 5678 и 5679 не заняты другими процессами
+- При изменении кода в контейнере изменения применяются автоматически благодаря volume mapping
+- Для отладки Celery задач запустите задачу через Django или другой механизм, чтобы она попала в очередь
+
 ## Техническая архитектура
 
 ### Сервисы
