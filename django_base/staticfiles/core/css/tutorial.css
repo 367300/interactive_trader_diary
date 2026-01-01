@@ -10,6 +10,7 @@
     z-index: 9998;
     pointer-events: auto;
     transition: opacity 0.3s ease;
+    opacity: 1;
 }
 
 .tutorial-overlay-svg {
@@ -38,6 +39,26 @@
     to {
         opacity: 1;
         transform: scale(1) translateY(0);
+    }
+}
+
+/* Анимации для плавных переходов */
+.tutorial-tooltip-fade-in {
+    animation: tutorialFadeIn 0.3s ease forwards;
+}
+
+.tutorial-tooltip-fade-out {
+    animation: tutorialFadeOut 0.3s ease forwards;
+}
+
+@keyframes tutorialFadeOut {
+    from {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: scale(0.95) translateY(-10px);
     }
 }
 
@@ -119,37 +140,71 @@
     font-weight: 400;
 }
 
-/* Кнопка "Понятно" */
+/* Контейнер для кнопок */
+.tutorial-tooltip-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+/* Кнопки */
 .tutorial-tooltip-button {
-    width: 100%;
+    flex: 1;
     padding: 12px 24px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
     border: none;
     border-radius: 10px;
     font-size: 16px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
+}
+
+/* Кнопка "Понятно" */
+.tutorial-tooltip-button-next {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
     box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
 }
 
-.tutorial-tooltip-button:hover {
+.tutorial-tooltip-button-next:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
     background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
 }
 
-.tutorial-tooltip-button:active {
+.tutorial-tooltip-button-next:active {
     transform: translateY(0);
     box-shadow: 0 2px 10px rgba(102, 126, 234, 0.4);
 }
 
-.tutorial-tooltip-button:focus {
+.tutorial-tooltip-button-next:focus {
     outline: none;
     box-shadow: 
         0 4px 15px rgba(102, 126, 234, 0.4),
         0 0 0 3px rgba(102, 126, 234, 0.2);
+}
+
+/* Кнопка "Пропустить" */
+.tutorial-tooltip-button-skip {
+    background: rgba(108, 117, 125, 0.1);
+    color: #6c757d;
+    border: 1px solid rgba(108, 117, 125, 0.3);
+}
+
+.tutorial-tooltip-button-skip:hover {
+    background: rgba(108, 117, 125, 0.15);
+    border-color: rgba(108, 117, 125, 0.5);
+    transform: translateY(-1px);
+}
+
+.tutorial-tooltip-button-skip:active {
+    transform: translateY(0);
+    background: rgba(108, 117, 125, 0.2);
+}
+
+.tutorial-tooltip-button-skip:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(108, 117, 125, 0.2);
 }
 
 /* Анимация пульсации для выделенных элементов */
@@ -187,6 +242,11 @@
         margin-bottom: 16px;
     }
 
+    .tutorial-tooltip-buttons {
+        flex-direction: column;
+        gap: 10px;
+    }
+
     .tutorial-tooltip-button {
         padding: 10px 20px;
         font-size: 15px;
@@ -214,6 +274,10 @@
         margin-bottom: 14px;
     }
 
+    .tutorial-tooltip-buttons {
+        gap: 8px;
+    }
+
     .tutorial-tooltip-button {
         padding: 10px 16px;
         font-size: 14px;
@@ -231,6 +295,17 @@
 
     .tutorial-tooltip-text {
         color: #e0e0e0;
+    }
+
+    .tutorial-tooltip-button-skip {
+        background: rgba(255, 255, 255, 0.1);
+        color: #e0e0e0;
+        border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .tutorial-tooltip-button-skip:hover {
+        background: rgba(255, 255, 255, 0.15);
+        border-color: rgba(255, 255, 255, 0.3);
     }
 
     .tutorial-tooltip[data-position="top"]::before {

@@ -18,7 +18,7 @@
  * tutorial.start();
  */
 class Tutorial {
-    constructor(steps = [], storageKey = 'tutorial_completed') {
+    constructor(steps = [], storageKey = 'tutorial_completed', repeat = false) {
         this.steps = steps;
         this.currentStep = 0;
         this.overlay = null;
@@ -28,6 +28,7 @@ class Tutorial {
         this.onComplete = null;
         this.onStepChange = null;
         this.storageKey = storageKey;
+        this.isRepeat = repeat;
         
         // Создаем элементы при инициализации
         this._createOverlay();
@@ -82,15 +83,22 @@ class Tutorial {
             <div class="tutorial-tooltip-content">
                 <div class="tutorial-tooltip-image-container"></div>
                 <div class="tutorial-tooltip-text"></div>
-                <button class="tutorial-tooltip-button">Понятно</button>
+                <div class="tutorial-tooltip-buttons">
+                    <button class="tutorial-tooltip-button tutorial-tooltip-button-skip">Пропустить</button>
+                    <button class="tutorial-tooltip-button tutorial-tooltip-button-next">Понятно</button>
+                </div>
             </div>
         `;
         this.tooltip.style.display = 'none';
         document.body.appendChild(this.tooltip);
 
         // Обработчик кнопки "Понятно"
-        const button = this.tooltip.querySelector('.tutorial-tooltip-button');
-        button.addEventListener('click', () => this.next());
+        const nextButton = this.tooltip.querySelector('.tutorial-tooltip-button-next');
+        nextButton.addEventListener('click', () => this.next());
+
+        // Обработчик кнопки "Пропустить"
+        const skipButton = this.tooltip.querySelector('.tutorial-tooltip-button-skip');
+        skipButton.addEventListener('click', () => this.skip());
     }
 
     /**
@@ -265,9 +273,41 @@ class Tutorial {
     }
 
     /**
+     * Скрывает tooltip с анимацией
+     */
+    _hideTooltip() {
+        return new Promise((resolve) => {
+            if (this.tooltip && this.tooltip.style.display === 'block') {
+                this.tooltip.classList.add('tutorial-tooltip-fade-out');
+                setTimeout(() => {
+                    this.tooltip.style.display = 'none';
+                    this.tooltip.classList.remove('tutorial-tooltip-fade-out');
+                    resolve();
+                }, 300);
+            } else {
+                resolve();
+            }
+        });
+    }
+
+    /**
+     * Показывает tooltip с анимацией
+     */
+    _showTooltip() {
+        return new Promise((resolve) => {
+            this.tooltip.style.display = 'block';
+            this.tooltip.classList.add('tutorial-tooltip-fade-in');
+            setTimeout(() => {
+                this.tooltip.classList.remove('tutorial-tooltip-fade-in');
+                resolve();
+            }, 300);
+        });
+    }
+
+    /**
      * Показывает текущий шаг
      */
-    _showStep(stepIndex) {
+    async _showStep(stepIndex) {
         if (stepIndex < 0 || stepIndex >= this.steps.length) {
             this.stop();
             return;
@@ -280,6 +320,12 @@ class Tutorial {
             console.warn(`Tutorial: элемент не найден для шага ${stepIndex}:`, step.target);
             this.next();
             return;
+        }
+
+        // Скрываем текущий tooltip с анимацией (если он виден)
+        const wasVisible = this.tooltip && this.tooltip.style.display === 'block';
+        if (wasVisible) {
+            await this._hideTooltip();
         }
 
         // Очищаем предыдущие выделения
@@ -303,20 +349,42 @@ class Tutorial {
             imageContainer.style.display = 'none';
         }
 
-        // Показываем overlay и tooltip
-        this.overlay.style.display = 'block';
-        this.tooltip.style.display = 'block';
+        // Показываем overlay с плавной анимацией
+        if (this.overlay.style.display === 'none') {
+            this.overlay.style.display = 'block';
+            this.overlay.style.opacity = '0';
+            setTimeout(() => {
+                if (this.overlay) {
+                    this.overlay.style.opacity = '1';
+                }
+            }, 10);
+        }
 
         // Ждем завершения прокрутки и обновляем overlay
-        setTimeout(() => {
+        setTimeout(async () => {
             // Создаем выделение после прокрутки
             this._createHighlight(targetElement);
             
-            // Вычисляем позицию подсказки
-            const position = this._calculateTooltipPosition(targetElement, step.position);
-            this.tooltip.style.top = position.top + 'px';
-            this.tooltip.style.left = position.left + 'px';
-            this.tooltip.setAttribute('data-position', position.position);
+            // Показываем tooltip невидимым для расчета размеров
+            this.tooltip.style.display = 'block';
+            this.tooltip.style.opacity = '0';
+            this.tooltip.style.visibility = 'hidden';
+            
+            // Рассчитываем позицию
+            requestAnimationFrame(() => {
+                const position = this._calculateTooltipPosition(targetElement, step.position);
+                this.tooltip.style.top = position.top + 'px';
+                this.tooltip.style.left = position.left + 'px';
+                this.tooltip.setAttribute('data-position', position.position);
+                
+                // Показываем с анимацией
+                this.tooltip.style.visibility = 'visible';
+                this.tooltip.style.opacity = '1';
+                this.tooltip.classList.add('tutorial-tooltip-fade-in');
+                setTimeout(() => {
+                    this.tooltip.classList.remove('tutorial-tooltip-fade-in');
+                }, 300);
+            });
         }, 300);
 
         // Вызываем callback если есть
@@ -335,7 +403,7 @@ class Tutorial {
         }
 
         // Проверяем, не прошел ли пользователь уже обучение
-        if (this.isCompleted()) {
+        if (this.isCompleted() && !this.isRepeat) {
             return;
         }
 
@@ -371,29 +439,43 @@ class Tutorial {
     /**
      * Переходит к следующему шагу
      */
-    next() {
+    async next() {
         if (!this.isActive) return;
 
         this.currentStep++;
         if (this.currentStep >= this.steps.length) {
+            await this._hideTooltip();
             this.stop();
         } else {
-            this._showStep(this.currentStep);
+            await this._showStep(this.currentStep);
         }
     }
 
     /**
      * Переходит к предыдущему шагу
      */
-    prev() {
+    async prev() {
         if (!this.isActive) return;
 
         this.currentStep--;
         if (this.currentStep < 0) {
             this.currentStep = 0;
         } else {
-            this._showStep(this.currentStep);
+            await this._showStep(this.currentStep);
         }
+    }
+
+    /**
+     * Пропускает обучение
+     */
+    async skip() {
+        if (!this.isActive) return;
+
+        // Скрываем tooltip с анимацией
+        await this._hideTooltip();
+        
+        // Останавливаем туториал и помечаем как пройденный
+        this.stop();
     }
 
     /**
@@ -401,8 +483,22 @@ class Tutorial {
      */
     stop() {
         this.isActive = false;
-        this.overlay.style.display = 'none';
-        this.tooltip.style.display = 'none';
+        
+        // Плавно скрываем overlay
+        if (this.overlay) {
+            this.overlay.style.opacity = '0';
+            setTimeout(() => {
+                if (this.overlay) {
+                    this.overlay.style.display = 'none';
+                    this.overlay.style.opacity = '1';
+                }
+            }, 300);
+        }
+        
+        if (this.tooltip) {
+            this.tooltip.style.display = 'none';
+        }
+        
         this.highlightedElements = [];
 
         if (this._resizeHandler) {
@@ -421,11 +517,11 @@ class Tutorial {
     /**
      * Переходит к конкретному шагу
      */
-    goToStep(stepIndex) {
+    async goToStep(stepIndex) {
         if (stepIndex >= 0 && stepIndex < this.steps.length) {
             this.currentStep = stepIndex;
             if (this.isActive) {
-                this._showStep(this.currentStep);
+                await this._showStep(this.currentStep);
             }
         }
     }
