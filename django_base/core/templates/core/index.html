@@ -17,14 +17,14 @@
                 </p>
                 <div class="d-flex gap-3">
                     {% if not user.is_authenticated %}
-                        <a href="{% url 'accounts:register' %}" class="btn btn-light btn-lg">
+                        <a href="{% url 'accounts:register' %}" class="btn btn-light btn-lg" id="tutorial-btn-1">
                             <i class="bi bi-person-plus me-2"></i>Начать бесплатно
                         </a>
                         <a href="{% url 'accounts:login' %}" class="btn btn-outline-light btn-lg">
                             <i class="bi bi-box-arrow-in-right me-2"></i>Войти
                         </a>
                     {% else %}
-                        <a href="{% url 'core:dashboard' %}" class="btn btn-light btn-lg">
+                        <a href="{% url 'core:dashboard' %}" class="btn btn-light btn-lg" id="tutorial-btn-1">
                             <i class="bi bi-speedometer2 me-2"></i>Перейти к дашборду
                         </a>
                     {% endif %}
@@ -53,7 +53,7 @@
         
         <div class="row g-4">
             <div class="col-md-6 col-lg-4">
-                <div class="card h-100 border-0 shadow-soft">
+                <div class="card h-100 border-0 shadow-soft" id="tutorial-card-1">
                     <div class="card-body text-center p-4">
                         <div class="feature-icon bg-primary bg-gradient text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
                             <i class="bi bi-journal-text fs-4"></i>
@@ -283,6 +283,7 @@
 {% endblock %}
 
 {% block extra_css %}
+<link href="{% static 'core/css/tutorial.css' %}" rel="stylesheet">
 <style>
 .bg-gradient-primary {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -305,4 +306,33 @@
     color: #6f42c1 !important;
 }
 </style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'core/js/tutorial.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Инициализация туториала
+    const tutorial = new Tutorial([
+        {
+            target: '#tutorial-btn-1',
+            text: 'Нажмите эту кнопку, чтобы начать работу с дневником трейдера. Здесь вы сможете отслеживать все свои сделки и анализировать результаты торговли.',
+            position: 'bottom'
+        },
+        {
+            target: '#tutorial-card-1',
+            text: 'Дневник сделок - это основная функция приложения. Здесь вы можете записывать каждую торговую операцию, добавлять скриншоты и анализировать результаты.',
+            position: 'top'
+        }
+    ], 'tutorial_index_completed');
+
+    // Запускаем туториал автоматически при загрузке страницы (если еще не пройден)
+    tutorial.start();
+
+    // Обработчик завершения туториала
+    tutorial.setOnComplete(function() {
+        console.log('Туториал завершен');
+    });
+});
+</script>
 {% endblock %}

@@ -1,0 +1,252 @@
+/* Tutorial.js - Стили для интерактивных элементов обучения */
+
+/* Затемняющий overlay */
+.tutorial-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9998;
+    pointer-events: auto;
+    transition: opacity 0.3s ease;
+}
+
+.tutorial-overlay-svg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+/* Подсказка */
+.tutorial-tooltip {
+    position: fixed;
+    z-index: 9999;
+    max-width: 400px;
+    min-width: 280px;
+    animation: tutorialFadeIn 0.3s ease;
+}
+
+@keyframes tutorialFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.tutorial-tooltip-content {
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 16px;
+    box-shadow: 
+        0 10px 40px rgba(0, 0, 0, 0.2),
+        0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+    padding: 24px;
+    position: relative;
+}
+
+/* Стрелка подсказки */
+.tutorial-tooltip::before {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 0;
+    border: 12px solid transparent;
+}
+
+.tutorial-tooltip[data-position="top"]::before {
+    bottom: -24px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-top-color: rgba(255, 255, 255, 0.98);
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+}
+
+.tutorial-tooltip[data-position="bottom"]::before {
+    top: -24px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-bottom-color: rgba(255, 255, 255, 0.98);
+    filter: drop-shadow(0 -4px 6px rgba(0, 0, 0, 0.1));
+}
+
+.tutorial-tooltip[data-position="left"]::before {
+    right: -24px;
+    top: 50%;
+    transform: translateY(-50%);
+    border-left-color: rgba(255, 255, 255, 0.98);
+    filter: drop-shadow(4px 0 6px rgba(0, 0, 0, 0.1));
+}
+
+.tutorial-tooltip[data-position="right"]::before {
+    left: -24px;
+    top: 50%;
+    transform: translateY(-50%);
+    border-right-color: rgba(255, 255, 255, 0.98);
+    filter: drop-shadow(-4px 0 6px rgba(0, 0, 0, 0.1));
+}
+
+/* Контейнер для изображения */
+.tutorial-tooltip-image-container {
+    margin-bottom: 16px;
+    border-radius: 12px;
+    overflow: hidden;
+    display: none;
+}
+
+.tutorial-tooltip-image {
+    width: 100%;
+    height: auto;
+    display: block;
+    object-fit: cover;
+    max-height: 200px;
+}
+
+/* Текст подсказки */
+.tutorial-tooltip-text {
+    font-size: 16px;
+    line-height: 1.6;
+    color: #333;
+    margin-bottom: 20px;
+    font-weight: 400;
+}
+
+/* Кнопка "Понятно" */
+.tutorial-tooltip-button {
+    width: 100%;
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.tutorial-tooltip-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+}
+
+.tutorial-tooltip-button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 10px rgba(102, 126, 234, 0.4);
+}
+
+.tutorial-tooltip-button:focus {
+    outline: none;
+    box-shadow: 
+        0 4px 15px rgba(102, 126, 234, 0.4),
+        0 0 0 3px rgba(102, 126, 234, 0.2);
+}
+
+/* Анимация пульсации для выделенных элементов */
+@keyframes tutorialPulse {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7);
+    }
+    50% {
+        box-shadow: 0 0 0 8px rgba(102, 126, 234, 0);
+    }
+}
+
+/* Выделенные элементы получают дополнительный эффект */
+.tutorial-highlighted {
+    position: relative;
+    z-index: 10000;
+    animation: tutorialPulse 2s ease-in-out infinite;
+    border-radius: 8px;
+}
+
+/* Адаптация для мобильных устройств */
+@media (max-width: 768px) {
+    .tutorial-tooltip {
+        max-width: calc(100vw - 40px);
+        min-width: calc(100vw - 40px);
+        margin: 0 20px;
+    }
+
+    .tutorial-tooltip-content {
+        padding: 20px;
+    }
+
+    .tutorial-tooltip-text {
+        font-size: 15px;
+        margin-bottom: 16px;
+    }
+
+    .tutorial-tooltip-button {
+        padding: 10px 20px;
+        font-size: 15px;
+    }
+
+    .tutorial-tooltip-image {
+        max-height: 150px;
+    }
+}
+
+/* Адаптация для очень маленьких экранов */
+@media (max-width: 480px) {
+    .tutorial-tooltip {
+        max-width: calc(100vw - 24px);
+        min-width: calc(100vw - 24px);
+        margin: 0 12px;
+    }
+
+    .tutorial-tooltip-content {
+        padding: 16px;
+    }
+
+    .tutorial-tooltip-text {
+        font-size: 14px;
+        margin-bottom: 14px;
+    }
+
+    .tutorial-tooltip-button {
+        padding: 10px 16px;
+        font-size: 14px;
+    }
+}
+
+/* Улучшенная видимость для темных тем */
+@media (prefers-color-scheme: dark) {
+    .tutorial-tooltip-content {
+        background: rgba(30, 30, 30, 0.98);
+        box-shadow: 
+            0 10px 40px rgba(0, 0, 0, 0.4),
+            0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+    }
+
+    .tutorial-tooltip-text {
+        color: #e0e0e0;
+    }
+
+    .tutorial-tooltip[data-position="top"]::before {
+        border-top-color: rgba(30, 30, 30, 0.98);
+    }
+
+    .tutorial-tooltip[data-position="bottom"]::before {
+        border-bottom-color: rgba(30, 30, 30, 0.98);
+    }
+
+    .tutorial-tooltip[data-position="left"]::before {
+        border-left-color: rgba(30, 30, 30, 0.98);
+    }
+
+    .tutorial-tooltip[data-position="right"]::before {
+        border-right-color: rgba(30, 30, 30, 0.98);
+    }
+}
+
