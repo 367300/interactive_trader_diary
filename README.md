@@ -213,6 +213,11 @@ docker compose exec web python manage.py createsuperuser
 
 # Сборка статики
 docker compose exec web python manage.py collectstatic --noinput
+
+# Загрузка торговых инструментов из API Мосбиржи
+docker compose exec web python manage.py load_instruments_from_moex
+docker compose exec web python manage.py load_instruments_from_moex --update-existing
+docker compose exec web python manage.py load_instruments_from_moex --instrument-type STOCK --limit 10
 ```
 
 ### Celery
