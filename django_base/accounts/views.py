@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
 from django.urls import reverse_lazy
@@ -12,6 +13,7 @@ from .models import TraderProfile
 from trades.models import Trade
 from strategies.models import TradingStrategy
 
+@method_decorator(csrf_exempt, name='dispatch')
 class CustomLoginView(LoginView):
     """Кастомная страница входа"""
     template_name = 'accounts/login.html'
@@ -25,6 +27,7 @@ class CustomLoginView(LoginView):
         return super().form_valid(form)
 
 
+@csrf_exempt
 @require_http_methods(["GET", "POST"])
 def register_view(request):
     """Регистрация нового пользователя"""

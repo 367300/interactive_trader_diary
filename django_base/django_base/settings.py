@@ -31,8 +31,15 @@ ALLOWED_HOSTS = config('DJANGO_ALLOWED_HOSTS', default='', cast=Csv())
 # CSRF trusted origins для работы через внешний домен
 CSRF_TRUSTED_ORIGINS = [
     'https://cunningly-supreme-scorpion.cloudpub.ru',
+    'https://faintly-humorous-snipe.cloudpub.ru',
     'http://localhost:8000',
 ]
+
+# Настройки CSRF для работы через прокси/HTTPS
+CSRF_COOKIE_SECURE = not DEBUG  # Только для HTTPS в production
+CSRF_COOKIE_HTTPONLY = False
+CSRF_USE_SESSIONS = False
+CSRF_COOKIE_SAMESITE = 'Lax'
 
 
 # Application definition
@@ -57,7 +64,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
+    # 'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
