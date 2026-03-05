@@ -173,7 +173,8 @@
         <div class="container-fluid">
             <div class="row">
                 <div class="col-md-6">
-                    <span class="text-muted">&copy; 2024 Интерактивный дневник трейдера</span>
+                    <span class="text-muted">&copy; <span id="footer-year"></span> Интерактивный дневник трейдера</span>
+                    <script>document.getElementById('footer-year').textContent = new Date().getFullYear();</script>
                 </div>
                 <div class="col-md-6 text-end">
                     <a href="{% url 'core:about' %}" class="text-muted text-decoration-none me-3">О проекте</a>

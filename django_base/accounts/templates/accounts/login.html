@@ -22,9 +22,9 @@
                                class="form-control {% if form.username.errors %}is-invalid{% endif %}" 
                                id="id_username" 
                                name="username" 
-                               placeholder="Имя пользователя"
+                               placeholder="Имя пользователя или email"
                                required>
-                        <label for="id_username">Имя пользователя</label>
+                        <label for="id_username">Имя пользователя или email</label>
                         {% if form.username.errors %}
                             <div class="invalid-feedback">
                                 {{ form.username.errors.0 }}

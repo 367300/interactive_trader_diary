@@ -10,18 +10,20 @@ from django.views.generic import TemplateView
 from django.urls import reverse_lazy
 from django.contrib.auth.views import LoginView
 from .models import TraderProfile
+from .forms import LoginUsernameOrEmailForm
 from trades.models import Trade
 from strategies.models import TradingStrategy
 
-@method_decorator(csrf_exempt, name='dispatch')
+
 class CustomLoginView(LoginView):
-    """Кастомная страница входа"""
+    """Кастомная страница входа (логин по имени пользователя или по email)."""
     template_name = 'accounts/login.html'
+    form_class = LoginUsernameOrEmailForm
     redirect_authenticated_user = True
-    
+
     def get_success_url(self):
         return reverse_lazy('core:dashboard')
-    
+
     def form_valid(self, form):
         messages.success(self.request, f'Добро пожаловать, {form.get_user().username}!')
         return super().form_valid(form)
