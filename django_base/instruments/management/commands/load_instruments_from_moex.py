@@ -7,11 +7,15 @@ Django management команда для загрузки торговых инс
     python manage.py load_instruments_from_moex --instrument-type STOCK
 """
 
+import logging
+
 import requests
 from decimal import Decimal, InvalidOperation
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from instruments.models import Instrument
+
+logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
@@ -47,12 +51,14 @@ class Command(BaseCommand):
                 f'Начинаю загрузку инструментов типа {instrument_type} из API Мосбиржи...'
             )
         )
+        logger.info("load_instruments_from_moex: начало загрузки, тип=%s", instrument_type)
 
         try:
             if instrument_type == 'STOCK':
                 instruments_data = self._fetch_stocks()
             else:
                 instruments_data = self._fetch_futures()
+            logger.info("load_instruments_from_moex: получен список, записей=%s", len(instruments_data))
 
             if limit:
                 instruments_data = instruments_data[:limit]
@@ -135,10 +141,12 @@ class Command(BaseCommand):
         }
 
         try:
+            logger.info("load_instruments_from_moex: запрос списка акций (limit=unlimited)...")
             response = requests.get(securities_url, params=params, timeout=30)
             response.raise_for_status()
+            logger.info("load_instruments_from_moex: ответ получен, разбор JSON...")
             data = response.json()
-            
+
             securities = data.get('securities', {}).get('data', [])
             columns = data.get('securities', {}).get('columns', [])
             
@@ -148,15 +156,18 @@ class Command(BaseCommand):
 
             # Преобразуем список списков в список словарей
             instruments = []
-            for sec in securities:
+            total = len(securities)
+            for i, sec in enumerate(securities, 1):
                 instrument_dict = dict(zip(columns, sec))
-                
+
                 # Получаем детальную информацию об инструменте
                 detailed_info = self._fetch_instrument_details(instrument_dict.get('SECID'))
                 if detailed_info:
                     instrument_dict.update(detailed_info)
-                
+
                 instruments.append(instrument_dict)
+                if i % 50 == 0:
+                    logger.info("load_instruments_from_moex: загружены детали %s/%s", i, total)
 
             return instruments
 

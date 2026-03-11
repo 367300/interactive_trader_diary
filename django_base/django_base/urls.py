@@ -23,13 +23,15 @@ from django.views.static import serve
 import os
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('favicon.ico', serve, {'document_root': os.path.join(settings.BASE_DIR, 'staticfiles'), 'path': 'favicon.ico'}),
+    # Публичные/клиентские маршруты (в том числе кастомное администрирование)
     path('', include('core.urls', namespace='core')),
     path('accounts/', include('accounts.urls', namespace='accounts')),
     path('strategies/', include('strategies.urls', namespace='strategies')),
     path('instruments/', include('instruments.urls', namespace='instruments')),
     path('trades/', include('trades.urls', namespace='trades')),
+    path('favicon.ico', serve, {'document_root': os.path.join(settings.BASE_DIR, 'staticfiles'), 'path': 'favicon.ico'}),
+    # Встроенная Django admin-панель
+    path('admin/', admin.site.urls),
 ]
 
 if settings.DEBUG:

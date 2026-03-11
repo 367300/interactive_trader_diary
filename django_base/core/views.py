@@ -1,15 +1,16 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import login, logout
 from django.contrib import messages
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.utils.decorators import method_decorator
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, View
 from django.db.models import Sum, Count, Avg
 from trades.models import Trade
 from strategies.models import TradingStrategy
 from accounts.models import TraderProfile
+from instruments.tasks import load_instruments_from_moex_task
 
 
 class IndexView(TemplateView):
@@ -118,3 +119,44 @@ def get_dashboard_stats(request):
     }
     
     return JsonResponse(stats)
+
+
+@method_decorator(login_required, name='dispatch')
+@method_decorator(user_passes_test(lambda u: u.is_staff), name='dispatch')
+class AdminInstrumentsLoadView(View):
+    """
+    Страница для администраторов с запуском фоновой задачи загрузки инструментов.
+    """
+
+    template_name = 'core/admin_instruments_load.html'
+
+    def get(self, request):
+        return render(request, self.template_name)
+
+    def post(self, request):
+        instrument_type = request.POST.get('instrument_type', 'STOCK')
+        update_existing = bool(request.POST.get('update_existing'))
+        limit_raw = request.POST.get('limit') or None
+
+        limit = None
+        if limit_raw:
+            try:
+                limit = int(limit_raw)
+            except (TypeError, ValueError):
+                messages.warning(
+                    request,
+                    'Некорректное значение для ограничения количества. Игнорируется.',
+                )
+
+        task = load_instruments_from_moex_task.delay(
+            instrument_type=instrument_type,
+            update_existing=update_existing,
+            limit=limit,
+        )
+
+        messages.success(
+            request,
+            f'Задача на загрузку инструментов поставлена в очередь Celery (ID: {task.id}).',
+        )
+
+        return redirect('core:admin_instruments_load')
