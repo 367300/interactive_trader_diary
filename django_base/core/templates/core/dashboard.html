@@ -88,25 +88,6 @@
                 </div>
             </div>
         </div>
-        
-        <div class="col-md-4" id="deposit-card">
-            <div class="card border-0 shadow-soft">
-                <div class="card-body text-center">
-                    <i class="bi bi-wallet2 text-primary fs-1 mb-2"></i>
-                    <h5 class="card-title">Депозит</h5>
-                    <div class="display-6 text-primary">
-                        {% if profile.get_effective_deposit %}
-                            {{ profile.get_effective_deposit|floatformat:0 }} ₽
-                        {% else %}
-                            Не указан
-                        {% endif %}
-                    </div>
-                    <small class="text-muted">
-                        <a href="{% url 'accounts:profile' %}" class="text-decoration-none">Настроить</a>
-                    </small>
-                </div>
-            </div>
-        </div>
     </div>
 
     <div class="row">
