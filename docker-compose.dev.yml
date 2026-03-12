@@ -35,7 +35,8 @@ services:
       context: .
       dockerfile: Dockerfile
     working_dir: /app/django_base
-    command: celery -A django_base worker --loglevel=info
+    command: >
+      python -Xfrozen_modules=off -m debugpy --listen 0.0.0.0:5679 -m celery -A django_base worker --loglevel=info
     volumes:
       - ./django_base:/app/django_base
     env_file:
@@ -43,6 +44,8 @@ services:
     environment:
       - CELERY_BROKER_URL=${CELERY_BROKER_URL}
       - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+    ports:
+      - "5679:5679"
     depends_on:
       - rabbitmq
 
