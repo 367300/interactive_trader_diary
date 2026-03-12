@@ -160,12 +160,8 @@ class Command(BaseCommand):
             for i, sec in enumerate(securities, 1):
                 instrument_dict = dict(zip(columns, sec))
 
-                # Получаем детальную информацию об инструменте
-                detailed_info = self._fetch_instrument_details(instrument_dict.get('SECID'))
-                if detailed_info:
-                    instrument_dict.update(detailed_info)
-
-                instruments.append(instrument_dict)
+                if 'RU000' not in instrument_dict['SECID']:
+                    instruments.append(instrument_dict)
                 if i % 50 == 0:
                     logger.info("load_instruments_from_moex: загружены детали %s/%s", i, total)
 
@@ -205,91 +201,12 @@ class Command(BaseCommand):
             for sec in securities:
                 instrument_dict = dict(zip(columns, sec))
                 
-                # Получаем детальную информацию об инструменте
-                detailed_info = self._fetch_instrument_details(instrument_dict.get('SECID'))
-                if detailed_info:
-                    instrument_dict.update(detailed_info)
-                
                 instruments.append(instrument_dict)
 
             return instruments
 
         except requests.RequestException as e:
             raise CommandError(f'Ошибка при запросе к API Мосбиржи: {str(e)}')
-
-    def _fetch_instrument_details(self, ticker):
-        """
-        Получает детальную информацию об инструменте, включая шаг цены и размер лота.
-        
-        API эндпоинт: https://iss.moex.com/iss/securities/{ticker}.json
-        """
-        if not ticker:
-            return {}
-
-        base_url = 'https://iss.moex.com/iss'
-        details_url = f'{base_url}/securities/{ticker}.json'
-        
-        params = {
-            'iss.meta': 'off',
-        }
-
-        try:
-            response = requests.get(details_url, params=params, timeout=10)
-            response.raise_for_status()
-            data = response.json()
-            
-            # Ищем секцию с описанием инструмента
-            description = data.get('description', {})
-            description_data = description.get('data', [])
-            description_columns = description.get('columns', [])
-            
-            details = {}
-            
-            if description_data and description_columns:
-                # Берем первую запись (обычно она одна)
-                desc_dict = dict(zip(description_columns, description_data[0]))
-                
-                # Извлекаем нужные поля
-                # Шаг цены может быть в разных полях, проверяем несколько вариантов
-                min_step = (
-                    desc_dict.get('MINSTEP') or 
-                    desc_dict.get('MIN_STEP') or 
-                    desc_dict.get('STEPPRICE') or
-                    desc_dict.get('STEP_PRICE')
-                )
-                
-                if min_step:
-                    try:
-                        # Преобразуем в Decimal, учитывая что может быть дробное число
-                        details['min_price_step'] = Decimal(str(min_step))
-                    except (InvalidOperation, ValueError):
-                        pass
-                
-                # Размер лота
-                lot_size = desc_dict.get('LOTSIZE') or desc_dict.get('LOT_SIZE')
-                if lot_size:
-                    try:
-                        details['lot_size'] = int(lot_size)
-                    except (ValueError, TypeError):
-                        pass
-                
-                # Валюта
-                currency = desc_dict.get('CURRENCYID') or desc_dict.get('CURRENCY')
-                if currency:
-                    details['currency'] = str(currency).upper()[:3]
-                
-                # Сектор экономики (если есть)
-                sector = desc_dict.get('SECTOR') or desc_dict.get('SECTORNAME')
-                if sector:
-                    details['sector'] = str(sector)[:100]  # Ограничиваем длину
-            
-            return details
-
-        except requests.RequestException:
-            # Не критично, если не удалось получить детали
-            return {}
-        except Exception:
-            return {}
 
     def _create_or_update_instrument(self, instrument_data, instrument_type, update_existing):
         """
@@ -312,11 +229,13 @@ class Command(BaseCommand):
         )
 
         # Получаем дополнительные данные
-        min_price_step = instrument_data.get('min_price_step')
+        min_price_step = instrument_data.get('MINSTEP')
+        if min_price_step is not None and str(min_price_step).strip() == "0.000001":
+            min_price_step = "0.01"
         if min_price_step is None:
             # Пробуем найти в основных данных
             min_price_step = (
-                instrument_data.get('MINSTEP') or 
+                instrument_data.get('min_price_step') or 
                 instrument_data.get('MIN_STEP') or
                 instrument_data.get('STEPPRICE') or
                 instrument_data.get('STEP_PRICE')
@@ -365,7 +284,7 @@ class Command(BaseCommand):
         status = instrument_data.get('STATUS') or instrument_data.get('status')
         if status:
             # Если статус указывает на неактивность
-            if 'не торгуется' in str(status).lower() or 'delisted' in str(status).lower():
+            if status != 'A':
                 is_active = False
 
         defaults = {
