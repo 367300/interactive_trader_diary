@@ -10,10 +10,16 @@ Django management команда для загрузки торговых инс
 import logging
 
 import requests
+import pandas as pd
+from pathlib import Path
 from decimal import Decimal, InvalidOperation
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
-from instruments.models import Instrument
+from instruments.models import (
+    DEFAULT_TICKER_ICON_PATH,
+    Instrument,
+    SubIndustry,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -30,9 +36,9 @@ class Command(BaseCommand):
         parser.add_argument(
             '--instrument-type',
             type=str,
-            choices=['STOCK', 'FUTURES'],
+            choices=['STOCK'],
             default='STOCK',
-            help='Тип инструментов для загрузки (по умолчанию: STOCK)',
+            help='Тип инструментов для загрузки (доступно: STOCK)',
         )
         parser.add_argument(
             '--limit',
@@ -54,11 +60,11 @@ class Command(BaseCommand):
         logger.info("load_instruments_from_moex: начало загрузки, тип=%s", instrument_type)
 
         try:
-            if instrument_type == 'STOCK':
-                instruments_data = self._fetch_stocks()
-            else:
-                instruments_data = self._fetch_futures()
+            instruments_data = self._fetch_stocks()
             logger.info("load_instruments_from_moex: получен список, записей=%s", len(instruments_data))
+
+            enrichment_map = self._load_csv_enrichment()
+            sub_industry_lookup = self._load_sub_industry_lookup()
 
             if limit:
                 instruments_data = instruments_data[:limit]
@@ -78,8 +84,12 @@ class Command(BaseCommand):
                         self.stdout.write(f'Обработано: {idx}/{len(instruments_data)}')
                     
                     try:
-                        instrument, created = self._create_or_update_instrument(
-                            instrument_data, instrument_type, update_existing
+                        _, created = self._create_or_update_instrument(
+                            instrument_data,
+                            instrument_type,
+                            update_existing,
+                            enrichment_map,
+                            sub_industry_lookup,
                         )
                         if created:
                             created_count += 1
@@ -170,45 +180,94 @@ class Command(BaseCommand):
         except requests.RequestException as e:
             raise CommandError(f'Ошибка при запросе к API Мосбиржи: {str(e)}')
 
-    def _fetch_futures(self):
-        """
-        Получает список фьючерсов с Мосбиржи.
-        
-        API эндпоинт: https://iss.moex.com/iss/engines/futures/markets/forts/securities.json
-        """
-        base_url = 'https://iss.moex.com/iss'
-        securities_url = f'{base_url}/engines/futures/markets/forts/securities.json'
-        
-        params = {
-            'iss.meta': 'off',
-            'iss.only': 'securities',
-            'limit': 'unlimited'
+    @staticmethod
+    def _csv_default_path() -> Path:
+        return (
+            Path(__file__).resolve().parents[4]
+            / 'uploads'
+            / 'data_instruments'
+            / 'moex_stocks_enriched.csv'
+        )
+
+    @staticmethod
+    def _clean_csv_value(value):
+        if value is None:
+            return ''
+        text = str(value).strip()
+        if text.lower() == 'nan':
+            return ''
+        return text
+
+    def _load_csv_enrichment(self):
+        path = self._csv_default_path()
+        if not path.exists():
+            self.stdout.write(self.style.WARNING(f'CSV файл не найден: {path}. Обогащение отключено.'))
+            return {}
+
+        required_columns = {
+            'ticker',
+            'sector',
+            'industry_group',
+            'industry',
+            'sub_industry',
+            'description',
+            'logolink',
+            'og_logo',
         }
 
         try:
-            response = requests.get(securities_url, params=params, timeout=30)
-            response.raise_for_status()
-            data = response.json()
-            
-            securities = data.get('securities', {}).get('data', [])
-            columns = data.get('securities', {}).get('columns', [])
-            
-            if not securities or not columns:
-                self.stdout.write(self.style.WARNING('Не получены данные о фьючерсах'))
-                return []
+            df = pd.read_csv(path, dtype=str)
+        except Exception as exc:
+            raise CommandError(f'Не удалось прочитать CSV с обогащением: {exc}') from exc
 
-            instruments = []
-            for sec in securities:
-                instrument_dict = dict(zip(columns, sec))
-                
-                instruments.append(instrument_dict)
+        missing_columns = sorted(required_columns - set(df.columns))
+        if missing_columns:
+            raise CommandError(
+                f'CSV не содержит обязательные колонки: {", ".join(missing_columns)}'
+            )
 
-            return instruments
+        enrichment_map = {}
+        for row in df.itertuples(index=False):
+            row_dict = row._asdict()
+            ticker = self._clean_csv_value(row_dict.get('ticker'))
+            if not ticker:
+                continue
 
-        except requests.RequestException as e:
-            raise CommandError(f'Ошибка при запросе к API Мосбиржи: {str(e)}')
+            enrichment_map[ticker] = {
+                'sector': self._clean_csv_value(row_dict.get('sector'))[:100],
+                'industry_group': self._clean_csv_value(row_dict.get('industry_group')),
+                'industry': self._clean_csv_value(row_dict.get('industry')),
+                'sub_industry': self._clean_csv_value(row_dict.get('sub_industry')),
+                'description': self._clean_csv_value(row_dict.get('description')),
+                'logolink': self._clean_csv_value(row_dict.get('logolink')),
+                'og_logo': self._clean_csv_value(row_dict.get('og_logo')),
+            }
 
-    def _create_or_update_instrument(self, instrument_data, instrument_type, update_existing):
+        self.stdout.write(f'Загружено записей обогащения из CSV: {len(enrichment_map)}')
+        return enrichment_map
+
+    @staticmethod
+    def _load_sub_industry_lookup():
+        lookup = {}
+        queryset = SubIndustry.objects.select_related('industry__industry_group__sector').all()
+        for sub_industry in queryset:
+            key = (
+                sub_industry.industry.industry_group.sector.name,
+                sub_industry.industry.industry_group.name,
+                sub_industry.industry.name,
+                sub_industry.name,
+            )
+            lookup[key] = sub_industry
+        return lookup
+
+    def _create_or_update_instrument(
+        self,
+        instrument_data,
+        instrument_type,
+        update_existing,
+        enrichment_map,
+        sub_industry_lookup,
+    ):
         """
         Создает или обновляет инструмент в базе данных.
         """
@@ -273,11 +332,22 @@ class Command(BaseCommand):
         else:
             currency = 'RUB'
 
-        sector = instrument_data.get('sector') or instrument_data.get('SECTOR')
-        if sector:
-            sector = str(sector)[:100]
-        else:
-            sector = ''
+        enrichment = enrichment_map.get(ticker, {})
+        sector = enrichment.get('sector', '')
+
+        sub_industry = None
+        key = (
+            enrichment.get('sector', ''),
+            enrichment.get('industry_group', ''),
+            enrichment.get('industry', ''),
+            enrichment.get('sub_industry', ''),
+        )
+        if all(key):
+            sub_industry = sub_industry_lookup.get(key)
+
+        description = enrichment.get('description', '')
+        logolink = enrichment.get('logolink', '') or DEFAULT_TICKER_ICON_PATH
+        og_logo = enrichment.get('og_logo', '') or DEFAULT_TICKER_ICON_PATH
 
         # Проверяем, активен ли инструмент
         is_active = True
@@ -294,6 +364,10 @@ class Command(BaseCommand):
             'lot_size': lot_size,
             'currency': currency,
             'sector': sector,
+            'sub_industry': sub_industry,
+            'description': description,
+            'logolink': logolink,
+            'og_logo': og_logo,
             'is_active': is_active,
         }
 

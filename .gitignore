@@ -211,3 +211,5 @@ __marimo__/
 
 certbot
 certbot/*
+
+uploads/*
