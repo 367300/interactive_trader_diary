@@ -60,7 +60,11 @@ class Command(BaseCommand):
         logger.info("load_instruments_from_moex: начало загрузки, тип=%s", instrument_type)
 
         try:
-            instruments_data = self._fetch_stocks()
+            instruments_data = [
+                item for item in self._fetch_stocks()
+                if item.get('BOARDID') == 'TQBR'
+                and item.get('BOARDNAME') == 'Т+: Акции и ДР - безадрес.'
+            ]
             logger.info("load_instruments_from_moex: получен список, записей=%s", len(instruments_data))
 
             enrichment_map = self._load_csv_enrichment()
@@ -289,33 +293,10 @@ class Command(BaseCommand):
 
         # Получаем дополнительные данные
         min_price_step = instrument_data.get('MINSTEP')
-        if min_price_step is not None and str(min_price_step).strip() == "0.000001":
-            min_price_step = "0.01"
-        if min_price_step is None:
-            # Пробуем найти в основных данных
-            min_price_step = (
-                instrument_data.get('min_price_step') or 
-                instrument_data.get('MIN_STEP') or
-                instrument_data.get('STEPPRICE') or
-                instrument_data.get('STEP_PRICE')
-            )
-            if min_price_step:
-                try:
-                    min_price_step = Decimal(str(min_price_step))
-                    # Проверяем, что значение положительное
-                    if min_price_step <= 0:
-                        min_price_step = Decimal('0.01')
-                except (InvalidOperation, ValueError):
-                    min_price_step = Decimal('0.01')  # Значение по умолчанию
-            else:
-                min_price_step = Decimal('0.01')  # Значение по умолчанию
-        else:
-            # Убеждаемся, что это Decimal
-            if not isinstance(min_price_step, Decimal):
-                try:
-                    min_price_step = Decimal(str(min_price_step))
-                except (InvalidOperation, ValueError):
-                    min_price_step = Decimal('0.01')
+        try:
+            min_price_step = Decimal(str(min_price_step))
+        except (InvalidOperation, ValueError):
+            min_price_step = Decimal('0.0001')
 
         lot_size = instrument_data.get('lot_size') or instrument_data.get('LOTSIZE')
         if lot_size:
