@@ -220,6 +220,67 @@ docker compose exec web python manage.py load_instruments_from_moex --update-exi
 docker compose exec web python manage.py load_instruments_from_moex --instrument-type STOCK --limit 10
 ```
 
+## Обогащение инструментов через CSV
+
+Команда `load_instruments_from_moex` умеет дополнительно обогащать данные инструментов из локального CSV-файла.
+
+### Путь к файлу
+
+Файл должен лежать по пути:
+
+- `uploads/data_instruments/moex_stocks_enriched.csv`
+
+Если файл отсутствует, загрузка из API Мосбиржи все равно выполняется, но без обогащения (команда выведет предупреждение).
+
+### Обязательные колонки CSV
+
+CSV должен содержать **ровно эти имена колонок** (в нижнем регистре):
+
+- `ticker`
+- `sector`
+- `industry_group`
+- `industry`
+- `sub_industry`
+- `description`
+- `logolink`
+- `og_logo`
+
+Важно:
+- `ticker` должен совпадать с тикером Мосбиржи (например, `SBER`, `GAZP`), иначе строка обогащения не будет применена.
+- `logolink` и `og_logo` должны содержать путь относительно `STATIC_URL` (например, `instruments/ticker_icons/sber.svg`).
+- Для пустых значений можно оставлять пустую строку.
+
+### Минимальный пример файла
+
+```csv
+ticker,sector,industry_group,industry,sub_industry,description,logolink,og_logo
+SBER,Финансы,Банки,Коммерческие банки,Универсальные банки,Крупнейший банк РФ,instruments/ticker_icons/sber.svg,instruments/ticker_icons/sber_og.svg
+GAZP,Энергетика,Нефтегаз,Газовые компании,Интегрированные компании,Крупнейшая газовая компания РФ,instruments/ticker_icons/gazp.svg,instruments/ticker_icons/gazp_og.svg
+LKOH,Энергетика,Нефтегаз,Нефтяные компании,Вертикально-интегрированные компании,Одна из крупнейших нефтяных компаний РФ,instruments/ticker_icons/lkoh.svg,instruments/ticker_icons/lkoh_og.svg
+```
+
+### Как подготовить и использовать CSV
+
+1. Создайте директорию и файл:
+   ```bash
+   mkdir -p uploads/data_instruments
+   ```
+2. Добавьте файл `uploads/data_instruments/moex_stocks_enriched.csv` с обязательными колонками.
+3. Запустите загрузку инструментов:
+   ```bash
+   docker compose exec web python manage.py load_instruments_from_moex --update-existing
+   ```
+4. Для быстрого теста можно ограничить количество записей:
+   ```bash
+   docker compose exec web python manage.py load_instruments_from_moex --limit 10 --update-existing
+   ```
+
+### Примечания по справочникам индустрий
+
+- Поля `industry_group`, `industry`, `sub_industry` применяются при наличии соответствующих записей в таблицах справочников.
+- Если нужная комбинация не найдена в БД, инструмент загрузится, но связь с подиндустрией не будет установлена.
+- Датасет и его наполнение остаются на усмотрение разработчика: можно начать с минимального набора тикеров и постепенно расширять.
+
 ### Celery
 ```bash
 # Запуск воркера вручную
