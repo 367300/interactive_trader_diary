@@ -166,8 +166,8 @@ class Instrument(models.Model):
         verbose_name='Размер лота'
     )
     min_price_step = models.DecimalField(
-        max_digits=10,
-        decimal_places=4,
+        max_digits=20,
+        decimal_places=10,
         verbose_name='Минимальный шаг цены'
     )
     currency = models.CharField(
@@ -225,8 +225,8 @@ class Futures(models.Model):
         verbose_name='Дата экспирации'
     )
     min_price_step = models.DecimalField(
-        max_digits=10,
-        decimal_places=4,
+        max_digits=20,
+        decimal_places=10,
         null=True,
         blank=True,
         verbose_name='Минимальный шаг цены (если отличается от базового актива)'
