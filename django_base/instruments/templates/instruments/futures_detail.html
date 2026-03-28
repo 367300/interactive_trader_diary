@@ -1,0 +1,97 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% load instrument_extras %}
+
+{% block title %}{{ futures_contract.ticker }} — фьючерс — Дневник трейдера{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-2">
+                <li class="breadcrumb-item"><a href="{% url 'instruments:instrument_list' %}">Инструменты</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'instruments:instrument_detail' futures_contract.base_asset.ticker %}">{{ futures_contract.base_asset.ticker }}</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ futures_contract.ticker }}</li>
+            </ol>
+        </nav>
+        <h1 class="h2 mb-1">{{ futures_contract.ticker }}</h1>
+        {% if futures_contract.name %}
+            <p class="text-muted">{{ futures_contract.name }}</p>
+        {% endif %}
+        <span class="badge bg-warning text-dark">Фьючерсный контракт</span>
+        {% if futures_contract.is_active %}
+            <span class="badge bg-success ms-1">Активен</span>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-soft mb-4">
+            <div class="card-body">
+                <h2 class="h5 mb-3"><i class="bi bi-link-45deg me-2"></i>Базовый актив</h2>
+                <div class="d-flex gap-3 align-items-start">
+                    <img src="{% static futures_contract.base_asset.logolink %}" alt="" width="56" height="56" class="rounded border bg-white">
+                    <div>
+                        <a href="{% url 'instruments:instrument_detail' futures_contract.base_asset.ticker %}" class="h5 d-inline-block mb-1">
+                            {{ futures_contract.base_asset.ticker }}
+                        </a>
+                        <p class="text-muted mb-2">{{ futures_contract.base_asset.name }}</p>
+                        {% if futures_contract.base_asset.description %}
+                            <p class="small text-body-secondary mb-0" style="white-space: pre-wrap;">{{ futures_contract.base_asset.description|truncatewords:80 }}</p>
+                            <a href="{% url 'instruments:instrument_detail' futures_contract.base_asset.ticker %}" class="small">Полное описание базового актива →</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if futures_contract.base_asset.sub_industry %}
+            <div class="card border-0 shadow-soft">
+                <div class="card-header bg-white border-0">
+                    <h2 class="h6 mb-0">Классификация базового актива</h2>
+                </div>
+                <div class="card-body">
+                    <div>{{ futures_contract.base_asset.sub_industry.industry.industry_group.sector.name }}</div>
+                    <div class="small text-muted">{{ futures_contract.base_asset.sub_industry.industry.industry_group.name }}</div>
+                    <div class="small">{{ futures_contract.base_asset.sub_industry.industry.name }}</div>
+                    <div class="fw-medium">{{ futures_contract.base_asset.sub_industry.name }}</div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-soft">
+            <div class="card-header bg-white border-0">
+                <h2 class="h6 mb-0">Параметры контракта</h2>
+            </div>
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item d-flex justify-content-between">
+                    <span class="text-muted">Валюта</span>
+                    <span>{{ futures_contract.currency|default:futures_contract.base_asset.currency }}</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between">
+                    <span class="text-muted">Лот</span>
+                    <span>{% if futures_contract.lot_size %}{{ futures_contract.lot_size }}{% else %}{{ futures_contract.base_asset.lot_size }} <span class="text-muted small">(базовый)</span>{% endif %}</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between">
+                    <span class="text-muted">Мин. шаг цены</span>
+                    <span class="font-monospace">
+                        {% if futures_contract.min_price_step %}
+                            {{ futures_contract.min_price_step|format_price_step }}
+                        {% else %}
+                            {{ futures_contract.base_asset.min_price_step|format_price_step }}
+                            <span class="text-muted small">(базовый)</span>
+                        {% endif %}
+                    </span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between">
+                    <span class="text-muted">Экспирация</span>
+                    <span>{% if futures_contract.expiration_date %}{{ futures_contract.expiration_date|date:"d.m.Y" }}{% else %}—{% endif %}</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

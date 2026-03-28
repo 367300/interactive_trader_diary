@@ -1,0 +1,215 @@
+{% load static %}
+{% load instrument_extras %}
+{# Фрагмент для SSR и для ответа AJAX (список + статистика + пагинация) #}
+
+<div class="instrument-list-fragment-inner">
+    <div class="row g-3 mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-soft">
+                <div class="card-body text-center">
+                    <div class="h4 text-primary mb-1">{{ total_instruments }}</div>
+                    <small class="text-muted">Найдено записей{% if is_paginated %} (стр. {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}){% endif %}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 instrument-list-cards">
+        {% if is_futures_list %}
+            {% for f in futures_list %}
+                <div class="col-lg-4 col-md-6">
+                    <div class="card border-0 shadow-soft h-100 instrument-list-card">
+                        <div class="card-body position-relative">
+                            <div class="d-flex gap-3 align-items-start mb-3">
+                                {% with logo=f.base_asset.logolink %}
+                                <img src="{% if logo|slice:':8' == 'https://' or logo|slice:':7' == 'http://' %}{{ logo }}{% else %}{% static logo %}{% endif %}" alt="" width="44" height="44"
+                                     class="rounded border bg-white flex-shrink-0 instrument-list-card__icon">
+                                {% endwith %}
+                                <div class="flex-grow-1 min-w-0">
+                                    <div class="d-flex justify-content-between align-items-start gap-2">
+                                        <div>
+                                            <h5 class="card-title mb-1">{{ f.ticker }}</h5>
+                                            <span class="badge bg-warning text-dark">Фьючерс</span>
+                                        </div>
+                                        {% if f.trades_count > 0 %}
+                                            <div class="text-end flex-shrink-0">
+                                                <div class="small text-muted">Сделок (база)</div>
+                                                <div class="h6 mb-0 text-primary">{{ f.trades_count }}</div>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h6 class="card-subtitle mb-2 text-muted">{{ f.name|default:f.base_asset.name }}</h6>
+
+                            <div class="mb-2 small text-muted">
+                                <i class="bi bi-link-45deg me-1"></i>Базовый актив: <strong>{{ f.base_asset.ticker }}</strong>
+                            </div>
+
+                            {% if f.base_asset.sector %}
+                                <div class="mb-2">
+                                    <small class="text-muted">
+                                        <i class="bi bi-building me-1"></i>{{ f.base_asset.sector }}
+                                    </small>
+                                </div>
+                            {% endif %}
+
+                            <div class="row g-2 mb-3">
+                                <div class="col-6">
+                                    <div class="text-center p-2 bg-light rounded">
+                                        <div class="fw-bold text-primary">{% if f.lot_size %}{{ f.lot_size }}{% else %}{{ f.base_asset.lot_size }}{% endif %}</div>
+                                        <small class="text-muted">Лот</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-center p-2 bg-light rounded">
+                                        <div class="fw-bold text-success">{% if f.min_price_step %}{{ f.min_price_step|format_price_step }}{% else %}{{ f.base_asset.min_price_step|format_price_step }}{% endif %}</div>
+                                        <small class="text-muted">Шаг цены</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-1">
+                                <small class="text-muted">
+                                    <i class="bi bi-calendar-event me-1"></i>
+                                    {% if f.expiration_date %}Эксп. {{ f.expiration_date|date:"d.m.Y" }}{% else %}—{% endif %}
+                                </small>
+                                <small class="text-muted">{{ f.currency|default:f.base_asset.currency }}</small>
+                            </div>
+
+                            <a href="{% url 'instruments:futures_detail' f.ticker %}"
+                               class="stretched-link"
+                               aria-label="Карточка фьючерса {{ f.ticker }}"></a>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="col-12">
+                    <div class="card border-0 shadow-soft">
+                        <div class="card-body text-center py-5">
+                            <i class="bi bi-search text-muted fs-1 mb-3"></i>
+                            <h5 class="text-muted">Фьючерсы не найдены</h5>
+                            <p class="text-muted">Измените фильтры или поиск</p>
+                            <button type="button" class="btn btn-primary instrument-list-reset-soft">Сбросить фильтры</button>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            {% for instrument in instruments %}
+                <div class="col-lg-4 col-md-6">
+                    <div class="card border-0 shadow-soft h-100 instrument-list-card">
+                        <div class="card-body position-relative">
+                            <div class="d-flex gap-3 align-items-start mb-3">
+                                {% with logo=instrument.logolink %}
+                                <img src="{% if logo|slice:':8' == 'https://' or logo|slice:':7' == 'http://' %}{{ logo }}{% else %}{% static logo %}{% endif %}" alt="" width="44" height="44"
+                                     class="rounded border bg-white flex-shrink-0 instrument-list-card__icon">
+                                {% endwith %}
+                                <div class="flex-grow-1 min-w-0">
+                                    <div class="d-flex justify-content-between align-items-start gap-2">
+                                        <div>
+                                            <h5 class="card-title mb-1">{{ instrument.ticker }}</h5>
+                                            <span class="badge bg-{% if instrument.instrument_type == 'STOCK' %}primary{% elif instrument.instrument_type == 'ETF' %}info{% else %}success{% endif %}">
+                                                {{ instrument.get_instrument_type_display }}
+                                            </span>
+                                        </div>
+                                        {% if instrument.trades_count > 0 %}
+                                            <div class="text-end flex-shrink-0">
+                                                <div class="small text-muted">Сделок</div>
+                                                <div class="h6 mb-0 text-primary">{{ instrument.trades_count }}</div>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h6 class="card-subtitle mb-2 text-muted">{{ instrument.name }}</h6>
+
+                            {% if instrument.sector %}
+                                <div class="mb-2">
+                                    <small class="text-muted">
+                                        <i class="bi bi-building me-1"></i>{{ instrument.sector }}
+                                    </small>
+                                </div>
+                            {% endif %}
+
+                            <div class="row g-2 mb-3">
+                                <div class="col-6">
+                                    <div class="text-center p-2 bg-light rounded">
+                                        <div class="fw-bold text-primary">{{ instrument.lot_size }}</div>
+                                        <small class="text-muted">Лот</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-center p-2 bg-light rounded">
+                                        <div class="fw-bold text-success">{{ instrument.min_price_step|format_price_step }}</div>
+                                        <small class="text-muted">Шаг цены</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">
+                                    <i class="bi bi-currency-exchange me-1"></i>{{ instrument.currency }}
+                                </small>
+                                {% if instrument.trades_count > 0 %}
+                                    <small class="text-success">
+                                        <i class="bi bi-check-circle me-1"></i>В использовании
+                                    </small>
+                                {% else %}
+                                    <small class="text-muted">
+                                        <i class="bi bi-circle me-1"></i>Не используется
+                                    </small>
+                                {% endif %}
+                            </div>
+
+                            <a href="{% url 'instruments:instrument_detail' instrument.ticker %}"
+                               class="stretched-link"
+                               aria-label="Карточка инструмента {{ instrument.ticker }}"></a>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="col-12">
+                    <div class="card border-0 shadow-soft">
+                        <div class="card-body text-center py-5">
+                            <i class="bi bi-search text-muted fs-1 mb-3"></i>
+                            <h5 class="text-muted">Инструменты не найдены</h5>
+                            <p class="text-muted">Попробуйте изменить параметры поиска или фильтрации</p>
+                            <button type="button" class="btn btn-primary instrument-list-reset-soft">
+                                <i class="bi bi-arrow-clockwise me-2"></i>Сбросить фильтры
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    {% if is_paginated %}
+    <nav class="mt-4 instrument-list-pagination" aria-label="Страницы справочника">
+        <ul class="pagination justify-content-center flex-wrap mb-0">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="{% querystring page=1 %}">Первая</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="{% querystring page=page_obj.previous_page_number %}">Назад</a>
+                </li>
+            {% endif %}
+            <li class="page-item active">
+                <span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+            </li>
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{% querystring page=page_obj.next_page_number %}">Вперёд</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="{% querystring page=page_obj.paginator.num_pages %}">Последняя</a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>

@@ -83,7 +83,7 @@
                                 <tr>
                                     <td>
                                         <div>
-                                            <strong>{{ instrument.ticker }}</strong>
+                                            <a href="{% url 'instruments:instrument_detail' instrument.ticker %}"><strong>{{ instrument.ticker }}</strong></a>
                                             <div class="small text-muted">{{ instrument.name }}</div>
                                         </div>
                                     </td>

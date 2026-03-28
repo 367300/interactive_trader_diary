@@ -1,5 +1,6 @@
 {% extends 'core/base.html' %}
 {% load static %}
+{% load instrument_extras %}
 
 {% block title %}Торговые инструменты - Дневник трейдера{% endblock %}
 
@@ -23,132 +24,104 @@
 <!-- Фильтры и поиск -->
 <div class="card border-0 shadow-soft mb-4">
     <div class="card-body">
-        <form method="get" class="row g-3">
-            <div class="col-md-4">
+        <form id="instrument-filter-form" method="get" class="row g-3">
+            <div class="col-md-4 col-lg-3">
                 <label for="search" class="form-label">Поиск</label>
-                <input type="text" class="form-control" id="search" name="search" 
-                       value="{{ current_search }}" placeholder="Поиск по тикеру или названию">
+                <input type="text" class="form-control" id="search" name="search"
+                       value="{{ current_search }}"
+                       placeholder="Тикер, название, описание…"
+                       autocomplete="off">
             </div>
-            <div class="col-md-4">
-                <label for="type" class="form-label">Тип инструмента</label>
+            <div class="col-md-4 col-lg-2">
+                <label for="type" class="form-label">Тип</label>
                 <select class="form-select" id="type" name="type">
-                    <option value="">Все типы</option>
                     <option value="STOCK" {% if current_filter == 'STOCK' %}selected{% endif %}>Акции</option>
                     <option value="FUTURES" {% if current_filter == 'FUTURES' %}selected{% endif %}>Фьючерсы</option>
                 </select>
             </div>
-            <div class="col-md-4 d-flex align-items-end">
+            <div class="col-md-4 col-lg-3">
+                <label for="sector" class="form-label">Сектор экономики</label>
+                <select class="form-select" id="sector" name="sector">
+                    <option value="">— Все —</option>
+                    {% for s in sectors %}
+                        <option value="{{ s.pk }}" {% if sector_id == s.pk %}selected{% endif %}>{{ s.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <label for="industry_group" class="form-label">Группа индустрий</label>
+                <select class="form-select" id="industry_group" name="industry_group">
+                    <option value="">— Все —</option>
+                    {% for g in industry_groups %}
+                        <option value="{{ g.pk }}" {% if industry_group_id == g.pk %}selected{% endif %}>{{ g.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <label for="industry" class="form-label">Индустрия</label>
+                <select class="form-select" id="industry" name="industry">
+                    <option value="">— Все —</option>
+                    {% for ind in industries %}
+                        <option value="{{ ind.pk }}" {% if industry_id == ind.pk %}selected{% endif %}>{{ ind.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <label for="sub_industry" class="form-label">Подгруппа индустрии</label>
+                <select class="form-select" id="sub_industry" name="sub_industry">
+                    <option value="">— Все —</option>
+                    {% for si in sub_industries %}
+                        <option value="{{ si.pk }}" {% if sub_industry_id == si.pk %}selected{% endif %}>{{ si.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-12 col-lg-4 d-flex align-items-end">
                 <div class="btn-group w-100">
-                    <button type="submit" class="btn btn-primary">
+                    <button type="submit" class="btn btn-primary" id="instrument-list-submit">
                         <i class="bi bi-search me-2"></i>Применить
                     </button>
-                    <a href="{% url 'instruments:instrument_list' %}" class="btn btn-outline-secondary">
+                    <button type="button" class="btn btn-outline-secondary instrument-list-reset">
                         <i class="bi bi-arrow-clockwise me-2"></i>Сбросить
-                    </a>
+                    </button>
                 </div>
             </div>
         </form>
     </div>
 </div>
 
-<!-- Статистика -->
-<div class="row g-3 mb-4">
-    <div class="col-12">
-        <div class="card border-0 shadow-soft">
-            <div class="card-body text-center">
-                <div class="h4 text-primary mb-1">{{ total_instruments }}</div>
-                <small class="text-muted">Всего инструментов в справочнике</small>
-            </div>
-        </div>
-    </div>
+<div id="instrument-list-loading" class="instrument-list-loading-overlay d-none" aria-busy="false" role="status">
+    <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" aria-hidden="true"></div>
+    <span class="visually-hidden">Загрузка списка…</span>
 </div>
 
-<!-- Список инструментов -->
-<div class="row g-4">
-    {% if instruments %}
-        {% for instrument in instruments %}
-            <div class="col-lg-4 col-md-6">
-                <div class="card border-0 shadow-soft h-100">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-3">
-                            <div>
-                                <h5 class="card-title mb-1">{{ instrument.ticker }}</h5>
-                                <span class="badge bg-{% if instrument.instrument_type == 'STOCK' %}primary{% else %}success{% endif %}">
-                                    {{ instrument.get_instrument_type_display }}
-                                </span>
-                            </div>
-                            {% if instrument.trades_count > 0 %}
-                                <div class="text-end">
-                                    <div class="small text-muted">Сделок</div>
-                                    <div class="h6 mb-0 text-primary">{{ instrument.trades_count }}</div>
-                                </div>
-                            {% endif %}
-                        </div>
-                        
-                        <h6 class="card-subtitle mb-2 text-muted">{{ instrument.name }}</h6>
-                        
-                        {% if instrument.sector %}
-                            <div class="mb-2">
-                                <small class="text-muted">
-                                    <i class="bi bi-building me-1"></i>{{ instrument.sector }}
-                                </small>
-                            </div>
-                        {% endif %}
-                        
-                        <div class="row g-2 mb-3">
-                            <div class="col-6">
-                                <div class="text-center p-2 bg-light rounded">
-                                    <div class="fw-bold text-primary">{{ instrument.lot_size }}</div>
-                                    <small class="text-muted">Лот</small>
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="text-center p-2 bg-light rounded">
-                                    <div class="fw-bold text-success">{{ instrument.min_price_step }}</div>
-                                    <small class="text-muted">Шаг цены</small>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="d-flex justify-content-between align-items-center">
-                            <small class="text-muted">
-                                <i class="bi bi-currency-exchange me-1"></i>{{ instrument.currency }}
-                            </small>
-                            {% if instrument.trades_count > 0 %}
-                                <small class="text-success">
-                                    <i class="bi bi-check-circle me-1"></i>В использовании
-                                </small>
-                            {% else %}
-                                <small class="text-muted">
-                                    <i class="bi bi-circle me-1"></i>Не используется
-                                </small>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        {% endfor %}
-    {% else %}
-        <div class="col-12">
-            <div class="card border-0 shadow-soft">
-                <div class="card-body text-center py-5">
-                    <i class="bi bi-search text-muted fs-1 mb-3"></i>
-                    <h5 class="text-muted">Инструменты не найдены</h5>
-                    <p class="text-muted">Попробуйте изменить параметры поиска или фильтрации</p>
-                    <a href="{% url 'instruments:instrument_list' %}" class="btn btn-primary">
-                        <i class="bi bi-arrow-clockwise me-2"></i>Показать все инструменты
-                    </a>
-                </div>
-            </div>
-        </div>
-    {% endif %}
+<div id="instrument-list-ajax-root">
+    {% include "instruments/instrument_list_fragment.html" %}
 </div>
+
+{{ taxonomy|json_script:"instrument-taxonomy-data" }}
 {% endblock %}
 
 {% block extra_css %}
 <style>
-.card {
-    transition: transform 0.2s ease;
+.instrument-list-loading-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(2px);
+}
+.instrument-list-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.instrument-list-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0.5rem 1.25rem rgba(0, 0, 0, 0.1) !important;
+}
+.instrument-list-card__icon {
+    object-fit: contain;
 }
 
 .badge {
@@ -159,4 +132,14 @@
     font-weight: 500;
 }
 </style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  window.__instrumentListConfig = {
+    apiUrl: "{% url 'instruments:instrument_list_fragment' %}",
+    listUrl: "{% url 'instruments:instrument_list' %}",
+  };
+</script>
+<script src="{% static 'instruments/js/instrument_list.js' %}"></script>
 {% endblock %}

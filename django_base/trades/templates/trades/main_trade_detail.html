@@ -1,5 +1,6 @@
 {% extends 'core/base.html' %}
 {% load static %}
+{% load instrument_extras %}
 {% load thumbnail %}
 
 {% block title %}{{ object.instrument.ticker }} - {{ object.get_trade_type_display }} - Дневник трейдера{% endblock %}
@@ -99,7 +100,7 @@
                                         </tr>
                                         <tr>
                                             <td><strong>Минимальный шаг цены:</strong></td>
-                                            <td>{{ object.instrument.min_price_step }} ₽</td>
+                                            <td>{{ object.instrument.min_price_step|format_price_step }} ₽</td>
                                         </tr>
                                     </table>
                                 </div>

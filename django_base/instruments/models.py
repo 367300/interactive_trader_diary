@@ -1,3 +1,5 @@
+from django.contrib.postgres.indexes import GinIndex
+from django.contrib.postgres.search import SearchVector
 from django.db import models
 
 
@@ -193,6 +195,13 @@ class Instrument(models.Model):
         verbose_name_plural = 'Торговые инструменты'
         db_table = 'instruments_instrument'
         ordering = ['ticker']
+        indexes = [
+            GinIndex(
+                SearchVector('ticker', config='simple')
+                + SearchVector('name', 'description', 'sector', config='russian'),
+                name='instruments_instr_fts_gin',
+            ),
+        ]
 
     def __str__(self):
         return f'{self.ticker} - {self.name}'
