@@ -207,6 +207,50 @@ class Instrument(models.Model):
         return f'{self.ticker} - {self.name}'
 
 
+class FuturesAssetCodeMapping(models.Model):
+    """
+    Ручное сопоставление ASSETCODE из API фьючерсов Мосбиржи с базовым активом (Instrument).
+    Загрузка load_instruments_from_moex сначала ищет базу здесь, затем по совпадению ticker == ASSETCODE.
+    """
+    asset_code = models.CharField(
+        max_length=75,
+        unique=True,
+        verbose_name='ASSETCODE фьючерса (Мосбиржа)',
+        help_text='Значение поля ASSETCODE в ответе ISS для FORTS, например SBRF для контрактов на Сбер.',
+    )
+    base_instrument = models.ForeignKey(
+        Instrument,
+        on_delete=models.PROTECT,
+        related_name='futures_asset_code_mappings',
+        verbose_name='Базовый актив',
+    )
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name='Учитывать при загрузке',
+    )
+    note = models.TextField(
+        blank=True,
+        verbose_name='Заметка',
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата создания',
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name='Дата обновления',
+    )
+
+    class Meta:
+        verbose_name = 'Сопоставление фьючерса с базовым активом'
+        verbose_name_plural = 'Сопоставления фьючерсов с базовыми активами'
+        db_table = 'instruments_futures_asset_code_mapping'
+        ordering = ['asset_code']
+
+    def __str__(self):
+        return f'{self.asset_code} → {self.base_instrument.ticker}'
+
+
 class Futures(models.Model):
     """
     Фьючерсные контракты. Фьючерс — производный инструмент от базового актива.

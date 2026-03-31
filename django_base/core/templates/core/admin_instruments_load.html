@@ -27,7 +27,9 @@
                 <div class="card-body">
                     <p class="text-muted">
                         Запускает фоновую задачу Celery, которая выполняет Django management-команду
-                        <code>load_instruments_from_moex</code>. Запрос веб-клиента не блокируется.
+                        <code>load_instruments_from_moex</code> с выбранным типом инструментов.
+                        Для фьючерсов в базе должны уже быть базовые активы (тикер = ASSETCODE с Мосбиржи).
+                        Запрос веб-клиента не блокируется.
                     </p>
 
                     <form method="post" class="row g-3">
@@ -37,6 +39,7 @@
                             <label for="id_instrument_type" class="form-label">Тип инструментов</label>
                             <select name="instrument_type" id="id_instrument_type" class="form-select">
                                 <option value="STOCK" selected>Акции (STOCK)</option>
+                                <option value="FUTURES">Фьючерсы FORTS (FUTURES)</option>
                             </select>
                         </div>
 

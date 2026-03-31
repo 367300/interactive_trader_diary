@@ -1,5 +1,13 @@
 from django.contrib import admin
-from .models import Sector, Instrument, IndustryGroup, Industry, SubIndustry, Futures
+from .models import (
+    Sector,
+    Instrument,
+    IndustryGroup,
+    Industry,
+    SubIndustry,
+    FuturesAssetCodeMapping,
+    Futures,
+)
 
 
 @admin.register(Sector)
@@ -64,6 +72,16 @@ class InstrumentAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
+
+
+@admin.register(FuturesAssetCodeMapping)
+class FuturesAssetCodeMappingAdmin(admin.ModelAdmin):
+    list_display = ('asset_code', 'base_instrument', 'is_active', 'updated_at')
+    list_filter = ('is_active',)
+    search_fields = ('asset_code', 'note', 'base_instrument__ticker')
+    readonly_fields = ('created_at', 'updated_at')
+    ordering = ('asset_code',)
+    autocomplete_fields = ('base_instrument',)
 
 
 @admin.register(Futures)
