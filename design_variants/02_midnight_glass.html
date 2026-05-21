@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>02 · Midnight Glass — Дневник трейдера</title>
+<style>
+:root{
+  --bg-a:#070b18; --bg-b:#0d1428; --bg-c:#161f3d;
+  --glass:rgba(22,30,55,.55); --glass-brd:rgba(120,150,220,.18);
+  --text:#e6ecff; --muted:#7e89ad;
+  --blue:#5a8cff; --cyan:#5cd4ff; --green:#3ddc97; --red:#ff6b81; --amber:#ffb454;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100vh;color:var(--text);font-family:"Inter","SF Pro Display",sans-serif;font-size:14px;
+  background:
+    radial-gradient(900px 600px at 12% 10%, rgba(90,140,255,.15), transparent 60%),
+    radial-gradient(700px 500px at 95% 8%, rgba(92,212,255,.10), transparent 65%),
+    radial-gradient(800px 700px at 85% 95%, rgba(189,147,249,.10), transparent 65%),
+    linear-gradient(180deg,var(--bg-a),var(--bg-b) 60%,var(--bg-c));
+  background-attachment:fixed}
+a{color:inherit;text-decoration:none}
+.nav{position:fixed;top:14px;left:14px;right:14px;height:60px;padding:0 22px;border-radius:18px;
+  background:var(--glass);border:1px solid var(--glass-brd);backdrop-filter:blur(22px) saturate(160%);
+  -webkit-backdrop-filter:blur(22px) saturate(160%);display:flex;align-items:center;z-index:10;
+  box-shadow:0 14px 40px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.06)}
+.brand{font-weight:600;letter-spacing:.04em;font-size:15px;background:linear-gradient(90deg,#fff,#a8c4ff);
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.brand i{margin-right:8px;color:var(--cyan)}
+.nav ul{display:flex;gap:6px;list-style:none;margin-left:36px}
+.nav li{padding:8px 14px;border-radius:10px;font-size:13px;color:var(--muted);cursor:pointer;transition:.2s}
+.nav li:hover{color:var(--text);background:rgba(255,255,255,.04)}
+.nav li.active{color:var(--text);background:rgba(90,140,255,.18);box-shadow:inset 0 0 0 1px rgba(90,140,255,.35)}
+.nav .user{margin-left:auto;display:flex;align-items:center;gap:10px;color:var(--muted);font-size:13px}
+.av{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#5a8cff,#bd93f9);display:grid;place-items:center;color:#fff;font-weight:600;font-size:12px}
+.layout{padding:96px 30px 40px;display:grid;grid-template-columns:230px 1fr;gap:24px;max-width:1600px;margin:0 auto}
+.sidebar{position:sticky;top:96px;height:fit-content;border-radius:18px;padding:18px;background:var(--glass);
+  border:1px solid var(--glass-brd);backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);box-shadow:0 8px 30px rgba(0,0,0,.3)}
+.sidebar h6{font-size:10px;color:var(--muted);letter-spacing:.18em;text-transform:uppercase;margin:6px 8px 14px}
+.sidebar a{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;color:var(--text);font-size:13px;margin-bottom:2px;transition:.2s}
+.sidebar a:hover{background:rgba(255,255,255,.04)}
+.sidebar a.active{background:linear-gradient(90deg,rgba(90,140,255,.22),rgba(92,212,255,.10));box-shadow:inset 0 0 0 1px rgba(90,140,255,.35)}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--cyan);box-shadow:0 0 10px var(--cyan)}
+.page-h{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:22px}
+.page-h h1{font-size:28px;font-weight:600;letter-spacing:-.02em}
+.page-h h1 span{background:linear-gradient(90deg,#5cd4ff,#bd93f9);-webkit-background-clip:text;background-clip:text;color:transparent}
+.page-h p{color:var(--muted);font-size:13px;margin-top:4px}
+.chip{padding:6px 12px;border-radius:999px;background:var(--glass);border:1px solid var(--glass-brd);font-size:12px;color:var(--muted)}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-bottom:22px}
+.card{border-radius:18px;padding:20px;background:var(--glass);border:1px solid var(--glass-brd);
+  backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);
+  box-shadow:0 14px 40px rgba(0,0,0,.30),inset 0 1px 0 rgba(255,255,255,.05);position:relative;overflow:hidden}
+.card::after{content:"";position:absolute;inset:auto -40% -60% auto;width:180px;height:180px;border-radius:50%;
+  background:radial-gradient(circle,rgba(90,140,255,.18),transparent 70%);pointer-events:none}
+.stat .lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;display:flex;align-items:center;gap:6px}
+.stat .num{font-size:32px;font-weight:600;margin:8px 0 4px;letter-spacing:-.02em}
+.stat .num.pos{color:var(--green)}.stat .num.neg{color:var(--red)}
+.stat .sub{font-size:12px;color:var(--muted)}
+.row2{display:grid;grid-template-columns:1.2fr 1fr;gap:18px;margin-bottom:22px}
+.panel-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.panel-h h3{font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px}
+.panel-h h3 i{width:8px;height:8px;border-radius:2px;background:linear-gradient(135deg,var(--blue),var(--cyan));box-shadow:0 0 12px var(--blue)}
+.panel-h a{font-size:12px;color:var(--cyan)}
+.li{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px dashed rgba(126,137,173,.18)}
+.li:last-child{border:none}
+.li .t{font-weight:600;font-size:14px}
+.li .s{font-size:11px;color:var(--muted);margin-top:3px;text-transform:uppercase;letter-spacing:.06em}
+.v{font-weight:600}.v.pos{color:var(--green)}.v.neg{color:var(--red)}
+.tag{font-size:10px;text-transform:uppercase;letter-spacing:.1em;padding:4px 10px;border-radius:999px}
+.tag.on{background:rgba(61,220,151,.14);color:var(--green);box-shadow:inset 0 0 0 1px rgba(61,220,151,.3)}
+.tag.off{background:rgba(255,180,84,.12);color:var(--amber);box-shadow:inset 0 0 0 1px rgba(255,180,84,.3)}
+.actions{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.act{padding:16px;border-radius:14px;background:var(--glass);border:1px solid var(--glass-brd);text-align:center;font-size:13px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);transition:.2s;cursor:pointer}
+.act:hover{transform:translateY(-2px);box-shadow:0 14px 30px rgba(90,140,255,.25)}
+.act i{display:block;font-size:18px;color:var(--cyan);margin-bottom:6px}
+.spark{margin-top:10px;display:flex;align-items:flex-end;gap:3px;height:28px}
+.spark span{width:6px;background:linear-gradient(180deg,var(--cyan),transparent);border-radius:2px;opacity:.7}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <div class="brand"><i>◇</i>Дневник трейдера</div>
+  <ul><li class="active">Дашборд</li><li>Сделки</li><li>Стратегии</li><li>Аналитика</li></ul>
+  <div class="user">jonirootman <div class="av">JR</div></div>
+</nav>
+<div class="layout">
+  <aside class="sidebar">
+    <h6>Меню</h6>
+    <a class="active"><span class="dot"></span>Дашборд</a>
+    <a>＋ Новая сделка</a><a>≡ Все сделки</a><a>◇ Стратегии</a><a>⌗ Инструменты</a><a>▤ Аналитика</a>
+  </aside>
+  <main>
+    <div class="page-h">
+      <div><h1>Дашборд <span>трейдера</span></h1><p>Обзор торговой активности · 22 мая 2026</p></div>
+      <div class="chip">Сессия активна · 04ч 12м</div>
+    </div>
+    <div class="grid-4">
+      <div class="card stat"><div class="lbl">◌ Всего сделок</div><div class="num">142</div><div class="sub">+12 за неделю</div>
+        <div class="spark"><span style="height:20%"></span><span style="height:40%"></span><span style="height:30%"></span><span style="height:60%"></span><span style="height:50%"></span><span style="height:80%"></span><span style="height:70%"></span><span style="height:100%"></span></div>
+      </div>
+      <div class="card stat"><div class="lbl">◌ Закрытых</div><div class="num">118</div><div class="sub">83% от общего</div>
+        <div class="spark"><span style="height:30%"></span><span style="height:50%"></span><span style="height:45%"></span><span style="height:70%"></span><span style="height:60%"></span><span style="height:90%"></span><span style="height:75%"></span><span style="height:95%"></span></div>
+      </div>
+      <div class="card stat"><div class="lbl">◌ Открытых</div><div class="num">24</div><div class="sub">$ 48 200 объём</div>
+        <div class="spark"><span style="height:50%"></span><span style="height:30%"></span><span style="height:60%"></span><span style="height:40%"></span><span style="height:70%"></span><span style="height:55%"></span><span style="height:65%"></span><span style="height:45%"></span></div>
+      </div>
+      <div class="card stat"><div class="lbl">◌ P&L (руб.)</div><div class="num pos">+184 520</div><div class="sub">Win rate 62.4%</div>
+        <div class="spark"><span style="height:20%;background:linear-gradient(180deg,var(--green),transparent)"></span><span style="height:35%;background:linear-gradient(180deg,var(--green),transparent)"></span><span style="height:50%;background:linear-gradient(180deg,var(--green),transparent)"></span><span style="height:45%;background:linear-gradient(180deg,var(--green),transparent)"></span><span style="height:70%;background:linear-gradient(180deg,var(--green),transparent)"></span><span style="height:65%;background:linear-gradient(180deg,var(--green),transparent)"></span><span style="height:85%;background:linear-gradient(180deg,var(--green),transparent)"></span><span style="height:100%;background:linear-gradient(180deg,var(--green),transparent)"></span></div>
+      </div>
+    </div>
+    <div class="row2">
+      <div class="card">
+        <div class="panel-h"><h3><i></i>Последние сделки</h3><a>Все сделки →</a></div>
+        <div class="li"><div><div class="t">SBER</div><div class="s">22 мая · LONG · Mean Reversion</div></div><div class="v pos">+4 820 ₽</div></div>
+        <div class="li"><div><div class="t">GAZP</div><div class="s">21 мая · SHORT · News Scalp</div></div><div class="v neg">−1 210 ₽</div></div>
+        <div class="li"><div><div class="t">YNDX</div><div class="s">21 мая · LONG · Breakout Pro</div></div><div class="v pos">+12 400 ₽</div></div>
+        <div class="li"><div><div class="t">LKOH</div><div class="s">20 мая · SHORT · Trend</div></div><div class="v pos">+3 600 ₽</div></div>
+        <div class="li"><div><div class="t">MGNT</div><div class="s">20 мая · LONG · Breakout Pro</div></div><div class="v neg">−2 100 ₽</div></div>
+      </div>
+      <div class="card">
+        <div class="panel-h"><h3><i></i>Активные стратегии</h3><a>Все стратегии →</a></div>
+        <div class="li"><div><div class="t">Breakout Pro</div><div class="s">Trend following · 38 сделок</div></div><span class="tag on">Активна</span></div>
+        <div class="li"><div><div class="t">Mean Reversion 1H</div><div class="s">Counter trend · 22 сделки</div></div><span class="tag on">Активна</span></div>
+        <div class="li"><div><div class="t">News Scalp</div><div class="s">Event driven · 11 сделок</div></div><span class="tag off">Пауза</span></div>
+      </div>
+    </div>
+    <div class="actions">
+      <div class="act"><i>＋</i>Новая сделка</div>
+      <div class="act"><i>◇</i>Стратегия</div>
+      <div class="act"><i>▤</i>Аналитика</div>
+      <div class="act"><i>☰</i>Профиль</div>
+    </div>
+  </main>
+</div>
+</body></html>

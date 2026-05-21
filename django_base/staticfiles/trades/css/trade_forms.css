@@ -1,64 +1,46 @@
-/* Стили для форм сделок */
+/* Стили для форм сделок — Midnight Glass */
 
-/* Стили для полей формы */
-.form-floating > label {
-    padding: 1rem 0.75rem;
-}
-
-/* Исправление проблем с отображением полей */
-.form-floating > .form-control {
-    padding: 1rem 0.75rem;
-}
-
-.form-floating > .form-control:focus {
-    padding-top: 1.625rem;
-    padding-bottom: 0.625rem;
-}
-
+.form-floating > label { padding: 1rem 0.75rem; color: var(--mg-muted); }
+.form-floating > .form-control { padding: 1rem 0.75rem; }
+.form-floating > .form-control:focus,
 .form-floating > .form-control:not(:placeholder-shown) {
     padding-top: 1.625rem;
     padding-bottom: 0.625rem;
 }
+.form-floating > textarea.form-control { height: auto; min-height: 100px; }
 
-/* Стили для текстовых областей */
-.form-floating > textarea.form-control {
-    height: auto;
-    min-height: 100px;
-}
-
-/* Стили для секций формы */
+/* Секции формы */
 .form-section {
-    background: #f8f9fa;
-    border-radius: 8px;
+    background: var(--mg-glass-soft);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-radius: 12px;
     padding: 1.5rem;
     margin-bottom: 1.5rem;
-    border: 1px solid #e9ecef;
+    border: 1px solid var(--mg-glass-brd);
 }
-
 .form-section h6 {
-    color: #495057;
+    color: var(--mg-text-soft);
     font-weight: 600;
     margin-bottom: 1rem;
     padding-bottom: 0.5rem;
-    border-bottom: 2px solid #dee2e6;
+    border-bottom: 1px solid var(--mg-glass-brd);
+    text-transform: uppercase;
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
 }
 
-.btn {
-    transition: all 0.2s ease;
-}
+.btn { transition: all 0.2s ease; }
+.btn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.28); }
 
-.btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-
-/* Стили для drag & drop области */
+/* Drag & drop */
 .drag-drop-area {
-    border: 2px dashed #dee2e6;
-    border-radius: 8px;
+    border: 2px dashed var(--mg-glass-brd-strong);
+    border-radius: 12px;
     padding: 2rem;
     text-align: center;
-    background: #f8f9fa;
+    background: var(--mg-glass-soft);
+    color: var(--mg-text-soft);
     transition: all 0.3s ease;
     cursor: pointer;
     min-height: 120px;
@@ -66,53 +48,38 @@
     align-items: center;
     justify-content: center;
 }
-
-.drag-drop-area:hover {
-    border-color: #0d6efd;
-    background: #e7f3ff;
-}
-
+.drag-drop-area:hover,
 .drag-drop-area.dragover {
-    border-color: #0d6efd;
-    background: #e7f3ff;
-    transform: scale(1.02);
+    border-color: var(--mg-blue);
+    background: rgba(90, 140, 255, 0.10);
+    color: var(--mg-text);
 }
+.drag-drop-area.dragover { transform: scale(1.02); }
+.drag-drop-content { pointer-events: none; }
 
-.drag-drop-content {
-    pointer-events: none;
-}
-
-/* Стили для превью изображений */
+/* Превью изображений */
 .image-preview {
     position: relative;
     display: inline-block;
     margin: 0.5rem;
     overflow: visible;
 }
-
 .image-preview img {
     max-width: 100%;
     height: auto;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+    border: 1px solid var(--mg-glass-brd);
 }
-
-/* Стили для контейнера изображений */
-.col-md-3 {
-    overflow: visible;
-}
-
-.col-md-3 .image-preview {
-    overflow: visible;
-}
+.col-md-3, .col-md-3 .image-preview { overflow: visible; }
 
 .remove-image {
     position: absolute;
     top: -12px;
     right: -12px;
-    background: #dc3545;
-    color: white;
-    border: 2px solid white;
+    background: var(--mg-red);
+    color: #fff;
+    border: 2px solid var(--mg-bg-a);
     border-radius: 50%;
     width: 28px;
     height: 28px;
@@ -122,131 +89,189 @@
     cursor: pointer;
     font-size: 14px;
     z-index: 1000;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
     transition: all 0.2s ease;
 }
-
 .remove-image:hover {
-    background: #c82333;
+    background: #ff8294;
     transform: scale(1.1);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6);
 }
 
-/* Стили для информации о родительской сделке */
+/* Карточка родительской сделки */
 .parent-trade-info {
-    border: 2px solid #0d6efd;
-    background: #e7f3ff;
-    border-radius: 8px;
+    border: 1px solid rgba(90, 140, 255, 0.42);
+    background: linear-gradient(135deg, rgba(90, 140, 255, 0.14), rgba(22, 30, 55, 0.40));
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-radius: 12px;
     padding: 1rem;
     margin-bottom: 1rem;
+    color: var(--mg-text-soft);
 }
+.parent-trade-info h6 { color: var(--mg-cyan); font-weight: 600; }
+.parent-trade-info .badge { font-size: 0.8rem; }
 
-.parent-trade-info h6 {
-    color: #0d6efd;
-    font-weight: 600;
-}
-
-.parent-trade-info .badge {
-    font-size: 0.8rem;
-}
-
-/* Стили для секций формы */
-.form-section {
-    background: #f8f9fa;
-    border-radius: 8px;
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-    border: 1px solid #e9ecef;
-}
-
-.form-section h6 {
-    color: #495057;
-    font-weight: 600;
-    margin-bottom: 1rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 2px solid #dee2e6;
-}
-
-/* Стили для валидации */
-.is-invalid {
-    border-color: #dc3545;
-}
-
+/* Валидация */
+.is-invalid { border-color: var(--mg-red) !important; }
 .invalid-feedback {
     display: block;
-    color: #dc3545;
-    font-size: 0.875rem;
+    color: var(--mg-red);
+    font-size: 0.85rem;
     margin-top: 0.25rem;
 }
 
-/* Стили для кнопок действий */
-.btn-group .btn {
-    margin: 0 2px;
-}
-
+/* Кнопки */
+.btn-group .btn { margin: 0 2px; }
 .btn-outline-primary:hover {
-    background-color: #0d6efd;
-    border-color: #0d6efd;
-    color: white;
+    background: var(--mg-blue);
+    border-color: var(--mg-blue);
+    color: #fff;
 }
-
 .btn-outline-danger:hover {
-    background-color: #dc3545;
-    border-color: #dc3545;
-    color: white;
+    background: var(--mg-red);
+    border-color: var(--mg-red);
+    color: #fff;
 }
 
-/* Дополнительные стили для исправления проблем с отображением */
-.row.g-3 > [class*="col-"] {
-    margin-bottom: 1rem;
-}
-
-.form-floating {
-    position: relative;
-}
-
+/* Утилиты */
+.row.g-3 > [class*="col-"] { margin-bottom: 1rem; }
+.form-floating { position: relative; }
 .form-floating > .form-control {
     height: calc(3.5rem + 2px);
     line-height: 1.25;
 }
+.form-floating > textarea.form-control { height: auto; min-height: calc(3.5rem + 2px); }
+.col-12 .form-floating > textarea.form-control { min-height: 120px; }
+.col-12 .form-floating { width: 100%; }
+.col-12 .form-floating > textarea { width: 100%; resize: vertical; }
 
-.form-floating > textarea.form-control {
-    height: auto;
-    min-height: calc(3.5rem + 2px);
-}
-
-/* Исправление для полей анализа */
-.col-12 .form-floating > textarea.form-control {
-    min-height: 120px;
-}
-
-/* Исправление для полей в полную ширину */
-.col-12 .form-floating {
-    width: 100%;
-}
-
-.col-12 .form-floating > textarea {
-    width: 100%;
-    resize: vertical;
-}
-
-/* Адаптивные стили */
 @media (max-width: 768px) {
-    .drag-drop-area {
-        padding: 1rem;
-        min-height: 100px;
-    }
-    
-    .form-section {
-        padding: 1rem;
-    }
-    
-    .btn {
-        font-size: 0.875rem;
-        padding: 0.5rem 1rem;
-    }
-    
-    .row.g-3 > [class*="col-"] {
-        margin-bottom: 0.5rem;
-    }
+    .drag-drop-area { padding: 1rem; min-height: 100px; }
+    .form-section { padding: 1rem; }
+    .btn { font-size: 0.875rem; padding: 0.5rem 1rem; }
+    .row.g-3 > [class*="col-"] { margin-bottom: 0.5rem; }
 }
+
+/* ============================================================
+   Tom Select (поисковый combobox для инструмента) — Midnight Glass
+   ============================================================ */
+.ts-field .form-label {
+    display: block;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--mg-muted);
+    margin-bottom: 6px;
+    font-weight: 600;
+}
+.ts-wrapper {
+    color: var(--mg-text);
+}
+.ts-wrapper.single .ts-control,
+.ts-wrapper.multi .ts-control {
+    background: var(--mg-glass-soft) !important;
+    color: var(--mg-text) !important;
+    border: 1px solid var(--mg-glass-brd) !important;
+    border-radius: 10px !important;
+    padding: 0.8rem 0.85rem !important;
+    min-height: calc(3.5rem + 2px);
+    box-shadow: none !important;
+    background-image: none !important;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    display: flex;
+    align-items: center;
+}
+.ts-wrapper.single .ts-control input,
+.ts-wrapper.multi .ts-control input {
+    color: var(--mg-text) !important;
+    font-family: inherit !important;
+    font-size: 1rem !important;
+}
+.ts-wrapper.single .ts-control input::placeholder,
+.ts-wrapper.multi .ts-control input::placeholder {
+    color: var(--mg-dim) !important;
+    opacity: 1 !important;
+}
+.ts-wrapper.focus .ts-control {
+    border-color: rgba(90, 140, 255, 0.6) !important;
+    box-shadow: 0 0 0 0.2rem rgba(90, 140, 255, 0.18) !important;
+    background: var(--mg-glass) !important;
+}
+.ts-wrapper .ts-control > .item {
+    background: rgba(90, 140, 255, 0.16) !important;
+    color: var(--mg-text) !important;
+    border-radius: 6px !important;
+    padding: 2px 8px !important;
+    box-shadow: inset 0 0 0 1px rgba(90, 140, 255, 0.32) !important;
+}
+
+/* Caret */
+.ts-wrapper.single .ts-control:after {
+    border-top-color: var(--mg-muted) !important;
+}
+
+/* Clear button */
+.ts-wrapper .clear-button {
+    color: var(--mg-muted) !important;
+    background: transparent !important;
+    opacity: 0.7;
+    transition: opacity 0.15s ease, color 0.15s ease;
+}
+.ts-wrapper .clear-button:hover {
+    color: var(--mg-red) !important;
+    opacity: 1;
+}
+
+/* Dropdown */
+.ts-dropdown {
+    background: var(--mg-glass-strong) !important;
+    backdrop-filter: blur(24px) saturate(160%);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    border: 1px solid var(--mg-glass-brd-strong) !important;
+    border-radius: 12px !important;
+    box-shadow: var(--mg-shadow-lg);
+    color: var(--mg-text) !important;
+    margin-top: 6px !important;
+    padding: 6px !important;
+    overflow: hidden;
+}
+.ts-dropdown .option {
+    color: var(--mg-text-soft) !important;
+    padding: 9px 12px !important;
+    border-radius: 8px !important;
+    font-size: 14px;
+    cursor: pointer;
+}
+.ts-dropdown .option:hover,
+.ts-dropdown .option.active {
+    background: rgba(90, 140, 255, 0.18) !important;
+    color: var(--mg-text) !important;
+    box-shadow: inset 0 0 0 1px rgba(90, 140, 255, 0.32);
+}
+.ts-dropdown .option.selected {
+    color: var(--mg-cyan) !important;
+}
+.ts-dropdown .no-results {
+    padding: 14px 12px;
+    color: var(--mg-muted);
+    font-size: 13px;
+    text-align: center;
+    font-style: italic;
+}
+.ts-dropdown .optgroup-header {
+    color: var(--mg-muted) !important;
+    background: transparent !important;
+    text-transform: uppercase;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    padding: 10px 12px 6px !important;
+    font-weight: 600;
+}
+.ts-dropdown .ts-dropdown-content {
+    max-height: 320px;
+}
+
+/* Когда select-страница использует form-floating и Tom Select переопределяет — скрываем оригинальный select */
+.ts-hidden-accessible { display: none !important; }
+

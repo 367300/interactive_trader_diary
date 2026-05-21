@@ -2,6 +2,67 @@ from decimal import Decimal
 from .models import Trade
 
 
+def calculate_user_aggregate_stats(user):
+    """Агрегированные метрики по всем родительским сделкам пользователя.
+
+    Финансовый результат считается в пипсах — поля рублёвого результата в модели нет
+    (см. миграцию 0003_remove_trade_actual_result_points_and_more). Для каждой
+    закрытой родительской сделки берём pips из calculate_trade_stats.
+    """
+    parent_trades = (
+        Trade.objects
+        .filter(user=user, parent_trade__isnull=True)
+        .select_related('instrument')
+        .prefetch_related('child_trades')
+    )
+
+    total_count = 0
+    closed_count = 0
+    win_count = 0
+    pips_sum = 0.0
+    closed_pips = []
+
+    for trade in parent_trades:
+        total_count += 1
+        if not trade.is_closed():
+            continue
+        stats = calculate_trade_stats(trade)
+        pips = stats.get('pips')
+        if pips is None:
+            continue
+        closed_count += 1
+        pips_sum += pips
+        closed_pips.append(pips)
+        if pips > 0:
+            win_count += 1
+
+    open_count = total_count - closed_count
+    win_rate = (win_count / closed_count * 100.0) if closed_count else 0.0
+    avg_trade_pips = (pips_sum / closed_count) if closed_count else 0.0
+
+    return {
+        'total_trades': total_count,
+        'closed_trades': closed_count,
+        'open_trades': open_count,
+        'total_pnl_pips': pips_sum,
+        'win_rate': win_rate,
+        'avg_trade_pips': avg_trade_pips,
+        'win_count': win_count,
+        'loss_count': closed_count - win_count,
+    }
+
+
+def annotate_recent_trades_with_pips(trades):
+    """Добавляет к каждой сделке поле pips_result (для отображения в списках)."""
+    for trade in trades:
+        if trade.parent_trade_id is None and trade.is_closed():
+            stats = calculate_trade_stats(trade)
+            trade.pips_result = stats.get('pips')
+        else:
+            trade.pips_result = None
+    return trades
+
+
 def calculate_trade_stats(main_trade):
     """Расчет агрегированной статистики по главной сделке и всем дочерним"""
     all_trades = [main_trade] + list(main_trade.child_trades.all().order_by('trade_date'))

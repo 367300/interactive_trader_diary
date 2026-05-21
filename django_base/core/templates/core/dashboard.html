@@ -3,16 +3,12 @@
 
 {% block title %}Дашборд - Дневник трейдера{% endblock %}
 
+{% block topbar_eyebrow %}Главная{% endblock %}
+{% block topbar_title %}Дашборд{% endblock %}
+
 {% block content %}
-<div class="container-fluid" id="dashboard-container">
-    <div class="row mb-4">
-        <div class="col-12">
-            <h1 class="h2 mb-0">
-                <i class="bi bi-speedometer2 me-2"></i>Дашборд
-            </h1>
-            <p class="text-muted">Обзор вашей торговой активности</p>
-        </div>
-    </div>
+<div class="container-fluid p-0" id="dashboard-container">
+    <p class="text-muted mb-4" style="margin-top: -6px;">Обзор вашей торговой активности</p>
 
     <!-- Статистические карточки -->
     <div class="row g-3 mb-4">
@@ -53,7 +49,7 @@
                             <span class="text-danger">{{ total_pnl|floatformat:2 }}</span>
                         {% endif %}
                     </div>
-                    <div class="stat-label">P&L (руб.)</div>
+                    <div class="stat-label">P&L (пипсы)</div>
                 </div>
             </div>
         </div>
@@ -84,7 +80,7 @@
                             <span class="text-danger">{{ avg_trade|floatformat:2 }}</span>
                         {% endif %}
                     </div>
-                    <small class="text-muted">Рублей за сделку</small>
+                    <small class="text-muted">Пипсы за сделку</small>
                 </div>
             </div>
         </div>
@@ -94,7 +90,7 @@
         <!-- Активные стратегии -->
         <div class="col-lg-6 mb-4">
             <div class="card border-0 shadow-soft">
-                <div class="card-header bg-white border-0">
+                <div class="card-header border-0">
                     <h5 class="card-title mb-0">
                         <i class="bi bi-diagram-3 me-2"></i>Активные стратегии
                     </h5>
@@ -131,7 +127,7 @@
         <!-- Последние сделки -->
         <div class="col-lg-6 mb-4">
             <div class="card border-0 shadow-soft">
-                <div class="card-header bg-white border-0">
+                <div class="card-header border-0">
                     <h5 class="card-title mb-0">
                         <i class="bi bi-clock-history me-2"></i>Последние сделки
                     </h5>
@@ -149,11 +145,11 @@
                                 </div>
                                 <div class="text-end">
                                     <div class="fw-bold">
-                                        {% if trade.actual_result_rub %}
-                                            {% if trade.actual_result_rub >= 0 %}
-                                                <span class="text-success">+{{ trade.actual_result_rub|floatformat:2 }}</span>
+                                        {% if trade.pips_result is not None %}
+                                            {% if trade.pips_result >= 0 %}
+                                                <span class="text-success">+{{ trade.pips_result|floatformat:1 }} п.</span>
                                             {% else %}
-                                                <span class="text-danger">{{ trade.actual_result_rub|floatformat:2 }}</span>
+                                                <span class="text-danger">{{ trade.pips_result|floatformat:1 }} п.</span>
                                             {% endif %}
                                         {% else %}
                                             <span class="text-muted">—</span>
@@ -192,7 +188,7 @@
     <div class="row">
         <div class="col-12">
             <div class="card border-0 shadow-soft">
-                <div class="card-header bg-white border-0">
+                <div class="card-header border-0">
                     <h5 class="card-title mb-0">
                         <i class="bi bi-lightning-charge me-2"></i>Быстрые действия
                     </h5>
@@ -229,35 +225,6 @@
 
 {% block extra_css %}
 <link href="{% static 'core/css/tutorial.css' %}" rel="stylesheet">
-<style>
-.stat-card {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border-radius: 12px;
-    border: none;
-}
-
-.stat-number {
-    font-size: 2.5rem;
-    font-weight: bold;
-    line-height: 1;
-}
-
-.stat-label {
-    font-size: 0.9rem;
-    opacity: 0.9;
-    margin-top: 0.5rem;
-}
-
-.card {
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.card:hover {
-    box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.15) !important;
-}
-</style>
-
 {% endblock %}
 
 {% block extra_js %}
