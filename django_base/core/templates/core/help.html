@@ -1,260 +1,457 @@
 {% extends 'core/base.html' %}
 {% load static %}
 
-{% block title %}Помощь - Дневник трейдера{% endblock %}
+{% block title %}Помощь — как извлечь максимум из дневника{% endblock %}
+{% block topbar_eyebrow %}Помощь{% endblock %}
+{% block topbar_title %}Как вести дневник по-взрослому{% endblock %}
+{% block topbar_actions %}{% endblock %}
 
 {% block content %}
+<div class="help-page">
 <div class="row">
     <div class="col-lg-10 mx-auto">
-        <div class="text-center mb-5">
-            <h1 class="display-4 fw-bold mb-3">Помощь</h1>
-            <p class="lead text-muted">
-                Часто задаваемые вопросы и руководство по использованию
+
+        <!-- Intro -->
+        <section class="help-intro text-center mb-5">
+            <span class="section-eyebrow">Руководство</span>
+            <h1 class="display-6 fw-bold mb-3 help-h1">
+                Чем больше&nbsp;пишешь&nbsp;— тем меньше теряешь.
+            </h1>
+            <p class="lead text-muted mx-auto" style="max-width: 720px;">
+                Дневник работает только если им пользуются. Ниже — короткие ответы на&nbsp;типичные
+                вопросы, а&nbsp;также чек-листы «до сделки» и&nbsp;«после сделки» — повесьте&nbsp;их
+                рядом с&nbsp;терминалом.
             </p>
-        </div>
-        
+        </section>
+
+        <!-- Чек-листы -->
+        <section class="row g-4 mb-5">
+            <div class="col-md-6">
+                <div class="checklist-card up">
+                    <div class="checklist-h">
+                        <span class="checklist-tag">До сделки</span>
+                        <h4>Чек-лист входа</h4>
+                    </div>
+                    <ul>
+                        <li><i class="bi bi-check2"></i>Какой <b>сетап</b>? Это рабочий шаблон или я&nbsp;его выдумал?</li>
+                        <li><i class="bi bi-check2"></i>Где <b>стоп</b>? Какой убыток я&nbsp;готов признать?</li>
+                        <li><i class="bi bi-check2"></i>Где <b>цель</b>? Каков потенциальный RR?</li>
+                        <li><i class="bi bi-check2"></i>Какой <b>объём</b>? Не&nbsp;больше, чем по&nbsp;риск-плану?</li>
+                        <li><i class="bi bi-check2"></i>Что я <b>чувствую</b> прямо сейчас?</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="checklist-card down">
+                    <div class="checklist-h">
+                        <span class="checklist-tag">После сделки</span>
+                        <h4>Чек-лист записи</h4>
+                    </div>
+                    <ul>
+                        <li><i class="bi bi-check2"></i>Совпало ли исполнение с&nbsp;планом?</li>
+                        <li><i class="bi bi-check2"></i>Что&nbsp;я сделал хорошо? Что — плохо?</li>
+                        <li><i class="bi bi-check2"></i>Был&nbsp;ли это <b>сетап</b> — или <b>скука</b>?</li>
+                        <li><i class="bi bi-check2"></i>Поставил <b>тег</b>: FOMO / стоп / спокойно?</li>
+                        <li><i class="bi bi-check2"></i>Прикрепил <b>скриншот</b> входа и&nbsp;выхода?</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Цитата -->
+        <section class="help-quote mb-5">
+            <i class="bi bi-quote quote-mark"></i>
+            <p>«Каждый трейдер думает, что у&nbsp;него хорошая память. Каждый трейдер ошибается.»</p>
+            <footer>Линда Браэдфорд Раш<span class="muted">ке · «Street Smarts»</span></footer>
+        </section>
+
         <!-- FAQ -->
-        <div class="card border-0 shadow-soft mb-4">
-            <div class="card-header bg-white border-0">
-                <h2 class="h4 mb-0">
-                    <i class="bi bi-question-circle text-primary me-2"></i>Часто задаваемые вопросы
-                </h2>
-            </div>
-            <div class="card-body p-0">
-                <div class="accordion" id="faqAccordion">
-                    <div class="accordion-item border-0">
-                        <h2 class="accordion-header">
-                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
-                                Как добавить новую сделку?
-                            </button>
-                        </h2>
-                        <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
-                            <div class="accordion-body">
-                                <p>Для добавления новой сделки:</p>
-                                <ol>
-                                    <li>Перейдите в раздел "Сделки" или нажмите кнопку "Новая сделка" на дашборде</li>
-                                    <li>Заполните обязательные поля: инструмент, дата/время, направление, цена входа, количество</li>
-                                    <li>Укажите стратегию, если она есть</li>
-                                    <li>Добавьте анализ сделки и основание для входа</li>
-                                    <li>Нажмите "Сохранить"</li>
-                                </ol>
-                            </div>
+        <section class="help-card mb-4">
+            <h2 class="h4 mb-3">
+                <i class="bi bi-question-circle text-primary me-2"></i>Частые вопросы трейдера
+            </h2>
+            <div class="accordion" id="faqAccordion">
+                <div class="accordion-item border-0">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                            Сколько сделок нужно, чтобы статистика стала достоверной?
+                        </button>
+                    </h2>
+                    <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            <p>Короткий ответ — <b>около 30 закрытых сделок</b> на одну стратегию. После этого
+                            win rate и средняя сделка перестают «прыгать» от каждой новой записи. Это не магия,
+                            а закон больших чисел в действии.</p>
+                            <p class="mb-0 text-muted"><i class="bi bi-lightbulb me-1"></i>
+                            Поэтому если вы поменяли сетап вчера — не делайте выводы по 5&nbsp;сделкам.
+                            Соберите хотя бы&nbsp;три-четыре десятка, и&nbsp;только потом смотрите на&nbsp;цифры.</p>
                         </div>
                     </div>
-                    
-                    <div class="accordion-item border-0">
-                        <h2 class="accordion-header">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
-                                Как настроить депозит?
-                            </button>
-                        </h2>
-                        <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                            <div class="accordion-body">
-                                <p>Для настройки депозита:</p>
-                                <ol>
-                                    <li>Перейдите в раздел "Профиль" в верхнем меню</li>
-                                    <li>Укажите начальный депозит или текущий депозит</li>
-                                    <li>Можете включить опцию "Использовать дефолтный депозит (1 млн руб.)"</li>
-                                    <li>Нажмите "Сохранить"</li>
-                                </ol>
-                                <p class="text-muted mt-3">
-                                    <i class="bi bi-info-circle me-1"></i>
-                                    Депозит используется для расчета процента доходности и других метрик.
-                                </p>
-                            </div>
+                </div>
+
+                <div class="accordion-item border-0">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                            Что писать в «Основание для сделки»?
+                        </button>
+                    </h2>
+                    <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            <p>Конкретно, одной-двумя фразами:</p>
+                            <ul>
+                                <li><b>Сетап:</b> «пробой уровня 312 с ретестом», «дивер по RSI на 4H»</li>
+                                <li><b>Контекст:</b> «после новости ЦБ», «лонг по тренду»</li>
+                                <li><b>План:</b> «стоп под уровень, цель — следующий хай»</li>
+                            </ul>
+                            <p class="mb-0 text-muted"><i class="bi bi-lightbulb me-1"></i>
+                            Если в&nbsp;поле написано «вроде разворот» — это&nbsp;НЕ&nbsp;основание. Это&nbsp;скука.</p>
                         </div>
                     </div>
-                    
-                    <div class="accordion-item border-0">
-                        <h2 class="accordion-header">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
-                                Как создать торговую стратегию?
-                            </button>
-                        </h2>
-                        <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                            <div class="accordion-body">
-                                <p>Для создания торговой стратегии:</p>
-                                <ol>
-                                    <li>Перейдите в раздел "Стратегии"</li>
-                                    <li>Нажмите "Создать стратегию"</li>
-                                    <li>Укажите название и описание стратегии</li>
-                                    <li>Выберите тип стратегии (скальпинг, дневная торговля, свинг, позиционная)</li>
-                                    <li>Укажите типы инструментов (акции, фьючерсы или оба)</li>
-                                    <li>Нажмите "Сохранить"</li>
-                                </ol>
-                            </div>
+                </div>
+
+                <div class="accordion-item border-0">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                            Что писать в «Выводы на будущее»?
+                        </button>
+                    </h2>
+                    <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            <p>Один урок, который вы хотите забрать <b>в&nbsp;следующую неделю</b>.
+                            Не пять, не десять — один. Иначе всё забудется.</p>
+                            <p>Примеры хороших выводов:</p>
+                            <ul>
+                                <li>«Передвигать стоп — только за&nbsp;точку безубытка, никогда против&nbsp;себя.»</li>
+                                <li>«Если плакал по поводу пропущенного входа — закрой терминал на&nbsp;час.»</li>
+                                <li>«News Scalp работает только до 12:00. После — закрывать алерты.»</li>
+                            </ul>
                         </div>
                     </div>
-                    
-                    <div class="accordion-item border-0">
-                        <h2 class="accordion-header">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
-                                Как закрыть сделку?
-                            </button>
-                        </h2>
-                        <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                            <div class="accordion-body">
-                                <p>Для закрытия сделки:</p>
-                                <ol>
-                                    <li>Найдите нужную сделку в списке сделок</li>
-                                    <li>Нажмите "Редактировать"</li>
-                                    <li>Укажите цену выхода</li>
-                                    <li>Рассчитайте и укажите фактический результат</li>
-                                    <li>Отметьте галочку "Сделка закрыта"</li>
-                                    <li>Добавьте основание для закрытия в анализе</li>
-                                    <li>Нажмите "Сохранить"</li>
-                                </ol>
-                            </div>
+                </div>
+
+                <div class="accordion-item border-0">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
+                            Какие теги ставить?
+                        </button>
+                    </h2>
+                    <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            <p>Минимум три категории, и&nbsp;стабильно одни и&nbsp;те&nbsp;же — иначе фильтры не&nbsp;работают:</p>
+                            <ul>
+                                <li><b>Эмоция:</b> <code>спокойно</code>, <code>FOMO</code>, <code>месть</code>, <code>сомнения</code></li>
+                                <li><b>Ошибка:</b> <code>передержал-стоп</code>, <code>ранний-вход</code>, <code>усреднил-лосс</code>, <code>пропустил-цель</code></li>
+                                <li><b>Условия:</b> <code>тренд</code>, <code>флэт</code>, <code>новости</code>, <code>отчёт</code></li>
+                            </ul>
+                            <p class="mb-0 text-muted"><i class="bi bi-lightbulb me-1"></i>
+                            Через 50 сделок отфильтруйте по&nbsp;тегу <code>FOMO</code> — и&nbsp;увидите,
+                            сколько денег вам стоит это&nbsp;слово.</p>
                         </div>
                     </div>
-                    
-                    <div class="accordion-item border-0">
-                        <h2 class="accordion-header">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq5">
-                                Что такое win rate?
-                            </button>
-                        </h2>
-                        <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                            <div class="accordion-body">
-                                <p><strong>Win Rate</strong> — это процент прибыльных сделок от общего количества закрытых сделок.</p>
-                                <p>Формула: (Количество прибыльных сделок / Общее количество закрытых сделок) × 100%</p>
-                                <p class="text-muted mt-3">
-                                    <i class="bi bi-info-circle me-1"></i>
-                                    Win Rate показывает, как часто ваши сделки оказываются прибыльными. 
-                                    Высокий win rate не всегда означает прибыльность — важнее общий P&L.
-                                </p>
-                            </div>
+                </div>
+
+                <div class="accordion-item border-0">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq5">
+                            Что такое Win Rate и почему он не главное?
+                        </button>
+                    </h2>
+                    <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            <p><b>Win Rate</b> — процент прибыльных сделок от&nbsp;общего числа закрытых.
+                            Формула: <code>прибыльные ÷ закрытые × 100%</code>.</p>
+                            <p>Звучит круто, но это <b>не&nbsp;единственная метрика</b>. Можно иметь
+                            win rate 70% и&nbsp;терять деньги, если каждая убыточная сделка втрое больше
+                            прибыльной. Поэтому смотрите на&nbsp;связку:</p>
+                            <ul>
+                                <li><b>Win Rate</b> — как часто угадываете</li>
+                                <li><b>Средний RR</b> — сколько берёте, когда правы</li>
+                                <li><b>Profit Factor</b> — общая прибыль ÷ общий убыток</li>
+                            </ul>
+                            <p class="mb-0 text-muted"><i class="bi bi-lightbulb me-1"></i>
+                            Если <b>Profit Factor &gt; 1.5</b>, а&nbsp;<b>Max Drawdown &lt; 15%</b> —
+                            вы&nbsp;уже выше большинства торговцев на&nbsp;рынке.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item border-0">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq6">
+                            Как добавить усреднение или частичное закрытие?
+                        </button>
+                    </h2>
+                    <div id="faq6" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            <p>Откройте карточку открытой позиции — внутри неё есть кнопки:</p>
+                            <ul>
+                                <li><b>Усреднить</b> — добавить ещё к&nbsp;текущей позиции по&nbsp;новой цене.</li>
+                                <li><b>Частичное закрытие</b> — зафиксировать часть объёма, остаток оставить.</li>
+                                <li><b>Закрытие</b> — закрыть весь оставшийся объём.</li>
+                            </ul>
+                            <p class="mb-0">Дневник свяжет все&nbsp;операции в&nbsp;одну сделку и&nbsp;посчитает
+                            результат с&nbsp;учётом средневзвешенной цены входа.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item border-0">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq7">
+                            Как использовать стратегии?
+                        </button>
+                    </h2>
+                    <div id="faq7" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            <p>Создайте по&nbsp;одной записи для каждого вашего <b>торгового сетапа</b>:
+                            «Breakout Pro», «News Scalp», «Mean Reversion 1H». Не&nbsp;надо плодить
+                            десятки — три-пять рабочих стратегий уже&nbsp;дают картину.</p>
+                            <p>В каждой сделке выбирайте, к&nbsp;какой стратегии она относится. Через
+                            месяц вы увидите, какая из&nbsp;них реально зарабатывает, а&nbsp;какая
+                            «вроде живая, но&nbsp;не&nbsp;помню, когда последний раз заходила в&nbsp;плюс».</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item border-0">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq8">
+                            Как часто пересматривать дневник?
+                        </button>
+                    </h2>
+                    <div id="faq8" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            <p>Минимум — <b>раз в неделю</b>. Сядьте в&nbsp;пятницу вечером или
+                            в&nbsp;воскресенье утром и&nbsp;пройдитесь по&nbsp;записям недели:</p>
+                            <ul>
+                                <li>Какие сделки были по плану? Какие — импульсивно?</li>
+                                <li>Какой тег ошибки повторяется чаще всего?</li>
+                                <li>В какие часы / дни вы&nbsp;были в&nbsp;минусе чаще всего?</li>
+                                <li>Что добавить в&nbsp;«правила входа» на&nbsp;следующую неделю?</li>
+                            </ul>
+                            <p class="mb-0 text-muted"><i class="bi bi-lightbulb me-1"></i>
+                            Один такой разбор стоит десяти прочитанных книг по&nbsp;ТА. Потому&nbsp;что
+                            это про&nbsp;вас, а&nbsp;не&nbsp;про&nbsp;абстрактного «трейдера».</p>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-        
-        <!-- Руководство -->
-        <div class="card border-0 shadow-soft mb-4">
-            <div class="card-header bg-white border-0">
-                <h2 class="h4 mb-0">
-                    <i class="bi bi-book text-success me-2"></i>Руководство пользователя
-                </h2>
-            </div>
-            <div class="card-body p-4">
-                <div class="row g-4">
-                    <div class="col-md-6">
-                        <h5 class="text-primary">Начало работы</h5>
-                        <ol class="list-unstyled">
-                            <li class="mb-2">
-                                <i class="bi bi-1-circle-fill text-primary me-2"></i>
-                                Зарегистрируйтесь или войдите в систему
-                            </li>
-                            <li class="mb-2">
-                                <i class="bi bi-2-circle-fill text-primary me-2"></i>
-                                Настройте профиль и депозит
-                            </li>
-                            <li class="mb-2">
-                                <i class="bi bi-3-circle-fill text-primary me-2"></i>
-                                Создайте торговые стратегии
-                            </li>
-                            <li class="mb-2">
-                                <i class="bi bi-4-circle-fill text-primary me-2"></i>
-                                Начните добавлять сделки
-                            </li>
-                        </ol>
-                    </div>
-                    <div class="col-md-6">
-                        <h5 class="text-success">Эффективное использование</h5>
-                        <ul class="list-unstyled">
-                            <li class="mb-2">
-                                <i class="bi bi-check-circle text-success me-2"></i>
-                                Регулярно ведите дневник сделок
-                            </li>
-                            <li class="mb-2">
-                                <i class="bi bi-check-circle text-success me-2"></i>
-                                Анализируйте свои эмоции и ошибки
-                            </li>
-                            <li class="mb-2">
-                                <i class="bi bi-check-circle text-success me-2"></i>
-                                Используйте теги для группировки сделок
-                            </li>
-                            <li class="mb-2">
-                                <i class="bi bi-check-circle text-success me-2"></i>
-                                Периодически просматривайте статистику
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Контакты -->
-        <div class="card border-0 shadow-soft mb-4">
-            <div class="card-header bg-white border-0">
-                <h2 class="h4 mb-0">
-                    <i class="bi bi-envelope text-info me-2"></i>Поддержка
-                </h2>
-            </div>
-            <div class="card-body p-4">
-                <p>Если у вас возникли вопросы или проблемы:</p>
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="d-flex align-items-center mb-3">
-                            <i class="bi bi-github text-dark fs-4 me-3"></i>
-                            <div>
-                                <h6 class="mb-0">GitHub Issues</h6>
-                                <small class="text-muted">Сообщить об ошибке или предложить улучшение</small>
-                            </div>
+        </section>
+
+        <!-- Полезные принципы -->
+        <section class="help-card mb-5">
+            <h2 class="h4 mb-3">
+                <i class="bi bi-bookmark-star text-warning me-2"></i>Принципы, которые работают
+            </h2>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="principle">
+                        <span>1</span>
+                        <div>
+                            <h6>Plan the trade, trade the plan</h6>
+                            <p>Если сделка не описана до&nbsp;входа — её&nbsp;не&nbsp;было.</p>
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <div class="d-flex align-items-center mb-3">
-                            <i class="bi bi-chat-dots text-primary fs-4 me-3"></i>
-                            <div>
-                                <h6 class="mb-0">Обсуждения</h6>
-                                <small class="text-muted">Задать вопрос сообществу</small>
-                            </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="principle">
+                        <span>2</span>
+                        <div>
+                            <h6>Cut losses short, let winners run</h6>
+                            <p>Срезать убытки. Позволить прибыли работать. Любой план должен делать&nbsp;это.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="principle">
+                        <span>3</span>
+                        <div>
+                            <h6>One trade ≠ trader</h6>
+                            <p>Хорошая сделка не&nbsp;делает вас гением. Плохая не&nbsp;делает идиотом. Серия из&nbsp;100&nbsp;— делает.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="principle">
+                        <span>4</span>
+                        <div>
+                            <h6>You can't manage what you don't measure</h6>
+                            <p>Без записи нет анализа. Без анализа — нет роста.</p>
                         </div>
                     </div>
                 </div>
             </div>
+        </section>
+
+        <div class="text-center pb-5">
+            {% if user.is_authenticated %}
+                <a href="{% url 'trades:trade_create' %}" class="btn btn-primary btn-lg me-2">
+                    <i class="bi bi-plus-lg me-2"></i>Записать сделку прямо сейчас
+                </a>
+                <a href="{% url 'core:dashboard' %}" class="btn btn-outline-secondary btn-lg">
+                    <i class="bi bi-speedometer2 me-2"></i>К дашборду
+                </a>
+            {% else %}
+                <a href="{% url 'accounts:register' %}" class="btn btn-primary btn-lg me-2">
+                    <i class="bi bi-rocket-takeoff me-2"></i>Завести дневник
+                </a>
+                <a href="{% url 'core:index' %}" class="btn btn-outline-secondary btn-lg">
+                    <i class="bi bi-arrow-left me-2"></i>На главную
+                </a>
+            {% endif %}
         </div>
-        
-        <div class="text-center">
-            <a href="{% url 'core:index' %}" class="btn btn-primary btn-lg">
-                <i class="bi bi-arrow-left me-2"></i>Вернуться на главную
-            </a>
-        </div>
+
     </div>
+</div>
 </div>
 {% endblock %}
 
 {% block extra_css %}
 <style>
-.accordion {
-    --bs-accordion-bg: transparent;
-    --bs-accordion-color: var(--mg-text-soft);
-    --bs-accordion-border-color: var(--mg-glass-brd);
-    --bs-accordion-btn-color: var(--mg-text);
-    --bs-accordion-btn-bg: var(--mg-glass-soft);
-    --bs-accordion-active-bg: rgba(90, 140, 255, 0.16);
-    --bs-accordion-active-color: var(--mg-text);
+.help-page { padding: 12px 0; }
+.help-intro { padding: 18px 0 8px; }
+.help-h1 {
+    background: linear-gradient(90deg, #fff, #a8c4ff 70%, var(--mg-cyan));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.01em;
 }
-.accordion-button:not(.collapsed) {
-    background-color: rgba(90, 140, 255, 0.16);
-    border-color: var(--mg-glass-brd);
+
+.section-eyebrow {
+    display: inline-block;
+    padding: 4px 12px;
+    background: rgba(92, 212, 255, 0.10);
+    color: var(--mg-cyan);
+    border: 1px solid rgba(92, 212, 255, 0.25);
+    border-radius: 999px;
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: 14px;
+}
+
+/* Checklist cards */
+.checklist-card {
+    background: var(--mg-glass);
+    border: 1px solid var(--mg-glass-brd);
+    border-radius: 16px;
+    padding: 26px 28px;
+    height: 100%;
+    backdrop-filter: blur(18px) saturate(150%);
+    -webkit-backdrop-filter: blur(18px) saturate(150%);
+    position: relative;
+}
+.checklist-card.up { border-left: 3px solid var(--mg-green); }
+.checklist-card.down { border-left: 3px solid var(--mg-cyan); }
+.checklist-h { margin-bottom: 18px; }
+.checklist-tag {
+    display: inline-block;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--mg-muted);
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+.checklist-h h4 { color: var(--mg-text); font-weight: 700; margin: 0; }
+.checklist-card ul {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+}
+.checklist-card ul li {
+    padding: 9px 0;
+    border-bottom: 1px dashed rgba(120, 150, 220, 0.18);
+    color: var(--mg-text-soft);
+    line-height: 1.55;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+.checklist-card ul li:last-child { border-bottom: none; }
+.checklist-card ul li i {
+    color: var(--mg-cyan);
+    font-size: 18px;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+.checklist-card.up ul li i { color: var(--mg-green); }
+.checklist-card b { color: var(--mg-text); }
+
+/* Quote */
+.help-quote {
+    text-align: center;
+    padding: 36px 20px;
+    border-top: 1px solid var(--mg-glass-brd);
+    border-bottom: 1px solid var(--mg-glass-brd);
+    background: radial-gradient(700px 200px at 50% 50%, rgba(189, 147, 249, 0.08), transparent 65%);
+}
+.help-quote .quote-mark {
+    font-size: 32px;
+    color: var(--mg-blue);
+    opacity: 0.55;
+}
+.help-quote p {
+    font-family: "Playfair Display", Georgia, serif;
+    font-size: clamp(18px, 2vw, 22px);
+    line-height: 1.4;
     color: var(--mg-text);
-    box-shadow: inset 0 -1px 0 var(--mg-glass-brd);
+    font-style: italic;
+    margin: 12px auto 10px;
+    max-width: 720px;
+    letter-spacing: -0.005em;
 }
-.accordion-button:focus {
-    box-shadow: 0 0 0 0.2rem rgba(90, 140, 255, 0.25);
-    border-color: rgba(90, 140, 255, 0.6);
-}
-.accordion-button::after { filter: invert(0.85); }
+.help-quote footer { color: var(--mg-cyan); font-weight: 600; font-size: 13px; }
+.help-quote footer .muted { color: var(--mg-muted); font-weight: 400; }
 
-.card {
-    transition: transform 0.2s ease;
+/* Help card */
+.help-card {
+    background: var(--mg-glass);
+    border: 1px solid var(--mg-glass-brd);
+    border-radius: 16px;
+    padding: 28px 32px;
+    backdrop-filter: blur(20px) saturate(150%);
+    -webkit-backdrop-filter: blur(20px) saturate(150%);
+    box-shadow: var(--mg-shadow-sm);
+}
+.help-card h2 { color: var(--mg-text); }
+.help-card p, .help-card li { color: var(--mg-text-soft); line-height: 1.6; }
+.help-card code {
+    background: rgba(92, 212, 255, 0.12);
+    color: var(--mg-cyan);
+    padding: 1px 7px;
+    border-radius: 5px;
+    font-size: 0.88em;
+    border: 1px solid rgba(92, 212, 255, 0.22);
 }
 
-.card:hover {
-    transform: translateY(-2px);
+.principle {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    padding: 14px 16px;
+    background: var(--mg-glass-soft);
+    border: 1px solid var(--mg-glass-brd);
+    border-radius: 12px;
+    height: 100%;
+}
+.principle span {
+    font-family: "Playfair Display", Georgia, serif;
+    font-size: 24px;
+    color: var(--mg-cyan);
+    font-weight: 500;
+    line-height: 1;
+    opacity: 0.75;
+    min-width: 30px;
+}
+.principle h6 { color: var(--mg-text); font-weight: 600; margin: 0 0 4px; font-size: 14px; }
+.principle p { color: var(--mg-muted); font-size: 13px; line-height: 1.5; margin: 0; }
+
+@media (max-width: 575.98px) {
+    .help-card { padding: 20px 18px; }
+    .checklist-card { padding: 22px 20px; }
 }
 </style>
 {% endblock %}
