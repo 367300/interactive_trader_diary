@@ -8,6 +8,7 @@ from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView, View
 from django.db.models import Sum, Count, Avg
 from trades.models import Trade
+from trades.utils import calculate_user_aggregate_stats, annotate_recent_trades_with_pips
 from strategies.models import TradingStrategy
 from accounts.models import TraderProfile
 from instruments.tasks import load_instruments_from_moex_task
@@ -39,49 +40,38 @@ class DashboardView(TemplateView):
         except TraderProfile.DoesNotExist:
             profile = TraderProfile.objects.create(user=user)
         
-        # Статистика по сделкам
-        trades = Trade.objects.filter(user=user)
-        total_trades = trades.count()
-        
-        # Закрытые сделки
-        closed_trades = trades.filter(trade_type='CLOSE')
-        closed_count = closed_trades.count()
-        
-        # Открытые позиции
-        open_trades = trades.filter(
-            parent_trade__isnull=True
-        ).exclude(
-            child_trades__trade_type='CLOSE'
-        ).distinct()
-        open_count = open_trades.count()
-        
-        # Win rate (пока не можем рассчитать без результатов)
-        win_rate = 0
-        
-        # Средняя сделка (пока не можем рассчитать без результатов)
-        avg_trade = 0
-        
-        # Total P&L (пока не можем рассчитать без результатов)
-        total_pnl = 0
-        
+        # Агрегированная статистика по сделкам (включая P&L в пипсах, win rate, avg)
+        agg = calculate_user_aggregate_stats(user)
+
         # Стратегии
         strategies = TradingStrategy.objects.filter(user=user, is_active=True)
-        
-        # Последние сделки
-        recent_trades = trades.order_by('-trade_date')[:5]
-        
+
+        # Последние сделки — берём родительские (исключаем закрытия/усреднения как дубли)
+        recent_trades = (
+            Trade.objects
+            .filter(user=user, parent_trade__isnull=True)
+            .select_related('instrument', 'strategy')
+            .prefetch_related('child_trades')
+            .order_by('-trade_date')[:5]
+        )
+        annotate_recent_trades_with_pips(recent_trades)
+
         context.update({
             'profile': profile,
-            'total_trades': total_trades,
-            'closed_trades': closed_count,
-            'open_trades': open_count,
-            'total_pnl': total_pnl,
-            'win_rate': win_rate,
-            'avg_trade': avg_trade,
+            'total_trades': agg['total_trades'],
+            'closed_trades': agg['closed_trades'],
+            'open_trades': agg['open_trades'],
+            'total_pnl': agg['total_pnl_pips'],
+            'total_pnl_pips': agg['total_pnl_pips'],
+            'win_rate': agg['win_rate'],
+            'avg_trade': agg['avg_trade_pips'],
+            'avg_trade_pips': agg['avg_trade_pips'],
+            'win_count': agg['win_count'],
+            'loss_count': agg['loss_count'],
             'strategies': strategies,
             'recent_trades': recent_trades,
         })
-        
+
         return context
 
 
@@ -98,26 +88,16 @@ class HelpView(TemplateView):
 @login_required
 @require_http_methods(["GET"])
 def get_dashboard_stats(request):
-    """AJAX endpoint для получения статистики дашборда"""
-    user = request.user
-    
-    # Получаем статистику за последние 30 дней
-    from datetime import datetime, timedelta
-    thirty_days_ago = datetime.now() - timedelta(days=30)
-    
-    recent_trades = Trade.objects.filter(
-        user=user,
-        trade_date__gte=thirty_days_ago,
-        trade_type='CLOSE'
-    )
-    
+    """AJAX endpoint для получения статистики дашборда (P&L в пипсах)."""
+    agg = calculate_user_aggregate_stats(request.user)
     stats = {
-        'trades_count': recent_trades.count(),
-        'total_pnl': 0,  # Пока не можем рассчитать без результатов
-        'win_rate': 0,   # Пока не можем рассчитать без результатов
-        'avg_trade': 0,  # Пока не можем рассчитать без результатов
+        'trades_count': agg['total_trades'],
+        'closed_trades': agg['closed_trades'],
+        'open_trades': agg['open_trades'],
+        'total_pnl_pips': round(agg['total_pnl_pips'], 2),
+        'win_rate': round(agg['win_rate'], 1),
+        'avg_trade_pips': round(agg['avg_trade_pips'], 2),
     }
-    
     return JsonResponse(stats)
 
 

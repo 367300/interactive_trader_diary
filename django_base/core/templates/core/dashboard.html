@@ -53,7 +53,7 @@
                             <span class="text-danger">{{ total_pnl|floatformat:2 }}</span>
                         {% endif %}
                     </div>
-                    <div class="stat-label">P&L (руб.)</div>
+                    <div class="stat-label">P&L (пипсы)</div>
                 </div>
             </div>
         </div>
@@ -84,7 +84,7 @@
                             <span class="text-danger">{{ avg_trade|floatformat:2 }}</span>
                         {% endif %}
                     </div>
-                    <small class="text-muted">Рублей за сделку</small>
+                    <small class="text-muted">Пипсы за сделку</small>
                 </div>
             </div>
         </div>
@@ -149,11 +149,11 @@
                                 </div>
                                 <div class="text-end">
                                     <div class="fw-bold">
-                                        {% if trade.actual_result_rub %}
-                                            {% if trade.actual_result_rub >= 0 %}
-                                                <span class="text-success">+{{ trade.actual_result_rub|floatformat:2 }}</span>
+                                        {% if trade.pips_result is not None %}
+                                            {% if trade.pips_result >= 0 %}
+                                                <span class="text-success">+{{ trade.pips_result|floatformat:1 }} п.</span>
                                             {% else %}
-                                                <span class="text-danger">{{ trade.actual_result_rub|floatformat:2 }}</span>
+                                                <span class="text-danger">{{ trade.pips_result|floatformat:1 }} п.</span>
                                             {% endif %}
                                         {% else %}
                                             <span class="text-muted">—</span>
