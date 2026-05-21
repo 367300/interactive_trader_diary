@@ -65,7 +65,12 @@ body {
         linear-gradient(180deg, var(--mg-bg-a), var(--mg-bg-b) 60%, var(--mg-bg-c));
     background-attachment: fixed;
 }
-body.app-public { display: flex; flex-direction: column; }
+body.app-public,
+body.app-authenticated { display: flex; flex-direction: column; }
+body.app-public > .public-content,
+body.app-authenticated > .app-content { flex: 1 0 auto; }
+body.app-public > .public-footer,
+body.app-authenticated > .app-footer { flex-shrink: 0; }
 
 /* Прокрутка */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
