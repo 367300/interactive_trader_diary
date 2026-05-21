@@ -3,16 +3,12 @@
 
 {% block title %}Дашборд - Дневник трейдера{% endblock %}
 
+{% block topbar_eyebrow %}Главная{% endblock %}
+{% block topbar_title %}Дашборд{% endblock %}
+
 {% block content %}
-<div class="container-fluid" id="dashboard-container">
-    <div class="row mb-4">
-        <div class="col-12">
-            <h1 class="h2 mb-0">
-                <i class="bi bi-speedometer2 me-2"></i>Дашборд
-            </h1>
-            <p class="text-muted">Обзор вашей торговой активности</p>
-        </div>
-    </div>
+<div class="container-fluid p-0" id="dashboard-container">
+    <p class="text-muted mb-4" style="margin-top: -6px;">Обзор вашей торговой активности</p>
 
     <!-- Статистические карточки -->
     <div class="row g-3 mb-4">
