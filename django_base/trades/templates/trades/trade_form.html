@@ -51,9 +51,9 @@
                             
                             {% if not parent_trade and not is_average and not is_partial_close and not is_close and not is_update %}
                             <div class="col-md-6">
-                                <div class="form-floating">
+                                <div class="ts-field">
+                                    <label for="{{ form.instrument.id_for_label }}" class="form-label">Инструмент *</label>
                                     {{ form.instrument }}
-                                    <label for="{{ form.instrument.id_for_label }}">Инструмент *</label>
                                     {% if form.instrument.errors %}
                                         <div class="invalid-feedback d-block">
                                             {{ form.instrument.errors.0 }}
@@ -398,6 +398,7 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'trades/css/trade_forms.css' %}">
 <link rel="stylesheet" href="{% static 'trades/css/screenshots.css' %}">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.4.3/dist/css/tom-select.min.css">
 <style>
 /* Стили для кнопок автозаполнения */
 .autofill-btn {
@@ -453,8 +454,28 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.4.3/dist/js/tom-select.complete.min.js"></script>
 <script src="{% static 'trades/js/trade_forms.js' %}"></script>
 <script src="{% static 'trades/js/screenshots.js' %}"></script>
+
+<script>
+(function(){
+    var sel = document.getElementById('id_instrument');
+    if(!sel || typeof TomSelect === 'undefined') return;
+    new TomSelect(sel, {
+        maxOptions: null,
+        searchField: ['text'],
+        placeholder: 'Начните вводить тикер или название…',
+        allowEmptyOption: false,
+        plugins: ['clear_button'],
+        render: {
+            no_results: function(data){
+                return '<div class="no-results">Ничего не найдено по «' + data.input + '»</div>';
+            }
+        }
+    });
+})();
+</script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {

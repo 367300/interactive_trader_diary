@@ -152,3 +152,126 @@
     .btn { font-size: 0.875rem; padding: 0.5rem 1rem; }
     .row.g-3 > [class*="col-"] { margin-bottom: 0.5rem; }
 }
+
+/* ============================================================
+   Tom Select (поисковый combobox для инструмента) — Midnight Glass
+   ============================================================ */
+.ts-field .form-label {
+    display: block;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--mg-muted);
+    margin-bottom: 6px;
+    font-weight: 600;
+}
+.ts-wrapper {
+    color: var(--mg-text);
+}
+.ts-wrapper.single .ts-control,
+.ts-wrapper.multi .ts-control {
+    background: var(--mg-glass-soft) !important;
+    color: var(--mg-text) !important;
+    border: 1px solid var(--mg-glass-brd) !important;
+    border-radius: 10px !important;
+    padding: 0.8rem 0.85rem !important;
+    min-height: calc(3.5rem + 2px);
+    box-shadow: none !important;
+    background-image: none !important;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    display: flex;
+    align-items: center;
+}
+.ts-wrapper.single .ts-control input,
+.ts-wrapper.multi .ts-control input {
+    color: var(--mg-text) !important;
+    font-family: inherit !important;
+    font-size: 1rem !important;
+}
+.ts-wrapper.single .ts-control input::placeholder,
+.ts-wrapper.multi .ts-control input::placeholder {
+    color: var(--mg-dim) !important;
+    opacity: 1 !important;
+}
+.ts-wrapper.focus .ts-control {
+    border-color: rgba(90, 140, 255, 0.6) !important;
+    box-shadow: 0 0 0 0.2rem rgba(90, 140, 255, 0.18) !important;
+    background: var(--mg-glass) !important;
+}
+.ts-wrapper .ts-control > .item {
+    background: rgba(90, 140, 255, 0.16) !important;
+    color: var(--mg-text) !important;
+    border-radius: 6px !important;
+    padding: 2px 8px !important;
+    box-shadow: inset 0 0 0 1px rgba(90, 140, 255, 0.32) !important;
+}
+
+/* Caret */
+.ts-wrapper.single .ts-control:after {
+    border-top-color: var(--mg-muted) !important;
+}
+
+/* Clear button */
+.ts-wrapper .clear-button {
+    color: var(--mg-muted) !important;
+    background: transparent !important;
+    opacity: 0.7;
+    transition: opacity 0.15s ease, color 0.15s ease;
+}
+.ts-wrapper .clear-button:hover {
+    color: var(--mg-red) !important;
+    opacity: 1;
+}
+
+/* Dropdown */
+.ts-dropdown {
+    background: var(--mg-glass-strong) !important;
+    backdrop-filter: blur(24px) saturate(160%);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    border: 1px solid var(--mg-glass-brd-strong) !important;
+    border-radius: 12px !important;
+    box-shadow: var(--mg-shadow-lg);
+    color: var(--mg-text) !important;
+    margin-top: 6px !important;
+    padding: 6px !important;
+    overflow: hidden;
+}
+.ts-dropdown .option {
+    color: var(--mg-text-soft) !important;
+    padding: 9px 12px !important;
+    border-radius: 8px !important;
+    font-size: 14px;
+    cursor: pointer;
+}
+.ts-dropdown .option:hover,
+.ts-dropdown .option.active {
+    background: rgba(90, 140, 255, 0.18) !important;
+    color: var(--mg-text) !important;
+    box-shadow: inset 0 0 0 1px rgba(90, 140, 255, 0.32);
+}
+.ts-dropdown .option.selected {
+    color: var(--mg-cyan) !important;
+}
+.ts-dropdown .no-results {
+    padding: 14px 12px;
+    color: var(--mg-muted);
+    font-size: 13px;
+    text-align: center;
+    font-style: italic;
+}
+.ts-dropdown .optgroup-header {
+    color: var(--mg-muted) !important;
+    background: transparent !important;
+    text-transform: uppercase;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    padding: 10px 12px 6px !important;
+    font-weight: 600;
+}
+.ts-dropdown .ts-dropdown-content {
+    max-height: 320px;
+}
+
+/* Когда select-страница использует form-floating и Tom Select переопределяет — скрываем оригинальный select */
+.ts-hidden-accessible { display: none !important; }
+
