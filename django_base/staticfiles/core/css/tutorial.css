@@ -325,3 +325,47 @@
     }
 }
 
+/* Принудительный тёмный стиль для всей темы Midnight Glass */
+html[data-bs-theme="dark"] .tutorial-tooltip-content {
+    background: rgba(22, 30, 55, 0.92);
+    backdrop-filter: blur(22px) saturate(160%);
+    -webkit-backdrop-filter: blur(22px) saturate(160%);
+    box-shadow:
+        0 14px 40px rgba(0, 0, 0, 0.55),
+        0 0 0 1px rgba(120, 150, 220, 0.22) inset;
+}
+html[data-bs-theme="dark"] .tutorial-tooltip-text {
+    color: var(--mg-text);
+}
+html[data-bs-theme="dark"] .tutorial-tooltip-button {
+    border: none;
+}
+html[data-bs-theme="dark"] .tutorial-tooltip-button-next {
+    background: linear-gradient(135deg, var(--mg-blue), #4c7df0);
+    color: #fff;
+}
+html[data-bs-theme="dark"] .tutorial-tooltip-button-next:hover {
+    box-shadow: var(--mg-glow-blue);
+}
+html[data-bs-theme="dark"] .tutorial-tooltip-button-skip {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--mg-text-soft);
+    border: 1px solid var(--mg-glass-brd);
+}
+html[data-bs-theme="dark"] .tutorial-tooltip-button-skip:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--mg-text);
+}
+html[data-bs-theme="dark"] .tutorial-tooltip[data-position="top"]::before {
+    border-top-color: rgba(22, 30, 55, 0.92);
+}
+html[data-bs-theme="dark"] .tutorial-tooltip[data-position="bottom"]::before {
+    border-bottom-color: rgba(22, 30, 55, 0.92);
+}
+html[data-bs-theme="dark"] .tutorial-tooltip[data-position="left"]::before {
+    border-left-color: rgba(22, 30, 55, 0.92);
+}
+html[data-bs-theme="dark"] .tutorial-tooltip[data-position="right"]::before {
+    border-right-color: rgba(22, 30, 55, 0.92);
+}
+

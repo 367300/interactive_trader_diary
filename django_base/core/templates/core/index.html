@@ -286,7 +286,44 @@
 <link href="{% static 'core/css/tutorial.css' %}" rel="stylesheet">
 <style>
 .bg-gradient-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background:
+        radial-gradient(900px 500px at 10% 0%, rgba(90, 140, 255, 0.30), transparent 60%),
+        radial-gradient(800px 500px at 95% 100%, rgba(189, 147, 249, 0.22), transparent 65%),
+        linear-gradient(135deg, rgba(22, 30, 55, 0.85), rgba(13, 20, 40, 0.92));
+    border-radius: 20px;
+    border: 1px solid var(--mg-glass-brd);
+    box-shadow: var(--mg-shadow-md);
+    backdrop-filter: blur(22px) saturate(160%);
+    -webkit-backdrop-filter: blur(22px) saturate(160%);
+    color: var(--mg-text) !important;
+}
+
+.bg-gradient-primary .display-4 {
+    background: linear-gradient(90deg, #fff, #a8c4ff 60%, var(--mg-cyan));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.bg-gradient-primary .lead { color: var(--mg-text-soft); }
+.bg-gradient-primary .btn-light {
+    background: linear-gradient(135deg, var(--mg-cyan), var(--mg-blue));
+    border: none;
+    color: #03101f;
+    font-weight: 600;
+}
+.bg-gradient-primary .btn-light:hover {
+    box-shadow: var(--mg-glow-blue);
+    color: #03101f;
+}
+.bg-gradient-primary .btn-outline-light {
+    border: 1px solid var(--mg-glass-brd-strong);
+    color: var(--mg-text);
+    background: rgba(255, 255, 255, 0.04);
+}
+.bg-gradient-primary .btn-outline-light:hover {
+    background: rgba(255, 255, 255, 0.10);
+    color: var(--mg-text);
 }
 
 .hero-section {
@@ -294,16 +331,22 @@
     padding-top: 80px !important;
 }
 
-.feature-icon {
-    transition: transform 0.3s ease;
-}
+.feature-icon { transition: transform 0.3s ease; }
+.card:hover .feature-icon { transform: scale(1.08); }
+.text-purple { color: var(--mg-purple) !important; }
 
-.card:hover .feature-icon {
-    transform: scale(1.1);
+section.bg-light {
+    background: transparent !important;
+    border-top: 1px solid var(--mg-glass-brd);
+    border-bottom: 1px solid var(--mg-glass-brd);
 }
-
-.text-purple {
-    color: #6f42c1 !important;
+section.bg-primary {
+    background:
+        radial-gradient(700px 400px at 50% 0%, rgba(90, 140, 255, 0.25), transparent 65%),
+        linear-gradient(135deg, rgba(22, 30, 55, 0.85), rgba(13, 20, 40, 0.92)) !important;
+    border-top: 1px solid var(--mg-glass-brd);
+    border-bottom: 1px solid var(--mg-glass-brd);
+    color: var(--mg-text) !important;
 }
 </style>
 {% endblock %}

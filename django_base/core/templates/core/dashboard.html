@@ -94,7 +94,7 @@
         <!-- Активные стратегии -->
         <div class="col-lg-6 mb-4">
             <div class="card border-0 shadow-soft">
-                <div class="card-header bg-white border-0">
+                <div class="card-header border-0">
                     <h5 class="card-title mb-0">
                         <i class="bi bi-diagram-3 me-2"></i>Активные стратегии
                     </h5>
@@ -131,7 +131,7 @@
         <!-- Последние сделки -->
         <div class="col-lg-6 mb-4">
             <div class="card border-0 shadow-soft">
-                <div class="card-header bg-white border-0">
+                <div class="card-header border-0">
                     <h5 class="card-title mb-0">
                         <i class="bi bi-clock-history me-2"></i>Последние сделки
                     </h5>
@@ -192,7 +192,7 @@
     <div class="row">
         <div class="col-12">
             <div class="card border-0 shadow-soft">
-                <div class="card-header bg-white border-0">
+                <div class="card-header border-0">
                     <h5 class="card-title mb-0">
                         <i class="bi bi-lightning-charge me-2"></i>Быстрые действия
                     </h5>
@@ -229,35 +229,6 @@
 
 {% block extra_css %}
 <link href="{% static 'core/css/tutorial.css' %}" rel="stylesheet">
-<style>
-.stat-card {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border-radius: 12px;
-    border: none;
-}
-
-.stat-number {
-    font-size: 2.5rem;
-    font-weight: bold;
-    line-height: 1;
-}
-
-.stat-label {
-    font-size: 0.9rem;
-    opacity: 0.9;
-    margin-top: 0.5rem;
-}
-
-.card {
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.card:hover {
-    box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.15) !important;
-}
-</style>
-
 {% endblock %}
 
 {% block extra_js %}
