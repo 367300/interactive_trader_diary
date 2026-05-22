@@ -398,7 +398,7 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'trades/css/trade_forms.css' %}">
 <link rel="stylesheet" href="{% static 'trades/css/screenshots.css' %}">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.4.3/dist/css/tom-select.min.css">
+<link rel="stylesheet" href="{% static 'vendor/tom-select/2.4.3/css/tom-select.min.css' %}">
 <style>
 /* Стили для кнопок автозаполнения */
 .autofill-btn {
@@ -454,7 +454,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/tom-select@2.4.3/dist/js/tom-select.complete.min.js"></script>
+<script src="{% static 'vendor/tom-select/2.4.3/js/tom-select.complete.min.js' %}"></script>
 <script src="{% static 'trades/js/trade_forms.js' %}"></script>
 <script src="{% static 'trades/js/screenshots.js' %}"></script>
 

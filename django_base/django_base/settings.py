@@ -149,11 +149,10 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
-# Настройки для статических файлов в режиме разработки
-if DEBUG:
-    STATICFILES_DIRS = [
-        os.path.join(BASE_DIR, 'staticfiles'),
-    ]
+# Проектные статические файлы нужны и dev-серверу, и collectstatic в production.
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'staticfiles'),
+]
 
 # Настройки для медиа-файлов (скриншоты сделок)
 MEDIA_URL = '/media/'
