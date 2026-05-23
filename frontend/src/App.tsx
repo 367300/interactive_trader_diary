@@ -7,6 +7,7 @@ import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
+import InstrumentsRouter from './pages/instruments';
 import StrategiesRouter from './pages/strategies';
 import About from './pages/public/About';
 import Help from './pages/public/Help';
@@ -48,7 +49,7 @@ export default function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/strategies/*" element={<StrategiesRouter />} />
-          <Route path="/instruments/*" element={<Placeholder title="Инструменты" />} />
+          <Route path="/instruments/*" element={<InstrumentsRouter />} />
           <Route path="/trades/*" element={<Placeholder title="Сделки" />} />
           <Route path="/analytics" element={<Placeholder title="Аналитика" />} />
           <Route path="/admin/*" element={<Placeholder title="Администрирование" />} />
