@@ -5,6 +5,7 @@ import Layout from './components/Layout';
 import PublicLayout from './components/PublicLayout';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
+import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
 import About from './pages/public/About';
 import Help from './pages/public/Help';
@@ -43,7 +44,7 @@ export default function App() {
             </RequireAuth>
           }
         >
-          <Route path="/dashboard" element={<Placeholder title="Дашборд" />} />
+          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/strategies/*" element={<Placeholder title="Стратегии" />} />
           <Route path="/instruments/*" element={<Placeholder title="Инструменты" />} />
