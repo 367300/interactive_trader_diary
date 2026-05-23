@@ -132,26 +132,13 @@ services:
       - ./frontend:/app
       - frontend_node_modules:/app/node_modules
     environment:
-      - VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://localhost:8000/api}
-    expose:
-      - "3000"
-    depends_on:
-      - web
-
-  nginx:
-    image: nginx:1.25
+      # Same-origin через Vite-прокси: фронт на :3000 проксирует /api → web:8000.
+      # Перекрыть для иных сценариев можно через .env, но дефолт безопасен и для prod-сборки.
+      - VITE_API_BASE_URL=${VITE_API_BASE_URL:-/api}
     ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - static_data:/app/django_base/static:ro
-      - ./uploads:/app/uploads:ro
-      - ./certbot/www:/var/www/certbot
-      - ./certbot/conf:/etc/letsencrypt
+      - "3000:3000"
     depends_on:
       - web
-      - frontend
 
 volumes:
   postgres_data:
