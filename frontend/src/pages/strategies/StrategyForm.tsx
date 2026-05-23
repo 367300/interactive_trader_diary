@@ -3,14 +3,14 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { strategiesApi } from '../../api/endpoints';
 import { ApiError } from '../../api/client';
 import { useApi } from '../../lib/useApi';
-import type { Strategy, StrategyChoices } from '../../api/types';
+import type { Strategy, StrategyChoices, StrategyType, StrategyInstruments } from '../../api/types';
 import Select from '../../components/Select';
 
 type FormState = {
   name: string;
   description: string;
-  strategy_type: string;
-  instruments: string;
+  strategy_type: StrategyType;
+  instruments: StrategyInstruments;
   is_active: boolean;
 };
 
@@ -105,17 +105,17 @@ export default function StrategyForm() {
         <div className="grid grid-2">
           <div className="form-row">
             <label>Тип стратегии</label>
-            <Select
+            <Select<StrategyType>
               value={form.strategy_type}
-              options={(choicesQ.data?.strategy_types ?? []).map((c) => ({ value: c.value, label: c.label }))}
+              options={(choicesQ.data?.strategy_types ?? []).map((c) => ({ value: c.value as StrategyType, label: c.label }))}
               onChange={(v) => setForm({ ...form, strategy_type: v })}
             />
           </div>
           <div className="form-row">
             <label>Инструменты</label>
-            <Select
+            <Select<StrategyInstruments>
               value={form.instruments}
-              options={(choicesQ.data?.instruments ?? []).map((c) => ({ value: c.value, label: c.label }))}
+              options={(choicesQ.data?.instruments ?? []).map((c) => ({ value: c.value as StrategyInstruments, label: c.label }))}
               onChange={(v) => setForm({ ...form, instruments: v })}
             />
           </div>

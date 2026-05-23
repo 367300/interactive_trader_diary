@@ -9,8 +9,7 @@ export default defineConfig({
     host: '0.0.0.0',
     port: 3000,
     watch: { usePolling: true },
-    // В dev сразу проксируем публичные SEO-страницы и админку на Django,
-    // чтобы заходить на http://localhost:3000 как на единый сайт.
+    allowedHosts: ['localhost', 'midas-hand.ru', 'www.midas-hand.ru', 'frontend'],
     proxy: {
       '^/$': { target: django, changeOrigin: true },
       '/about': { target: django, changeOrigin: true },

@@ -43,7 +43,6 @@ export const strategiesApi = {
 };
 
 export interface InstrumentListParams {
-  [key: string]: string | number | null | undefined;
   page?: number;
   search?: string;
   type?: 'STOCK' | 'FUTURES';
