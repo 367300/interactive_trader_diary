@@ -1,124 +1,85 @@
-from django.shortcuts import render, redirect
-from django.contrib.auth import login, logout, authenticate
-from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django.contrib import messages
-from django.views.decorators.http import require_http_methods
-from django.views.decorators.csrf import csrf_exempt
-from django.utils.decorators import method_decorator
-from django.views.generic import TemplateView
-from django.urls import reverse_lazy
-from django.contrib.auth.views import LoginView
-from .models import TraderProfile
-from .forms import LoginUsernameOrEmailForm
-from trades.models import Trade
+from rest_framework import status
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.tokens import RefreshToken
+
 from strategies.models import TradingStrategy
+from trades.models import Trade
+
+from .models import TraderProfile
+from .serializers import (
+    LoginSerializer,
+    RegisterSerializer,
+    TraderProfileSerializer,
+    UserSerializer,
+    issue_tokens_for,
+)
 
 
-class CustomLoginView(LoginView):
-    """Кастомная страница входа (логин по имени пользователя или по email)."""
-    template_name = 'accounts/login.html'
-    form_class = LoginUsernameOrEmailForm
-    redirect_authenticated_user = True
+class RegisterView(APIView):
+    """Регистрация: создаёт пользователя и сразу выдаёт токены."""
 
-    def get_success_url(self):
-        return reverse_lazy('core:dashboard')
+    permission_classes = (AllowAny,)
 
-    def form_valid(self, form):
-        messages.success(self.request, f'Добро пожаловать, {form.get_user().username}!')
-        return super().form_valid(form)
+    def post(self, request):
+        serializer = RegisterSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        return Response(issue_tokens_for(user), status=status.HTTP_201_CREATED)
 
 
-@csrf_exempt
-@require_http_methods(["GET", "POST"])
-def register_view(request):
-    """Регистрация нового пользователя"""
-    if request.user.is_authenticated:
-        return redirect('core:dashboard')
-    
-    if request.method == 'POST':
-        username = request.POST.get('username')
-        email = request.POST.get('email')
-        password1 = request.POST.get('password1')
-        password2 = request.POST.get('password2')
-        
-        # Валидация
-        errors = {}
-        
-        if not username:
-            errors['username'] = 'Имя пользователя обязательно'
-        elif User.objects.filter(username=username).exists():
-            errors['username'] = 'Пользователь с таким именем уже существует'
-        
-        if not email:
-            errors['email'] = 'Email обязателен'
-        elif User.objects.filter(email=email).exists():
-            errors['email'] = 'Пользователь с таким email уже существует'
-        
-        if not password1:
-            errors['password1'] = 'Пароль обязателен'
-        elif len(password1) < 8:
-            errors['password1'] = 'Пароль должен содержать минимум 8 символов'
-        
-        if password1 != password2:
-            errors['password2'] = 'Пароли не совпадают'
-        
-        if not errors:
-            # Создаем пользователя
-            user = User.objects.create_user(
-                username=username,
-                email=email,
-                password=password1
-            )
-            
-            # Создаем профиль трейдера
-            TraderProfile.objects.create(user=user)
-            
-            # Авторизуем пользователя
-            login(request, user)
-            messages.success(request, 'Регистрация прошла успешно! Добро пожаловать!')
-            return redirect('core:dashboard')
-        
-        # Если есть ошибки, показываем их
-        for field, error in errors.items():
-            messages.error(request, f'{field}: {error}')
-    
-    return render(request, 'accounts/register.html')
+class LoginView(APIView):
+    """Вход по username или email + выдача access/refresh."""
+
+    permission_classes = (AllowAny,)
+
+    def post(self, request):
+        serializer = LoginSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        return Response(issue_tokens_for(serializer.validated_data['user']))
 
 
-@login_required
-def logout_view(request):
-    """Выход из системы"""
-    logout(request)
-    messages.info(request, 'Вы успешно вышли из системы')
-    return redirect('core:index')
+class LogoutView(APIView):
+    """Помечает refresh-токен как использованный (опционально клиент его передаёт)."""
+
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request):
+        token = request.data.get('refresh')
+        if token:
+            try:
+                RefreshToken(token).blacklist()
+            except (TokenError, AttributeError):
+                # blacklist недоступен без приложения, игнорируем — клиент удалит токен сам
+                pass
+        return Response(status=status.HTTP_205_RESET_CONTENT)
 
 
-@method_decorator(login_required, name='dispatch')
-class ProfileView(TemplateView):
-    """Профиль пользователя"""
-    template_name = 'accounts/profile.html'
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        user = self.request.user
-        
-        try:
-            profile = user.trader_profile
-        except TraderProfile.DoesNotExist:
-            profile = TraderProfile.objects.create(user=user)
+class MeView(APIView):
+    """Текущий пользователь + краткая статистика для UI."""
 
-        # Статистика
+    def get(self, request):
+        user = request.user
+        profile, _ = TraderProfile.objects.get_or_create(user=user)
         trades = Trade.objects.filter(user=user)
-        context['total_trades'] = trades.count()
-        context['closed_trades'] = trades.filter(trade_type='CLOSE').count()
-        context['open_trades'] = context['total_trades'] - context['closed_trades']
+        data = TraderProfileSerializer(profile).data
+        data['stats'] = {
+            'total_trades': trades.filter(parent_trade__isnull=True).count(),
+            'closed_trades': trades.filter(trade_type=Trade.TradeType.CLOSE).count(),
+            'open_trades': trades.filter(parent_trade__isnull=True).count()
+            - trades.filter(trade_type=Trade.TradeType.CLOSE).count(),
+            'active_strategies': TradingStrategy.objects.filter(
+                user=user, is_active=True
+            ).count(),
+        }
+        return Response(data)
 
-        context['count_strategies'] = TradingStrategy.objects.filter(user=user, is_active=True).count()
-        
-        context['profile'] = profile
-        return context
-    
-    def post(self, request, *args, **kwargs):
-        messages.success(request, 'Профиль успешно обновлен')
-        return redirect('accounts:profile')
+    def patch(self, request):
+        user = request.user
+        serializer = UserSerializer(user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
