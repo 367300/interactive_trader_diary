@@ -3,6 +3,9 @@ import { AuthProvider } from './auth/AuthContext';
 import { RequireAuth, RequireGuest } from './auth/RequireAuth';
 import Layout from './components/Layout';
 import PublicLayout from './components/PublicLayout';
+import Login from './pages/auth/Login';
+import Register from './pages/auth/Register';
+import Profile from './pages/Profile';
 import About from './pages/public/About';
 import Help from './pages/public/Help';
 import Landing from './pages/public/Landing';
@@ -26,11 +29,11 @@ export default function App() {
           <Route path="/help" element={<Help />} />
           <Route
             path="/login"
-            element={<RequireGuest><Placeholder title="Вход" /></RequireGuest>}
+            element={<RequireGuest><Login /></RequireGuest>}
           />
           <Route
             path="/register"
-            element={<RequireGuest><Placeholder title="Регистрация" /></RequireGuest>}
+            element={<RequireGuest><Register /></RequireGuest>}
           />
         </Route>
         <Route
@@ -41,7 +44,7 @@ export default function App() {
           }
         >
           <Route path="/dashboard" element={<Placeholder title="Дашборд" />} />
-          <Route path="/profile" element={<Placeholder title="Профиль" />} />
+          <Route path="/profile" element={<Profile />} />
           <Route path="/strategies/*" element={<Placeholder title="Стратегии" />} />
           <Route path="/instruments/*" element={<Placeholder title="Инструменты" />} />
           <Route path="/trades/*" element={<Placeholder title="Сделки" />} />
