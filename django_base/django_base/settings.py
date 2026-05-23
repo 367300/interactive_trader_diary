@@ -228,3 +228,7 @@ CORS_ALLOWED_ORIGINS = config(
     cast=Csv(),
 )
 CORS_ALLOW_CREDENTIALS = True
+
+# Базовый URL React-фронтенда — используется в публичных Django-шаблонах для ссылок на SPA.
+# В dev указываем явный хост, в prod оставляем пустым (тогда ссылки относительные и работают через nginx).
+FRONTEND_URL = config('FRONTEND_URL', default='')

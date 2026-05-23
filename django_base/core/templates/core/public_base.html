@@ -1,0 +1,89 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark">
+    <meta name="theme-color" content="#070b18">
+    <link rel="icon" href="{% static 'favicon.svg' %}" type="image/svg+xml">
+    <title>{% block title %}Интерактивный дневник трейдера{% endblock %}</title>
+    <meta name="description" content="{% block meta_description %}Интерактивный дневник трейдера — учёт сделок, стратегий и аналитика для трейдеров на Мосбирже.{% endblock %}">
+
+    <link href="{% static 'vendor/bootstrap/5.3.2/css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'vendor/bootstrap-icons/1.11.1/font/bootstrap-icons.css' %}" rel="stylesheet">
+    <link href="{% static 'vendor/inter/v20/inter.css' %}" rel="stylesheet">
+    <link href="{% static 'core/css/main.css' %}" rel="stylesheet">
+    <style>
+        .reveal {
+            opacity: 0;
+            transform: translateY(28px);
+            transition: opacity 0.65s ease, transform 0.65s ease;
+        }
+        .reveal.is-visible {
+            opacity: 1;
+            transform: none;
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .reveal { opacity: 1; transform: none; transition: none; }
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="app-public">
+
+<header class="public-topbar">
+    <a class="public-brand" href="{% url 'index' %}">
+        <span class="app-brand-mark"><i class="bi bi-graph-up-arrow"></i></span>
+        <span>Дневник трейдера</span>
+    </a>
+    <nav class="public-nav">
+        <a href="{% url 'about' %}">О проекте</a>
+        <a href="{% url 'help' %}">Помощь</a>
+    </nav>
+    <div class="public-actions">
+        <a class="public-link" href="{{ frontend_url }}/login">Войти</a>
+        <a class="public-cta" href="{{ frontend_url }}/register">Создать аккаунт <i class="bi bi-arrow-right"></i></a>
+    </div>
+</header>
+
+<main class="public-content">
+    {% block content %}{% endblock %}
+</main>
+
+<footer class="public-footer">
+    <div>&copy; <span id="footer-year"></span> Дневник трейдера</div>
+    <div class="app-footer-links">
+        <a href="{% url 'about' %}">О проекте</a>
+        <a href="{% url 'help' %}">Помощь</a>
+    </div>
+    <script>document.getElementById('footer-year').textContent = new Date().getFullYear();</script>
+</footer>
+
+<script src="{% static 'vendor/bootstrap/5.3.2/js/bootstrap.bundle.min.js' %}"></script>
+<script src="{% static 'core/js/main.js' %}"></script>
+<script>
+(function () {
+    var nodes = document.querySelectorAll('main section, main .quote-band, main .card');
+    nodes.forEach(function (el, i) {
+        el.classList.add('reveal');
+        el.style.transitionDelay = (i % 4) * 0.06 + 's';
+    });
+    if (!('IntersectionObserver' in window)) {
+        nodes.forEach(function (el) { el.classList.add('is-visible'); });
+        return;
+    }
+    var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+            if (e.isIntersecting) {
+                e.target.classList.add('is-visible');
+                io.unobserve(e.target);
+            }
+        });
+    }, { rootMargin: '0px 0px -8% 0px', threshold: 0.08 });
+    nodes.forEach(function (el) { io.observe(el); });
+})();
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

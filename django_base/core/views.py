@@ -1,3 +1,5 @@
+from django.conf import settings
+from django.views.generic import TemplateView
 from rest_framework import status
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
@@ -11,6 +13,27 @@ from trades.utils import (
     annotate_recent_trades_with_pips,
     calculate_user_aggregate_stats,
 )
+
+
+class PublicTemplateView(TemplateView):
+    """Публичный шаблон с пробросом frontend_url для ссылок на SPA."""
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['frontend_url'] = getattr(settings, 'FRONTEND_URL', '')
+        return context
+
+
+class IndexView(PublicTemplateView):
+    template_name = 'core/index.html'
+
+
+class AboutView(PublicTemplateView):
+    template_name = 'core/about.html'
+
+
+class HelpView(PublicTemplateView):
+    template_name = 'core/help.html'
 
 
 class DashboardView(APIView):

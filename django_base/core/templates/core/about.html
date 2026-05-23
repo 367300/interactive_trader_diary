@@ -1,0 +1,343 @@
+{% extends 'core/public_base.html' %}
+{% load static %}
+
+{% block title %}О проекте — Дневник трейдера{% endblock %}
+{% block topbar_eyebrow %}О проекте{% endblock %}
+{% block topbar_title %}Зачем мы это сделали{% endblock %}
+{% block topbar_actions %}{% endblock %}
+
+{% block content %}
+<div class="about-page">
+    <div class="row">
+        <div class="col-lg-9 mx-auto">
+
+            <!-- Hero -->
+            <section class="about-hero text-center mb-5">
+                <span class="section-eyebrow">Миссия</span>
+                <h1 class="display-5 fw-bold mb-3 about-h1">
+                    Перевести вашу торговлю с&nbsp;языка <em>надежды</em><br>
+                    на&nbsp;язык <em>данных</em>.
+                </h1>
+                <p class="lead text-muted mx-auto" style="max-width: 720px;">
+                    «Дневник трейдера» создан для людей, которые торгуют не&nbsp;ради адреналина,
+                    а&nbsp;ради результата. Никакого инфоцыганства, никакого «секрета успеха».
+                    Только инструменты, которые превращают каждую вашу сделку в&nbsp;следующий
+                    осознанный шаг.
+                </p>
+            </section>
+
+            <!-- Стат-пугалка -->
+            <section class="about-stat mb-5">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="stat-block">
+                            <div class="stat-big">80%</div>
+                            <div class="stat-text">трейдеров теряют депозит<br>за&nbsp;первый год</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-block">
+                            <div class="stat-big">3 из 10</div>
+                            <div class="stat-text">ведут систематический<br>учёт сделок</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-block">
+                            <div class="stat-big">≈ 0</div>
+                            <div class="stat-text">случайно совпало?<br>Мы тоже думаем, что&nbsp;нет.</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Манифест -->
+            <section class="about-card mb-4">
+                <h2 class="h4 mb-3">
+                    <i class="bi bi-fire text-warning me-2"></i>Манифест
+                </h2>
+                <p>
+                    Рынок — это не казино, но и не лестница в&nbsp;небо. Это вероятностная среда,
+                    в&nbsp;которой выигрывает тот, кто <strong>повторяет правильные действия</strong>
+                    и&nbsp;<strong>понимает свои ошибки</strong>. Невозможно стать дисциплинированным,
+                    если ты не помнишь, что делал вчера.
+                </p>
+                <p class="mb-0">
+                    Дневник — не модный аксессуар. Это базовая гигиена профессии, такая же,
+                    как стоп-лосс. Без неё <em>возможны</em> отдельные выигрыши, но&nbsp;невозможна
+                    карьера.
+                </p>
+            </section>
+
+            <!-- Ценности -->
+            <section class="about-card mb-4">
+                <h2 class="h4 mb-3">
+                    <i class="bi bi-stars text-info me-2"></i>Что мы ценим
+                </h2>
+                <div class="row g-4">
+                    <div class="col-md-4">
+                        <div class="value-block">
+                            <div class="value-icon"><i class="bi bi-shield-check"></i></div>
+                            <h6>Честность данных</h6>
+                            <p>Метрики считаются по реальным закрытым сделкам. Без приписок,
+                            «прогнозных PnL» и&nbsp;маркетинговых округлений.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="value-block">
+                            <div class="value-icon"><i class="bi bi-stopwatch"></i></div>
+                            <h6>Уважение к времени</h6>
+                            <p>На запись сделки уходит минута. На&nbsp;настройку — ноль.
+                            Вы пришли торговать, а&nbsp;не&nbsp;заполнять формы.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="value-block">
+                            <div class="value-icon"><i class="bi bi-lock"></i></div>
+                            <h6>Прайвеси по умолчанию</h6>
+                            <p>Ваш дневник — это&nbsp;ваш дневник. Без рекламных интеграций,
+                            без «лидерборда», без шеринга в&nbsp;ленту.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Цитата -->
+            <section class="about-quote my-5">
+                <i class="bi bi-quote quote-mark"></i>
+                <p>«Лучшие трейдеры — параноидальные счетоводы. Они&nbsp;знают каждый свой просчёт,
+                каждый шаг и&nbsp;каждый рубль, что прошёл через&nbsp;их&nbsp;руки.»</p>
+                <footer>Александр Эл<span class="muted">дер · «Как играть и выигрывать на бирже»</span></footer>
+            </section>
+
+            <!-- Кому подойдёт -->
+            <section class="about-card mb-4">
+                <h2 class="h4 mb-3">
+                    <i class="bi bi-people text-success me-2"></i>Кому подойдёт
+                </h2>
+                <ul class="audience-list">
+                    <li><b>Начинающим</b> — увидеть свои реальные паттерны до&nbsp;того, как закончится депозит.</li>
+                    <li><b>Дей-трейдерам</b> — разобрать день по&nbsp;входам, найти&nbsp;лучшее время и&nbsp;худший сетап.</li>
+                    <li><b>Свинг-трейдерам</b> — следить за&nbsp;несколькими стратегиями одновременно, не&nbsp;путая&nbsp;их.</li>
+                    <li><b>Алготрейдерам</b> — фиксировать ручные «исключения» и&nbsp;понимать, мешают&nbsp;они&nbsp;системе или помогают.</li>
+                    <li><b>Тем, кто учит других</b> — иметь живой пример своей торговли вместо абстрактных схем.</li>
+                </ul>
+            </section>
+
+            <!-- Принципы продукта -->
+            <section class="about-card mb-5">
+                <h2 class="h4 mb-3">
+                    <i class="bi bi-compass text-primary me-2"></i>Принципы продукта
+                </h2>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="principle-row">
+                            <span class="principle-num">01</span>
+                            <div>
+                                <h6>Меньше — лучше</h6>
+                                <p>Шесть честных метрик, а&nbsp;не&nbsp;шестьдесят красивых графиков.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="principle-row">
+                            <span class="principle-num">02</span>
+                            <div>
+                                <h6>Структура сделки — а не строки</h6>
+                                <p>Усреднения, частичные закрытия и&nbsp;фиксации связаны логикой, а&nbsp;не&nbsp;собраны в&nbsp;кучу.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="principle-row">
+                            <span class="principle-num">03</span>
+                            <div>
+                                <h6>Тёмная тема по умолчанию</h6>
+                                <p>Долгие вечерние разборы — без выжженных глаз.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="principle-row">
+                            <span class="principle-num">04</span>
+                            <div>
+                                <h6>Скорость записи</h6>
+                                <p>Поиск по тикеру — за&nbsp;три буквы. Вход и&nbsp;выход — за&nbsp;30&nbsp;секунд.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="text-center pb-5">
+                {% if user.is_authenticated %}
+                    <a href="{{ frontend_url }}/dashboard" class="btn btn-primary btn-lg">
+                        <i class="bi bi-speedometer2 me-2"></i>К дашборду
+                    </a>
+                {% else %}
+                    <a href="{{ frontend_url }}/register" class="btn btn-primary btn-lg me-2">
+                        <i class="bi bi-rocket-takeoff me-2"></i>Начать вести дневник
+                    </a>
+                    <a href="{% url 'index' %}" class="btn btn-outline-secondary btn-lg">
+                        <i class="bi bi-arrow-left me-2"></i>На главную
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.about-page { padding: 12px 0; }
+.about-hero { padding: 18px 0 8px; }
+.about-h1 em {
+    font-style: italic;
+    background: linear-gradient(90deg, var(--mg-cyan), var(--mg-blue), var(--mg-purple));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 500;
+}
+
+.section-eyebrow {
+    display: inline-block;
+    padding: 4px 12px;
+    background: rgba(92, 212, 255, 0.10);
+    color: var(--mg-cyan);
+    border: 1px solid rgba(92, 212, 255, 0.25);
+    border-radius: 999px;
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: 14px;
+}
+
+.stat-block {
+    background: var(--mg-glass);
+    border: 1px solid var(--mg-glass-brd);
+    border-radius: 14px;
+    padding: 22px 20px;
+    text-align: center;
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    height: 100%;
+}
+.stat-big {
+    font-family: "Playfair Display", Georgia, serif;
+    font-size: 44px;
+    font-weight: 600;
+    line-height: 1;
+    background: linear-gradient(90deg, #fff, #a8c4ff);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.stat-text {
+    margin-top: 10px;
+    font-size: 13.5px;
+    color: var(--mg-text-soft);
+    line-height: 1.45;
+}
+
+.about-card {
+    background: var(--mg-glass);
+    border: 1px solid var(--mg-glass-brd);
+    border-radius: 16px;
+    padding: 28px 32px;
+    backdrop-filter: blur(20px) saturate(150%);
+    -webkit-backdrop-filter: blur(20px) saturate(150%);
+    color: var(--mg-text-soft);
+    box-shadow: var(--mg-shadow-sm);
+}
+.about-card h2 { color: var(--mg-text); }
+.about-card p { line-height: 1.65; }
+
+.value-block .value-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, rgba(92, 212, 255, 0.18), rgba(90, 140, 255, 0.10));
+    color: var(--mg-cyan);
+    display: grid;
+    place-items: center;
+    font-size: 18px;
+    margin-bottom: 12px;
+}
+.value-block h6 { color: var(--mg-text); font-weight: 600; }
+.value-block p { font-size: 13.5px; line-height: 1.55; margin: 0; }
+
+.about-quote {
+    text-align: center;
+    padding: 40px 20px;
+    border-top: 1px solid var(--mg-glass-brd);
+    border-bottom: 1px solid var(--mg-glass-brd);
+    background: radial-gradient(700px 200px at 50% 50%, rgba(189, 147, 249, 0.08), transparent 65%);
+}
+.about-quote .quote-mark {
+    font-size: 36px;
+    color: var(--mg-blue);
+    opacity: 0.55;
+}
+.about-quote p {
+    font-family: "Playfair Display", Georgia, serif;
+    font-size: clamp(18px, 2.1vw, 24px);
+    line-height: 1.4;
+    color: var(--mg-text);
+    font-style: italic;
+    margin: 14px auto 12px;
+    max-width: 760px;
+    letter-spacing: -0.005em;
+}
+.about-quote footer { color: var(--mg-cyan); font-weight: 600; font-size: 13px; }
+.about-quote footer .muted { color: var(--mg-muted); font-weight: 400; }
+
+.audience-list { list-style: none; padding-left: 0; margin: 0; }
+.audience-list li {
+    position: relative;
+    padding: 10px 0 10px 30px;
+    border-bottom: 1px dashed rgba(120, 150, 220, 0.18);
+    color: var(--mg-text-soft);
+    line-height: 1.6;
+}
+.audience-list li:last-child { border-bottom: none; }
+.audience-list li::before {
+    content: "";
+    position: absolute;
+    left: 6px;
+    top: 18px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--mg-cyan);
+    box-shadow: 0 0 8px var(--mg-cyan);
+}
+.audience-list li b { color: var(--mg-text); margin-right: 4px; }
+
+.principle-row {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    padding: 14px 16px;
+    background: var(--mg-glass-soft);
+    border: 1px solid var(--mg-glass-brd);
+    border-radius: 12px;
+}
+.principle-num {
+    font-family: "Playfair Display", Georgia, serif;
+    font-size: 26px;
+    color: var(--mg-cyan);
+    font-weight: 500;
+    line-height: 1;
+    opacity: 0.7;
+    min-width: 40px;
+}
+.principle-row h6 { color: var(--mg-text); font-weight: 600; margin: 0 0 4px; }
+.principle-row p { color: var(--mg-muted); font-size: 13px; line-height: 1.5; margin: 0; }
+
+@media (max-width: 575.98px) {
+    .about-card { padding: 20px 18px; }
+}
+</style>
+{% endblock %}

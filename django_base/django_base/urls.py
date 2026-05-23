@@ -20,15 +20,22 @@ from django.contrib import admin
 from django.urls import path, include
 from django.views.generic import RedirectView
 
+from core.views import AboutView, HelpView, IndexView
+
 urlpatterns = [
-    # REST API (единственная точка взаимодействия с фронтендом и мобильными клиентами)
+    # Публичные SEO-страницы (Django-шаблоны)
+    path('', IndexView.as_view(), name='index'),
+    path('about/', AboutView.as_view(), name='about'),
+    path('help/', HelpView.as_view(), name='help'),
+
+    # REST API (единственная точка взаимодействия с SPA и мобильными клиентами)
     path('api/auth/', include('accounts.urls', namespace='accounts')),
     path('api/strategies/', include('strategies.urls', namespace='strategies')),
     path('api/instruments/', include('instruments.urls', namespace='instruments')),
     path('api/trades/', include('trades.urls', namespace='trades')),
     path('api/', include('core.urls', namespace='core')),
     path('favicon.ico', RedirectView.as_view(url=f'{settings.STATIC_URL}favicon.svg', permanent=True)),
-    # Django admin-панель (единственный серверный UI)
+    # Django admin-панель
     path('admin/', admin.site.urls),
 ]
 
