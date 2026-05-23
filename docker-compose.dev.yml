@@ -40,6 +40,7 @@ services:
     volumes:
       - ./django_base:/app/django_base
       - ./uploads:/app/uploads
+      - static_data:/app/django_base/static
     command: >
       python -Xfrozen_modules=off -m debugpy --listen 0.0.0.0:5678 -m uvicorn django_base.asgi:application --host 0.0.0.0 --port 8000 --reload
     env_file:
@@ -50,6 +51,7 @@ services:
       - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS}
       - DJANGO_LANGUAGE_CODE=${DJANGO_LANGUAGE_CODE}
       - DJANGO_TIME_ZONE=${DJANGO_TIME_ZONE}
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
@@ -121,5 +123,24 @@ services:
     depends_on:
       - db
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+    environment:
+      # Same-origin через Vite-прокси: фронт на :3000 проксирует /api → web:8000.
+      # Перекрыть для иных сценариев можно через .env, но дефолт безопасен и для prod-сборки.
+      - VITE_API_BASE_URL=${VITE_API_BASE_URL:-/api}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - web
+
 volumes:
   postgres_data:
+  frontend_node_modules:
+  static_data:

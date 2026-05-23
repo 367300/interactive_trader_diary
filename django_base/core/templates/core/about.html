@@ -1,4 +1,4 @@
-{% extends 'core/base.html' %}
+{% extends 'core/public_base.html' %}
 {% load static %}
 
 {% block title %}О проекте — Дневник трейдера{% endblock %}
@@ -170,14 +170,14 @@
 
             <div class="text-center pb-5">
                 {% if user.is_authenticated %}
-                    <a href="{% url 'core:dashboard' %}" class="btn btn-primary btn-lg">
+                    <a href="{{ frontend_url }}/dashboard" class="btn btn-primary btn-lg">
                         <i class="bi bi-speedometer2 me-2"></i>К дашборду
                     </a>
                 {% else %}
-                    <a href="{% url 'accounts:register' %}" class="btn btn-primary btn-lg me-2">
+                    <a href="{{ frontend_url }}/register" class="btn btn-primary btn-lg me-2">
                         <i class="bi bi-rocket-takeoff me-2"></i>Начать вести дневник
                     </a>
-                    <a href="{% url 'core:index' %}" class="btn btn-outline-secondary btn-lg">
+                    <a href="{% url 'index' %}" class="btn btn-outline-secondary btn-lg">
                         <i class="bi bi-arrow-left me-2"></i>На главную
                     </a>
                 {% endif %}

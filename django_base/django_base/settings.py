@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+from datetime import timedelta
 from typing import List
 from decouple import config, Csv
 import os
@@ -57,6 +58,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.postgres',
     'channels',
+    'rest_framework',
+    'corsheaders',
+    'django_filters',
     'core',
     'accounts',
     'strategies',
@@ -67,6 +71,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -194,3 +199,36 @@ THUMBNAIL_BASEDIR = 'thumbnails'
 THUMBNAIL_QUALITY = 85
 THUMBNAIL_PRESERVE_EXTENSIONS = ('png', 'gif', 'jpg', 'jpeg')
 LIMIT_SIZE_MB = 2
+
+# Django REST Framework + JWT
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+    'DEFAULT_FILTER_BACKENDS': (
+        'django_filters.rest_framework.DjangoFilterBackend',
+    ),
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 24,
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=14),
+    'AUTH_HEADER_TYPES': ('Bearer',),
+}
+
+# CORS: разрешаем фронтенду (отдельный сервис) обращаться к API
+CORS_ALLOWED_ORIGINS = config(
+    'CORS_ALLOWED_ORIGINS',
+    default='http://localhost:3000,http://127.0.0.1:3000',
+    cast=Csv(),
+)
+CORS_ALLOW_CREDENTIALS = True
+
+# Базовый URL React-фронтенда — используется в публичных Django-шаблонах для ссылок на SPA.
+# В dev указываем явный хост, в prod оставляем пустым (тогда ссылки относительные и работают через nginx).
+FRONTEND_URL = config('FRONTEND_URL', default='')
