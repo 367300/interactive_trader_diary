@@ -4,6 +4,7 @@ import { strategiesApi } from '../../api/endpoints';
 import { ApiError } from '../../api/client';
 import { useApi } from '../../lib/useApi';
 import type { Strategy, StrategyChoices } from '../../api/types';
+import Select from '../../components/Select';
 
 type FormState = {
   name: string;
@@ -104,25 +105,19 @@ export default function StrategyForm() {
         <div className="grid grid-2">
           <div className="form-row">
             <label>Тип стратегии</label>
-            <select
+            <Select
               value={form.strategy_type}
-              onChange={(e) => setForm({ ...form, strategy_type: e.target.value })}
-            >
-              {choicesQ.data?.strategy_types.map((c) => (
-                <option key={c.value} value={c.value}>{c.label}</option>
-              ))}
-            </select>
+              options={(choicesQ.data?.strategy_types ?? []).map((c) => ({ value: c.value, label: c.label }))}
+              onChange={(v) => setForm({ ...form, strategy_type: v })}
+            />
           </div>
           <div className="form-row">
             <label>Инструменты</label>
-            <select
+            <Select
               value={form.instruments}
-              onChange={(e) => setForm({ ...form, instruments: e.target.value })}
-            >
-              {choicesQ.data?.instruments.map((c) => (
-                <option key={c.value} value={c.value}>{c.label}</option>
-              ))}
-            </select>
+              options={(choicesQ.data?.instruments ?? []).map((c) => ({ value: c.value, label: c.label }))}
+              onChange={(v) => setForm({ ...form, instruments: v })}
+            />
           </div>
         </div>
         <div className="form-row">

@@ -4,6 +4,7 @@ import { instrumentsApi, type InstrumentListParams } from '../../api/endpoints';
 import { useApi } from '../../lib/useApi';
 import { staticUrl } from '../../lib/urls';
 import type { FuturesListItem, InstrumentListItem, Taxonomy } from '../../api/types';
+import Select from '../../components/Select';
 
 const PAGE_SIZE = 24;
 
@@ -80,59 +81,68 @@ export default function InstrumentList() {
           </div>
           <div className="form-row" style={{ marginBottom: 0 }}>
             <label>Тип списка</label>
-            <select
+            <Select
               value={params.type ?? 'STOCK'}
-              onChange={(e) => updateParam('type', e.target.value as 'STOCK' | 'FUTURES')}
-            >
-              <option value="STOCK">Акции</option>
-              <option value="FUTURES">Фьючерсы</option>
-            </select>
+              options={[
+                { value: 'STOCK', label: 'Акции' },
+                { value: 'FUTURES', label: 'Фьючерсы' },
+              ]}
+              onChange={(v) => updateParam('type', v as 'STOCK' | 'FUTURES')}
+            />
           </div>
         </div>
 
         <div className="grid grid-4" style={{ marginTop: 14 }}>
           <div className="form-row" style={{ marginBottom: 0 }}>
             <label>Сектор</label>
-            <select
+            <Select<number | ''>
               value={params.sector ?? ''}
-              onChange={(e) => updateParam('sector', e.target.value ? Number(e.target.value) : undefined)}
-            >
-              <option value="">Все</option>
-              {taxonomy?.sectors.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-            </select>
+              options={[
+                { value: '', label: 'Все' },
+                ...(taxonomy?.sectors.map((s) => ({ value: s.id, label: s.name })) ?? []),
+              ]}
+              onChange={(v) => updateParam('sector', v === '' ? undefined : Number(v))}
+              searchable={(taxonomy?.sectors.length ?? 0) > 8}
+            />
           </div>
           <div className="form-row" style={{ marginBottom: 0 }}>
             <label>Группа индустрий</label>
-            <select
+            <Select<number | ''>
               value={params.industry_group ?? ''}
-              onChange={(e) => updateParam('industry_group', e.target.value ? Number(e.target.value) : undefined)}
+              options={[
+                { value: '', label: 'Все' },
+                ...industryGroups.map((g) => ({ value: g.id, label: g.name })),
+              ]}
+              onChange={(v) => updateParam('industry_group', v === '' ? undefined : Number(v))}
               disabled={!params.sector}
-            >
-              <option value="">Все</option>
-              {industryGroups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
-            </select>
+              searchable={industryGroups.length > 8}
+            />
           </div>
           <div className="form-row" style={{ marginBottom: 0 }}>
             <label>Индустрия</label>
-            <select
+            <Select<number | ''>
               value={params.industry ?? ''}
-              onChange={(e) => updateParam('industry', e.target.value ? Number(e.target.value) : undefined)}
+              options={[
+                { value: '', label: 'Все' },
+                ...industries.map((i) => ({ value: i.id, label: i.name })),
+              ]}
+              onChange={(v) => updateParam('industry', v === '' ? undefined : Number(v))}
               disabled={!params.industry_group}
-            >
-              <option value="">Все</option>
-              {industries.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
-            </select>
+              searchable={industries.length > 8}
+            />
           </div>
           <div className="form-row" style={{ marginBottom: 0 }}>
             <label>Подгруппа</label>
-            <select
+            <Select<number | ''>
               value={params.sub_industry ?? ''}
-              onChange={(e) => updateParam('sub_industry', e.target.value ? Number(e.target.value) : undefined)}
+              options={[
+                { value: '', label: 'Все' },
+                ...subIndustries.map((s) => ({ value: s.id, label: s.name })),
+              ]}
+              onChange={(v) => updateParam('sub_industry', v === '' ? undefined : Number(v))}
               disabled={!params.industry}
-            >
-              <option value="">Все</option>
-              {subIndustries.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-            </select>
+              searchable={subIndustries.length > 8}
+            />
           </div>
         </div>
       </div>

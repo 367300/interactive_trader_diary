@@ -5,6 +5,7 @@ import { instrumentsApi, strategiesApi, tradesApi } from '../../api/endpoints';
 import { useApi } from '../../lib/useApi';
 import { isoToInput, nowForInput, inputToIso } from '../../lib/datetime';
 import type { EmotionalState, InstrumentListItem, Trade, TradeAnalysis } from '../../api/types';
+import Select from '../../components/Select';
 
 interface FormState {
   strategy: string;
@@ -74,6 +75,21 @@ export default function TradeForm() {
     () => (isEdit ? tradesApi.get(id!) : Promise.resolve(null)),
     [id],
   );
+
+  const strategyOptions = useMemo(() => {
+    const list = strategiesQ.data?.results ?? [];
+    return [
+      { value: '', label: 'Без стратегии' },
+      ...list
+        .filter((s) => s.is_active || String(s.id) === form.strategy)
+        .map((s) => ({ value: String(s.id), label: s.name })),
+    ];
+  }, [strategiesQ.data, form.strategy]);
+
+  const directionOptions = [
+    { value: 'LONG', label: 'Лонг' },
+    { value: 'SHORT', label: 'Шорт' },
+  ];
 
   useEffect(() => {
     if (editQ.data) {
@@ -176,15 +192,13 @@ export default function TradeForm() {
         <div className="grid grid-2">
           <div className="form-row">
             <label>Стратегия</label>
-            <select
+            <Select
               value={form.strategy}
-              onChange={(e) => setForm({ ...form, strategy: e.target.value })}
-            >
-              <option value="">Без стратегии</option>
-              {strategiesQ.data?.results
-                .filter((s) => s.is_active || String(s.id) === form.strategy)
-                .map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-            </select>
+              options={strategyOptions}
+              onChange={(v) => setForm({ ...form, strategy: v })}
+              placeholder="Без стратегии"
+              searchable={strategyOptions.length > 8}
+            />
             {errors.strategy && <div className="error">{errors.strategy}</div>}
           </div>
 
@@ -238,13 +252,11 @@ export default function TradeForm() {
           </div>
           <div className="form-row">
             <label>Направление</label>
-            <select
+            <Select
               value={form.direction}
-              onChange={(e) => setForm({ ...form, direction: e.target.value as 'LONG' | 'SHORT' })}
-            >
-              <option value="LONG">Лонг</option>
-              <option value="SHORT">Шорт</option>
-            </select>
+              options={directionOptions}
+              onChange={(v) => setForm({ ...form, direction: v as 'LONG' | 'SHORT' })}
+            />
           </div>
           <div className="form-row">
             <label>Объём от капитала, %</label>
@@ -321,14 +333,12 @@ export default function TradeForm() {
         <div className="grid grid-2">
           <div className="form-row">
             <label>Эмоциональное состояние</label>
-            <select
+            <Select
               value={form.emotional_state}
-              onChange={(e) => setForm({ ...form, emotional_state: e.target.value as EmotionalState })}
-            >
-              {emotionChoices.map((c) => (
-                <option key={c.value || 'none'} value={c.value}>{c.label}</option>
-              ))}
-            </select>
+              options={emotionChoices.map((c) => ({ value: c.value, label: c.label }))}
+              onChange={(v) => setForm({ ...form, emotional_state: v as EmotionalState })}
+              placeholder="Не выбрано"
+            />
           </div>
           <div className="form-row">
             <label>Теги (через запятую)</label>

@@ -1,5 +1,6 @@
 import { FormEvent, useState } from 'react';
 import { coreApi } from '../../api/endpoints';
+import Select from '../../components/Select';
 
 export default function InstrumentsLoad() {
   const [type, setType] = useState('STOCK');
@@ -40,10 +41,14 @@ export default function InstrumentsLoad() {
         {error && <div className="flash flash-error">{error}</div>}
         <div className="form-row">
           <label>Тип инструмента</label>
-          <select value={type} onChange={(e) => setType(e.target.value)}>
-            <option value="STOCK">Акции</option>
-            <option value="FUTURES">Фьючерсы</option>
-          </select>
+          <Select
+            value={type}
+            options={[
+              { value: 'STOCK', label: 'Акции' },
+              { value: 'FUTURES', label: 'Фьючерсы' },
+            ]}
+            onChange={setType}
+          />
         </div>
         <div className="form-row">
           <label>
