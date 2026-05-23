@@ -1,0 +1,183 @@
+# Prod-стек под Dokploy.
+#
+# Отличия от docker-compose.prod.yml (классический deploy «руками»):
+#  - SSL и Let's Encrypt больше не наши — это делает Traefik из Dokploy.
+#  - Сертификаты, certbot и 443-листенер удалены, nginx работает только по HTTP внутри.
+#  - Опубликованных портов на хосте нет: всё ходит через Traefik по `dokploy-network`.
+#  - Маршрутизацию доменов задаём в UI Dokploy: домен → сервис `nginx`, порт 80,
+#    HTTPS + Let's Encrypt. Dokploy сам инжектит нужные Traefik-labels при деплое.
+#  - Если хочется ручные labels (без UI) — см. блок-комментарий внизу.
+
+services:
+  db:
+    image: postgres:17.5
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:4.1.1-management
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  redis:
+    image: redis:8
+    restart: unless-stopped
+
+  web:
+    build: .
+    image: django-base:latest
+    working_dir: /app/django_base
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             python manage.py collectstatic --noinput &&
+             uvicorn django_base.asgi:application --host 0.0.0.0 --port 8000"
+    env_file:
+      - .env
+    environment:
+      - PYTHONPATH=/app/django_base
+      - DJANGO_DEBUG=${DJANGO_DEBUG}
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
+      - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS}
+      - CSRF_TRUSTED_ORIGINS=${CSRF_TRUSTED_ORIGINS}
+      - DJANGO_LANGUAGE_CODE=${DJANGO_LANGUAGE_CODE}
+      - DJANGO_TIME_ZONE=${DJANGO_TIME_ZONE}
+      - FRONTEND_URL=${FRONTEND_URL:-}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+    volumes:
+      - static_data:/app/django_base/static
+      - ./uploads:/app/uploads:ro
+    depends_on:
+      - db
+      - rabbitmq
+      - redis
+    restart: unless-stopped
+
+  celery:
+    build: .
+    image: django-base:latest
+    working_dir: /app/django_base
+    command: celery -A django_base worker --loglevel=info
+    volumes:
+      - ./uploads:/app/uploads:ro
+    env_file:
+      - .env
+    environment:
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+      args:
+        # Same-origin: фронт зовёт `/api`, nginx внутри стека отдаст это Django.
+        VITE_API_BASE_URL: /api
+    image: trader-diary-frontend:latest
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:1.25
+    # Никаких `ports:` на хост — Traefik снаружи доходит до контейнера по dokploy-network.
+    volumes:
+      - ./nginx.dokploy.conf:/etc/nginx/nginx.conf:ro
+      - static_data:/app/django_base/static:ro
+      - ./uploads:/app/uploads:ro
+    expose:
+      - "80"
+    depends_on:
+      - web
+      - frontend
+    restart: unless-stopped
+    networks:
+      - default
+      - dokploy-network
+
+  flower:
+    image: mher/flower:2.0.1
+    environment:
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - FLOWER_BASIC_AUTH=${FLOWER_BASIC_AUTH}
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      celery:
+        condition: service_started
+    restart: unless-stopped
+
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+    depends_on:
+      - db
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  static_data:
+
+# `default` — внутренняя сеть стека (создаётся docker compose'ом автоматически),
+# по ней web/frontend/celery/db общаются друг с другом и с nginx.
+# `dokploy-network` — внешняя сеть Dokploy/Traefik. К ней подключаем только
+# тот сервис, который должен принимать публичный трафик (nginx).
+networks:
+  dokploy-network:
+    external: true
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ПОДКЛЮЧЕНИЕ ДОМЕНОВ В DOKPLOY (рекомендованный путь — через UI)
+# ─────────────────────────────────────────────────────────────────────────────
+# 1. В Dokploy создать Compose-сервис, указать репозиторий и путь к этому файлу.
+# 2. Установить переменные окружения (DJANGO_SECRET_KEY, POSTGRES_*, RABBITMQ_*,
+#    CELERY_*, FRONTEND_URL=`` (пусто — ссылки в Django-шаблонах относительные),
+#    DJANGO_DEBUG=False, DJANGO_ALLOWED_HOSTS=midas-hand.ru,www.midas-hand.ru,
+#    CSRF_TRUSTED_ORIGINS=https://midas-hand.ru,https://www.midas-hand.ru).
+# 3. Раздел «Domains» → Add Domain:
+#       Host:            midas-hand.ru
+#       Service:         nginx
+#       Container Port:  80
+#       HTTPS:           On
+#       Certificate:     Let's Encrypt
+#    Повторить для www.midas-hand.ru (или оставить только основной — редирект
+#    www → апекс уже зашит в nginx.dokploy.conf).
+# 4. Deploy. Dokploy сам впишет в стек labels Traefik-роутеров на сервис nginx.
+#
+# Альтернативный путь (manual labels) — добавить в секцию nginx, например:
+#   labels:
+#     - traefik.enable=true
+#     - traefik.http.routers.midas-hand.rule=Host(`midas-hand.ru`) || Host(`www.midas-hand.ru`)
+#     - traefik.http.routers.midas-hand.entrypoints=websecure
+#     - traefik.http.routers.midas-hand.tls.certresolver=letsencrypt
+#     - traefik.http.services.midas-hand.loadbalancer.server.port=80
+#     # HTTP → HTTPS:
+#     - traefik.http.routers.midas-hand-http.rule=Host(`midas-hand.ru`) || Host(`www.midas-hand.ru`)
+#     - traefik.http.routers.midas-hand-http.entrypoints=web
+#     - traefik.http.routers.midas-hand-http.middlewares=redirect-to-https
+#     - traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https
+#     - traefik.http.middlewares.redirect-to-https.redirectscheme.permanent=true
