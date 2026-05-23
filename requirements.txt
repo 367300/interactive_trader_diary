@@ -46,3 +46,7 @@ requests==2.32.4
 pandas
 Pillow==10.4.0
 easy-thumbnails==2.10.1
+djangorestframework==3.15.2
+djangorestframework-simplejwt==5.3.1
+django-cors-headers==4.4.0
+django-filter==24.3
