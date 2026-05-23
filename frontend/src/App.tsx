@@ -5,23 +5,16 @@ import Layout from './components/Layout';
 import PublicLayout from './components/PublicLayout';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
+import Analytics from './pages/Analytics';
 import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
+import InstrumentsLoad from './pages/admin/InstrumentsLoad';
 import InstrumentsRouter from './pages/instruments';
 import StrategiesRouter from './pages/strategies';
 import TradesRouter from './pages/trades';
 import About from './pages/public/About';
 import Help from './pages/public/Help';
 import Landing from './pages/public/Landing';
-
-function Placeholder({ title }: { title: string }) {
-  return (
-    <section>
-      <h1>{title}</h1>
-      <p>Страница в процессе миграции.</p>
-    </section>
-  );
-}
 
 export default function App() {
   return (
@@ -52,8 +45,8 @@ export default function App() {
           <Route path="/strategies/*" element={<StrategiesRouter />} />
           <Route path="/instruments/*" element={<InstrumentsRouter />} />
           <Route path="/trades/*" element={<TradesRouter />} />
-          <Route path="/analytics" element={<Placeholder title="Аналитика" />} />
-          <Route path="/admin/*" element={<Placeholder title="Администрирование" />} />
+          <Route path="/analytics" element={<Analytics />} />
+          <Route path="/admin/instruments" element={<InstrumentsLoad />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
