@@ -1,16 +1,27 @@
-from django.urls import path
+from django.urls import include, path
+from rest_framework.routers import DefaultRouter
+
 from . import views
 
 app_name = 'trades'
 
+router = DefaultRouter()
+router.register('', views.TradeViewSet, basename='trade')
+
 urlpatterns = [
-    path('', views.TradeListView.as_view(), name='trade_list'),
-    path('create/', views.TradeCreateView.as_view(), name='trade_create'),
-    path('<uuid:pk>/', views.TradeDetailView.as_view(), name='trade_detail'),
-    path('<uuid:pk>/edit/', views.TradeUpdateView.as_view(), name='trade_update'),
-    path('<uuid:pk>/delete/', views.TradeDeleteView.as_view(), name='trade_delete'),
-    path('<uuid:parent_id>/average/', views.TradeAverageView.as_view(), name='trade_average'),
-    path('<uuid:parent_id>/partial-close/', views.TradePartialCloseView.as_view(), name='trade_partial_close'),
-    path('<uuid:parent_id>/close/', views.TradeCloseView.as_view(), name='trade_close'),
     path('analytics/', views.TradeAnalyticsView.as_view(), name='analytics'),
+    path('chart/', views.TradesChartView.as_view(), name='chart'),
+    path(
+        '<uuid:trade_id>/screenshots/',
+        views.TradeScreenshotViewSet.as_view({'get': 'list', 'post': 'create'}),
+        name='screenshots',
+    ),
+    path(
+        '<uuid:trade_id>/screenshots/<int:pk>/',
+        views.TradeScreenshotViewSet.as_view(
+            {'get': 'retrieve', 'patch': 'partial_update', 'delete': 'destroy'}
+        ),
+        name='screenshot_detail',
+    ),
+    path('', include(router.urls)),
 ]
