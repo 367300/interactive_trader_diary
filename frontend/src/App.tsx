@@ -12,18 +12,12 @@ import InstrumentsLoad from './pages/admin/InstrumentsLoad';
 import InstrumentsRouter from './pages/instruments';
 import StrategiesRouter from './pages/strategies';
 import TradesRouter from './pages/trades';
-import About from './pages/public/About';
-import Help from './pages/public/Help';
-import Landing from './pages/public/Landing';
 
 export default function App() {
   return (
     <AuthProvider>
       <Routes>
         <Route element={<PublicLayout />}>
-          <Route path="/" element={<Landing />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/help" element={<Help />} />
           <Route
             path="/login"
             element={<RequireGuest><Login /></RequireGuest>}
@@ -48,7 +42,7 @@ export default function App() {
           <Route path="/analytics" element={<Analytics />} />
           <Route path="/admin/instruments" element={<InstrumentsLoad />} />
         </Route>
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </AuthProvider>
   );

@@ -1,16 +1,21 @@
-import { Link, NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet } from 'react-router-dom';
+
+const landingHref = (() => {
+  const apiBase = import.meta.env.VITE_API_BASE_URL || '';
+  return apiBase.replace(/\/api\/?$/, '') || '/';
+})();
 
 export default function PublicLayout() {
   return (
     <div className="public">
       <header className="public-topbar">
-        <Link to="/" className="brand">
+        <a href={landingHref} className="brand">
           <span className="brand-mark">TD</span>
           <span className="brand-title">Дневник трейдера</span>
-        </Link>
+        </a>
         <nav>
-          <NavLink to="/about">О проекте</NavLink>
-          <NavLink to="/help">Помощь</NavLink>
+          <a href={`${landingHref}about/`}>О проекте</a>
+          <a href={`${landingHref}help/`}>Помощь</a>
         </nav>
         <NavLink to="/login" className="btn btn-ghost">Войти</NavLink>
         <NavLink to="/register" className="btn btn-primary">Создать аккаунт</NavLink>
