@@ -1,4 +1,6 @@
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string) || 'http://localhost:8000/api';
+// Дефолт — относительный `/api`: один и тот же код для dev (через Vite-прокси) и prod (через nginx).
+// Перекрыть на абсолютный URL можно через VITE_API_BASE_URL в .env, например для кросс-хост сценариев.
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string) || '/api';
 
 const ACCESS_KEY = 'td_access';
 const REFRESH_KEY = 'td_refresh';
