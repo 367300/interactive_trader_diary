@@ -99,6 +99,21 @@ services:
         delay: 30s
         window: 600s
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api}
+    image: trader-diary-frontend:latest
+    expose:
+      - "80"
+    deploy:
+      restart_policy:
+        condition: unless-stopped
+        delay: 30s
+        window: 600s
+
   nginx:
     image: nginx:1.25
     ports:
@@ -107,10 +122,12 @@ services:
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
       - static_data:/app/django_base/static:ro
+      - ./uploads:/app/uploads:ro
       - ./certbot/www:/var/www/certbot
       - ./certbot/conf:/etc/letsencrypt
     depends_on:
       - web
+      - frontend
     deploy:
       restart_policy:
         condition: unless-stopped
