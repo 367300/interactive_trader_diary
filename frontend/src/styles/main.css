@@ -1,0 +1,20 @@
+:root {
+  color-scheme: dark;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: #070b18;
+  color: #e9eef9;
+}
+
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  background: #070b18;
+}
+
+* { box-sizing: border-box; }
+
+a { color: #8ab4f8; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+button { font-family: inherit; }
