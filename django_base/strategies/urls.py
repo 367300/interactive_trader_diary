@@ -1,12 +1,14 @@
-from django.urls import path
+from django.urls import include, path
+from rest_framework.routers import DefaultRouter
+
 from . import views
 
 app_name = 'strategies'
 
+router = DefaultRouter()
+router.register('', views.TradingStrategyViewSet, basename='strategy')
+
 urlpatterns = [
-    path('', views.TradingStrategyListView.as_view(), name='strategy_list'),
-    path('create/', views.TradingStrategyCreateView.as_view(), name='strategy_create'),
-    path('<int:pk>/', views.TradingStrategyDetailView.as_view(), name='strategy_detail'),
-    path('<int:pk>/edit/', views.TradingStrategyUpdateView.as_view(), name='strategy_update'),
-    path('<int:pk>/delete/', views.TradingStrategyDeleteView.as_view(), name='strategy_delete'),
+    path('choices/', views.StrategyChoicesView.as_view(), name='choices'),
+    path('', include(router.urls)),
 ]
