@@ -194,13 +194,12 @@ GID=1000
 
 ## Docker Compose
 
-Проект использует три compose-файла:
+Проект использует два compose-файла:
 
 | Файл | Назначение |
 |------|------------|
 | `docker-compose.dev.yml` | Локальная разработка с hot-reload и debugpy |
-| `docker-compose.prod.yml` | Production-окружение с nginx |
-| `docker-compose.certbot.yml` | Одноразовое получение/обновление SSL-сертификатов |
+| `docker-compose.prod.yml` | Production-окружение под Dokploy + Traefik |
 
 ## Полезные команды
 
@@ -220,35 +219,26 @@ docker compose -f docker-compose.dev.yml logs -f web
 docker compose -f docker-compose.dev.yml logs -f celery
 ```
 
-### Production
+### Production (Dokploy + Traefik)
+
+Стек рассчитан на запуск через [Dokploy](https://dokploy.com/), который поднимает Traefik как единый reverse-proxy. Внутри проекта nginx больше не используется: статику Django раздаёт WhiteNoise, медиа — view `django.views.static.serve`, SPA — встроенный в `frontend`-контейнер alpine-nginx (только bundle).
+
+**Подключение в Dokploy:**
+
+1. Создать Compose-сервис, указать репозиторий и путь к `docker-compose.prod.yml`.
+2. Прокинуть переменные окружения из `.env.example` (в том числе `DOMAIN`, `DJANGO_SECRET_KEY`, `POSTGRES_*`, `RABBITMQ_*`, `CELERY_*`, `FLOWER_BASIC_AUTH`, `PGADMIN_DEFAULT_*`, `DJANGO_ALLOWED_HOSTS=${DOMAIN},www.${DOMAIN},flower.${DOMAIN},pgadmin.${DOMAIN}`, `CSRF_TRUSTED_ORIGINS=https://${DOMAIN},https://www.${DOMAIN}`, `DJANGO_DEBUG=False`).
+3. DNS: A-записи для apex и поддоменов (`${DOMAIN}`, `www.${DOMAIN}`, `flower.${DOMAIN}`, `pgadmin.${DOMAIN}`) должны указывать на хост Dokploy.
+4. Deploy. Никаких доменов в UI Dokploy подключать руками не нужно — Traefik подхватит labels из compose, Let's Encrypt выпустит сертификаты автоматически.
+
+**Локальная проверка prod-сборки (без Traefik):**
+
 ```bash
-# Запуск production-стека
-docker compose -f docker-compose.prod.yml up --build -d
-
-# Остановка
-docker compose -f docker-compose.prod.yml down
-
-# Просмотр логов
+DOMAIN=midas-hand.ru docker compose -f docker-compose.prod.yml up --build -d
 docker compose -f docker-compose.prod.yml logs -f web
-docker compose -f docker-compose.prod.yml logs -f nginx
+docker compose -f docker-compose.prod.yml down
 ```
 
-### SSL-сертификаты (Certbot)
-
-Certbot не входит в постоянный prod-стек — запускается вручную при первичной настройке или обновлении сертификата (раз в несколько месяцев). Перед запуском prod-стек с nginx должен быть поднят и доступен на порту 80.
-
-```bash
-# Первичное получение сертификата
-docker compose -f docker-compose.prod.yml -f docker-compose.certbot.yml run --rm certbot
-
-# Обновление сертификата
-docker compose -f docker-compose.prod.yml -f docker-compose.certbot.yml run --rm certbot renew
-
-# Перезагрузка nginx после обновления
-docker compose -f docker-compose.prod.yml exec nginx nginx -s reload
-```
-
-В `.env` задайте `CERTBOT_EMAIL` и `CERTBOT_DOMAIN`.
+Без поднятого Traefik сервисы будут жить во внутренней сети, но извне они недоступны (по дизайну). Для full-stack проверки используйте `dev`-стек.
 
 ### Управление данными
 ```bash
