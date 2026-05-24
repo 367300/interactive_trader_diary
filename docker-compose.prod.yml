@@ -1,3 +1,19 @@
+# Prod-стек под Dokploy.
+#
+# Маршрутизацию делает Traefik (Dokploy), TLS — Let's Encrypt в Traefik.
+# Статику Django раздаёт WhiteNoise, медиа — Django views.static.serve.
+# SPA отдаётся из собственного контейнера на alpine-nginx (только статический bundle).
+#
+# Публичные домены:
+#   ${DOMAIN}              → frontend SPA + Django (path routing внутри Traefik)
+#   www.${DOMAIN}          → 301 на ${DOMAIN}
+#   flower.${DOMAIN}       → Flower (мониторинг Celery, basic-auth внутри Flower)
+#   pgadmin.${DOMAIN}      → pgAdmin
+#
+# В Dokploy достаточно подключить compose, задать переменные окружения и
+# нажать Deploy — labels ниже сами поднимут роутеры Traefik. Никакого
+# конфига доменов в UI Dokploy руками задавать не нужно.
+
 services:
   db:
     image: postgres:17.5
@@ -33,7 +49,9 @@ services:
     image: django-base:latest
     working_dir: /app/django_base
     command: >
-      sh -c "python manage.py migrate --noinput && python manage.py collectstatic --noinput && uvicorn django_base.asgi:application --host 0.0.0.0 --port 8000"
+      sh -c "python manage.py migrate --noinput &&
+             python manage.py collectstatic --noinput &&
+             uvicorn django_base.asgi:application --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips='*'"
     env_file:
       - .env
     environment:
@@ -45,6 +63,7 @@ services:
       - DJANGO_LANGUAGE_CODE=${DJANGO_LANGUAGE_CODE}
       - DJANGO_TIME_ZONE=${DJANGO_TIME_ZONE}
       - FRONTEND_URL=${FRONTEND_URL:-}
+      - MEDIA_ROOT=/app/uploads
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
@@ -52,16 +71,35 @@ services:
       - POSTGRES_PORT=${POSTGRES_PORT}
       - CELERY_BROKER_URL=${CELERY_BROKER_URL}
       - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
-    expose:
-      - "8000"
     volumes:
-      - static_data:/app/django_base/static
-      - ./uploads:/app/uploads:ro
+      - ./uploads:/app/uploads
     depends_on:
       - db
       - rabbitmq
       - redis
     restart: unless-stopped
+    networks:
+      - default
+      - dokploy-network
+    labels:
+      - traefik.enable=true
+      # HTTPS-роутер: ловим всё, что должен отдавать Django (API, админка, WS,
+      # статика, медиа, SEO-страницы). Приоритет выше, чем у frontend-catch-all,
+      # чтобы эти пути не уходили в SPA.
+      - traefik.http.routers.web.rule=Host(`${DOMAIN}`) && (PathPrefix(`/api`) || PathPrefix(`/admin`) || PathPrefix(`/ws`) || PathPrefix(`/static`) || PathPrefix(`/media`) || PathPrefix(`/about`) || PathPrefix(`/help`) || Path(`/`) || Path(`/favicon.ico`))
+      - traefik.http.routers.web.entrypoints=websecure
+      - traefik.http.routers.web.tls=true
+      - traefik.http.routers.web.tls.certresolver=letsencrypt
+      - traefik.http.routers.web.priority=100
+      - traefik.http.routers.web.service=web
+      - traefik.http.services.web.loadbalancer.server.port=8000
+      # HTTP → HTTPS для тех же путей
+      - traefik.http.routers.web-http.rule=Host(`${DOMAIN}`) && (PathPrefix(`/api`) || PathPrefix(`/admin`) || PathPrefix(`/ws`) || PathPrefix(`/static`) || PathPrefix(`/media`) || PathPrefix(`/about`) || PathPrefix(`/help`) || Path(`/`) || Path(`/favicon.ico`))
+      - traefik.http.routers.web-http.entrypoints=web
+      - traefik.http.routers.web-http.middlewares=redirect-to-https
+      - traefik.http.routers.web-http.priority=100
+      - traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https
+      - traefik.http.middlewares.redirect-to-https.redirectscheme.permanent=true
 
   celery:
     build: .
@@ -73,6 +111,7 @@ services:
     env_file:
       - .env
     environment:
+      - MEDIA_ROOT=/app/uploads
       - CELERY_BROKER_URL=${CELERY_BROKER_URL}
       - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
     depends_on:
@@ -85,55 +124,99 @@ services:
       context: ./frontend
       dockerfile: Dockerfile.prod
       args:
-        # В prod ходим в API через nginx того же домена. Жёстко прибиваем `/api`,
-        # чтобы случайный VITE_API_BASE_URL в .env не «зашился» в собранный bundle.
+        # Same-origin: фронт зовёт `/api`, Traefik отдаст это Django (web).
         VITE_API_BASE_URL: /api
     image: trader-diary-frontend:latest
-    expose:
-      - "80"
     restart: unless-stopped
-
-  nginx:
-    image: nginx:1.25
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - static_data:/app/django_base/static:ro
-      - ./uploads:/app/uploads:ro
-      - ./certbot/www:/var/www/certbot
-      - ./certbot/conf:/etc/letsencrypt
-    depends_on:
-      - web
-      - frontend
-    restart: unless-stopped
+    networks:
+      - default
+      - dokploy-network
+    labels:
+      - traefik.enable=true
+      # Catch-all на apex-домене — отдаёт SPA-маршруты (всё, что не перехватил web).
+      - traefik.http.routers.frontend.rule=Host(`${DOMAIN}`) || Host(`www.${DOMAIN}`)
+      - traefik.http.routers.frontend.entrypoints=websecure
+      - traefik.http.routers.frontend.tls=true
+      - traefik.http.routers.frontend.tls.certresolver=letsencrypt
+      - traefik.http.routers.frontend.priority=10
+      - traefik.http.routers.frontend.middlewares=www-to-apex
+      - traefik.http.routers.frontend.service=frontend
+      - traefik.http.services.frontend.loadbalancer.server.port=80
+      # www → apex (301)
+      - traefik.http.middlewares.www-to-apex.redirectregex.regex=^https?://www\.${DOMAIN}/(.*)
+      - traefik.http.middlewares.www-to-apex.redirectregex.replacement=https://${DOMAIN}/$${1}
+      - traefik.http.middlewares.www-to-apex.redirectregex.permanent=true
+      # HTTP → HTTPS
+      - traefik.http.routers.frontend-http.rule=Host(`${DOMAIN}`) || Host(`www.${DOMAIN}`)
+      - traefik.http.routers.frontend-http.entrypoints=web
+      - traefik.http.routers.frontend-http.middlewares=redirect-to-https
+      - traefik.http.routers.frontend-http.priority=10
 
   flower:
     image: mher/flower:2.0.1
     environment:
       - CELERY_BROKER_URL=${CELERY_BROKER_URL}
       - FLOWER_BASIC_AUTH=${FLOWER_BASIC_AUTH}
-    ports:
-      - "5555:5555"
     depends_on:
       rabbitmq:
         condition: service_healthy
       celery:
         condition: service_started
     restart: unless-stopped
+    networks:
+      - default
+      - dokploy-network
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.flower.rule=Host(`flower.${DOMAIN}`)
+      - traefik.http.routers.flower.entrypoints=websecure
+      - traefik.http.routers.flower.tls=true
+      - traefik.http.routers.flower.tls.certresolver=letsencrypt
+      - traefik.http.routers.flower.service=flower
+      - traefik.http.services.flower.loadbalancer.server.port=5555
+      - traefik.http.routers.flower-http.rule=Host(`flower.${DOMAIN}`)
+      - traefik.http.routers.flower-http.entrypoints=web
+      - traefik.http.routers.flower-http.middlewares=redirect-to-https
 
   pgadmin:
     image: dpage/pgadmin4
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
-    expose:
-      - "80"
+      # pgAdmin за reverse-proxy: подсказываем ему о внешнем https-домене,
+      # иначе ломаются редиректы при логине.
+      PGADMIN_CONFIG_PROXY_X_FOR_COUNT: 1
+      PGADMIN_CONFIG_PROXY_X_PROTO_COUNT: 1
+      PGADMIN_CONFIG_PROXY_X_HOST_COUNT: 1
+      PGADMIN_CONFIG_PROXY_X_PREFIX_COUNT: 0
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
     depends_on:
       - db
     restart: unless-stopped
+    networks:
+      - default
+      - dokploy-network
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.pgadmin.rule=Host(`pgadmin.${DOMAIN}`)
+      - traefik.http.routers.pgadmin.entrypoints=websecure
+      - traefik.http.routers.pgadmin.tls=true
+      - traefik.http.routers.pgadmin.tls.certresolver=letsencrypt
+      - traefik.http.routers.pgadmin.service=pgadmin
+      - traefik.http.services.pgadmin.loadbalancer.server.port=80
+      - traefik.http.routers.pgadmin-http.rule=Host(`pgadmin.${DOMAIN}`)
+      - traefik.http.routers.pgadmin-http.entrypoints=web
+      - traefik.http.routers.pgadmin-http.middlewares=redirect-to-https
 
 volumes:
   postgres_data:
-  static_data:
+  pgadmin_data:
+
+# `default` — внутренняя сеть стека (создаётся docker compose'ом автоматически),
+# по ней web/frontend/celery/db общаются между собой.
+# `dokploy-network` — внешняя сеть Dokploy/Traefik. К ней подключаем только
+# сервисы, на которые приходит публичный трафик (web, frontend, flower, pgadmin).
+networks:
+  dokploy-network:
+    external: true
