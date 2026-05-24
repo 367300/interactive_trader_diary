@@ -17,8 +17,9 @@ Including another URLconf
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, re_path, include
 from django.views.generic import RedirectView
+from django.views.static import serve as static_serve
 
 from core.views import AboutView, HelpView, IndexView
 
@@ -46,3 +47,14 @@ if settings.DEBUG:
         settings.MEDIA_URL,
         document_root=settings.MEDIA_ROOT
     )
+else:
+    # В prod static раздаёт WhiteNoise (см. settings.MIDDLEWARE/STORAGES),
+    # а пользовательские медиа отдаём Django-вью static.serve: nginx-контейнера
+    # больше нет, перед сервисом стоит только Traefik, который файлы не отдаёт.
+    urlpatterns += [
+        re_path(
+            r'^media/(?P<path>.*)$',
+            static_serve,
+            {'document_root': settings.MEDIA_ROOT},
+        ),
+    ]
