@@ -160,14 +160,15 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'staticfiles'),
 ]
 
-# Раздача статики в prod без отдельного nginx: WhiteNoise с компрессией и
-# manifest-хешированием. Прозрачно для dev (WhiteNoise обходится в DEBUG=True).
+# Раздача статики в prod без отдельного nginx: WhiteNoise с компрессией.
+# CompressedStaticFilesStorage сжимает файлы без manifest-хеширования,
+# что надёжнее при первом деплое.
 STORAGES = {
     "default": {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
     },
 }
 
