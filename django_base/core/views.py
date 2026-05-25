@@ -111,7 +111,11 @@ class AdminUploadEnrichmentCSVView(APIView):
     permission_classes = (IsAuthenticated, IsAdminUser)
     parser_classes = (MultiPartParser,)
 
-    DEST = Path(settings.BASE_DIR).parent / 'uploads' / 'data_instruments' / 'moex_stocks_enriched.csv'
+    def _dest(self):
+        base = Path(getattr(settings, 'MEDIA_ROOT', ''))
+        if not base.is_absolute():
+            base = Path(settings.BASE_DIR).parent / 'uploads'
+        return base / 'data_instruments' / 'moex_stocks_enriched.csv'
 
     def post(self, request):
         file = request.FILES.get('file')
@@ -126,10 +130,17 @@ class AdminUploadEnrichmentCSVView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        self.DEST.parent.mkdir(parents=True, exist_ok=True)
-        with open(self.DEST, 'wb') as dest:
-            for chunk in file.chunks():
-                dest.write(chunk)
+        dest = self._dest()
+        try:
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            with open(dest, 'wb') as f:
+                for chunk in file.chunks():
+                    f.write(chunk)
+        except OSError as e:
+            return Response(
+                {'detail': f'Ошибка записи: {e}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
         return Response(
             {'detail': f'Файл сохранён ({file.size} байт).'},
