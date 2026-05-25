@@ -64,7 +64,7 @@ export default function Layout() {
                 {item.label}
               </NavLink>
             ))}
-            <a className="nav-link" href="http://localhost:8000/admin/" target="_blank" rel="noreferrer">
+            <a className="nav-link" href="/admin/" target="_blank" rel="noreferrer">
               Django-админка ↗
             </a>
           </div>
