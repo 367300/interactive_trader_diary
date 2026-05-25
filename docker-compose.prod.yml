@@ -50,8 +50,8 @@ services:
     working_dir: /app/django_base
     user: root
     command: >
-      sh -c "chown -R 5678:5678 /app/uploads &&
-             mkdir -p /app/uploads/data_instruments &&
+      sh -c "mkdir -p /app/uploads/data_instruments &&
+             chown -R 5678:5678 /app/uploads &&
              su -s /bin/sh appuser -c '
                python manage.py migrate --noinput &&
                python manage.py collectstatic --noinput &&
