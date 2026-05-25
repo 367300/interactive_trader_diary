@@ -92,6 +92,14 @@ def load_instruments_from_moex_task(
                 f"Ошибка: {e}"
             ) from e
 
+    # Если CSV обогащения существует — сначала загрузить таксономию отраслей,
+    # чтобы load_instruments_from_moex мог привязать SubIndustry к инструментам.
+    from instruments.management.commands.load_industry_taxonomy_from_moex_csv import Command as TaxCmd
+    csv_path = TaxCmd._resolve_csv_path(None)
+    if csv_path.exists():
+        logger.info("CSV обогащения найден (%s), загружаем таксономию отраслей", csv_path)
+        call_command("load_industry_taxonomy_from_moex_csv")
+
     command_kwargs: dict = {}
 
     if instrument_type:
