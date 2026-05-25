@@ -35,6 +35,7 @@ _extra_origins = config('CSRF_TRUSTED_ORIGINS', default='', cast=Csv())
 _extra_origins = [x.strip() for x in _extra_origins if x.strip()]
 CSRF_TRUSTED_ORIGINS = list({
     'http://localhost:8000',
+    'http://localhost:3000',
     'https://midas-hand.ru',
     'https://www.midas-hand.ru',
     *_extra_origins,
