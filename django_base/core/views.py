@@ -1,6 +1,9 @@
+from pathlib import Path
+
 from django.conf import settings
 from django.views.generic import TemplateView
 from rest_framework import status
+from rest_framework.parsers import MultiPartParser
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -99,4 +102,36 @@ class AdminInstrumentsLoadView(APIView):
                 'message': 'Задача поставлена в очередь Celery.',
             },
             status=status.HTTP_202_ACCEPTED,
+        )
+
+
+class AdminUploadEnrichmentCSVView(APIView):
+    """Загрузка CSV-файла обогащения инструментов."""
+
+    permission_classes = (IsAuthenticated, IsAdminUser)
+    parser_classes = (MultiPartParser,)
+
+    DEST = Path(settings.BASE_DIR).parent / 'uploads' / 'data_instruments' / 'moex_stocks_enriched.csv'
+
+    def post(self, request):
+        file = request.FILES.get('file')
+        if not file:
+            return Response(
+                {'detail': 'Файл не передан.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if not file.name.endswith('.csv'):
+            return Response(
+                {'detail': 'Допустимы только .csv файлы.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        self.DEST.parent.mkdir(parents=True, exist_ok=True)
+        with open(self.DEST, 'wb') as dest:
+            for chunk in file.chunks():
+                dest.write(chunk)
+
+        return Response(
+            {'detail': f'Файл сохранён ({file.size} байт).'},
+            status=status.HTTP_200_OK,
         )

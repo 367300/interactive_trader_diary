@@ -115,4 +115,11 @@ export const coreApi = {
     update_existing?: boolean;
     limit?: number | null;
   }) => api.post<{ task_id: string; message: string }>('/admin/instruments/load/', data),
+  uploadEnrichmentCsv: (file: File) => {
+    const fd = new FormData();
+    fd.append('file', file);
+    return api.post<{ detail: string }>('/admin/instruments/upload-csv/', fd, {
+      isFormData: true,
+    });
+  },
 };

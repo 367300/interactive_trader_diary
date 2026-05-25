@@ -11,4 +11,9 @@ urlpatterns = [
         views.AdminInstrumentsLoadView.as_view(),
         name='admin_instruments_load',
     ),
+    path(
+        'admin/instruments/upload-csv/',
+        views.AdminUploadEnrichmentCSVView.as_view(),
+        name='admin_instruments_upload_csv',
+    ),
 ]
