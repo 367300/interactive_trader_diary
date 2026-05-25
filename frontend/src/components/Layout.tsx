@@ -1,3 +1,4 @@
+import { useCallback, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 
@@ -17,6 +18,9 @@ const adminItems = [
 export default function Layout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const closeSidebar = useCallback(() => setSidebarOpen(false), []);
 
   if (!user) return null;
 
@@ -29,8 +33,12 @@ export default function Layout() {
 
   return (
     <div className="layout">
-      <aside className="sidebar">
-        <NavLink to="/dashboard" className="brand">
+      <div
+        className={`sidebar-backdrop${sidebarOpen ? ' is-open' : ''}`}
+        onClick={closeSidebar}
+      />
+      <aside className={`sidebar${sidebarOpen ? ' is-open' : ''}`}>
+        <NavLink to="/dashboard" className="brand" onClick={closeSidebar}>
           <span className="brand-mark">TD</span>
           <span>
             <span className="brand-title">Дневник трейдера</span>
@@ -46,6 +54,7 @@ export default function Layout() {
               to={item.to}
               end={item.exact}
               className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+              onClick={closeSidebar}
             >
               {item.label}
             </NavLink>
@@ -60,6 +69,7 @@ export default function Layout() {
                 key={item.to}
                 to={item.to}
                 className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+                onClick={closeSidebar}
               >
                 {item.label}
               </NavLink>
@@ -82,6 +92,13 @@ export default function Layout() {
 
       <div className="content">
         <header className="topbar">
+          <button
+            className="btn-icon sidebar-toggle"
+            onClick={() => setSidebarOpen((o) => !o)}
+            aria-label="Меню"
+          >
+            ☰
+          </button>
           <NavLink to="/profile" className="user-name text-soft">Профиль</NavLink>
           <span className="spacer" />
           <NavLink to="/trades/new" className="btn btn-primary btn-sm">+ Новая сделка</NavLink>
