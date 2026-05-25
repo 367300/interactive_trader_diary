@@ -3,13 +3,20 @@ import react from '@vitejs/plugin-react';
 
 const django = process.env.VITE_DJANGO_PROXY_TARGET || 'http://web:8000';
 
+const trustedHosts = (process.env.CSRF_TRUSTED_ORIGINS ?? '')
+  .split(',')
+  .map((u) => { try { return new URL(u.trim()).hostname; } catch { return ''; } })
+  .filter(Boolean);
+
+const allowedHosts = [...new Set(['localhost', 'frontend', ...trustedHosts])];
+
 export default defineConfig({
   plugins: [react()],
   server: {
     host: '0.0.0.0',
     port: 3000,
     watch: { usePolling: true },
-    allowedHosts: ['localhost', 'midas-hand.ru', 'www.midas-hand.ru', 'frontend'],
+    allowedHosts,
     proxy: {
       '^/$': { target: django, changeOrigin: true },
       '/about': { target: django, changeOrigin: true },

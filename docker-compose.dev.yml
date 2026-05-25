@@ -132,9 +132,8 @@ services:
       - ./frontend:/app
       - frontend_node_modules:/app/node_modules
     environment:
-      # Same-origin через Vite-прокси: фронт на :3000 проксирует /api → web:8000.
-      # Перекрыть для иных сценариев можно через .env, но дефолт безопасен и для prod-сборки.
       - VITE_API_BASE_URL=${VITE_API_BASE_URL:-/api}
+      - CSRF_TRUSTED_ORIGINS=${CSRF_TRUSTED_ORIGINS:-}
     ports:
       - "3000:3000"
     depends_on:
