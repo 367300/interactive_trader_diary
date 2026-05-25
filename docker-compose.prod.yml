@@ -48,10 +48,15 @@ services:
     build: .
     image: django-base:latest
     working_dir: /app/django_base
+    user: root
     command: >
-      sh -c "python manage.py migrate --noinput &&
-             python manage.py collectstatic --noinput &&
-             uvicorn django_base.asgi:application --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips='*'"
+      sh -c "chown -R 5678:5678 /app/uploads &&
+             mkdir -p /app/uploads/data_instruments &&
+             su -s /bin/sh appuser -c '
+               python manage.py migrate --noinput &&
+               python manage.py collectstatic --noinput &&
+               uvicorn django_base.asgi:application --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips=\"*\"
+             '"
     env_file:
       - .env
     environment:
