@@ -10,9 +10,23 @@ import {
   type Time,
   ColorType,
 } from 'lightweight-charts';
+import {
+  DrawingManager,
+  ToolRegistry,
+  type SerializedDrawing,
+  type IDrawing,
+  type Anchor,
+} from 'lightweight-charts-drawing';
 import { instrumentsApi } from '../api/endpoints';
 import type { CandleData } from '../api/types';
 import { Alert } from '@/components/ui/alert';
+import DrawingToolbar from './DrawingToolbar';
+import {
+  loadChartSettings,
+  saveChartSettings,
+  saveDrawings,
+  loadDrawings,
+} from '@/lib/chartStorage';
 
 const INTERVALS = [
   { value: 1, label: '1м' },
@@ -33,6 +47,11 @@ const RANGES = [
   { label: 'YTD', days: 0, defaultInterval: 1440 },
 ] as const;
 
+let drawingIdCounter = Date.now();
+function nextDrawingId(): string {
+  return `d-${++drawingIdCounter}`;
+}
+
 interface Props {
   ticker: string;
 }
@@ -42,12 +61,28 @@ export default function CandlestickChart({ ticker }: Props) {
   const chartRef = useRef<IChartApi | null>(null);
   const candleSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
   const volumeSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null);
+  const drawingManagerRef = useRef<DrawingManager | null>(null);
+  const drawingsRestoredRef = useRef(false);
 
-  const [interval, setInterval] = useState(5);
-  const [rangeIdx, setRangeIdx] = useState(1);
+  const activeToolRef = useRef<string | null>(null);
+  const pendingAnchorsRef = useRef<Anchor[]>([]);
+  const requiredAnchorsRef = useRef<number>(0);
+
+  const saved = loadChartSettings(ticker);
+  const [interval, setInterval] = useState(saved.interval ?? 5);
+  const [rangeIdx, setRangeIdx] = useState(saved.rangeIdx ?? 1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [noData, setNoData] = useState(false);
+  const [activeTool, setActiveTool] = useState<string | null>(null);
+  const [hasSelection, setHasSelection] = useState(false);
+
+  const persistDrawings = useCallback(() => {
+    const mgr = drawingManagerRef.current;
+    if (!mgr) return;
+    const data = mgr.exportDrawings();
+    saveDrawings(ticker, data);
+  }, [ticker]);
 
   const getDateRange = useCallback(() => {
     const range = RANGES[rangeIdx];
@@ -114,13 +149,80 @@ export default function CandlestickChart({ ticker }: Props) {
     candleSeriesRef.current = candleSeries;
     volumeSeriesRef.current = volumeSeries;
 
+    const mgr = new DrawingManager();
+    mgr.attach(chart, candleSeries, containerRef.current);
+
+    mgr.on('drawing:added', () => persistDrawings());
+    mgr.on('drawing:removed', () => persistDrawings());
+    mgr.on('drawing:updated', () => persistDrawings());
+    mgr.on('drawing:cleared', () => persistDrawings());
+    mgr.on('drawing:selected', () => setHasSelection(true));
+    mgr.on('drawing:deselected', () => setHasSelection(false));
+
+    drawingManagerRef.current = mgr;
+    drawingsRestoredRef.current = false;
+
+    const registry = ToolRegistry.getInstance();
+
+    chart.subscribeClick((param) => {
+      const toolType = activeToolRef.current;
+      if (!toolType || !param.time || !param.point) return;
+
+      const price = candleSeries.coordinateToPrice(param.point.y);
+      if (price === null) return;
+
+      const anchor: Anchor = { time: param.time, price };
+      pendingAnchorsRef.current.push(anchor);
+
+      if (pendingAnchorsRef.current.length >= requiredAnchorsRef.current) {
+        const drawing = registry.createDrawing(
+          toolType,
+          nextDrawingId(),
+          [...pendingAnchorsRef.current],
+          { lineColor: '#5a8cff', lineWidth: 2, fillColor: 'rgba(90,140,255,0.15)', fillOpacity: 0.15 },
+        );
+        if (drawing) {
+          mgr.addDrawing(drawing);
+        }
+        pendingAnchorsRef.current = [];
+      }
+    });
+
     return () => {
+      mgr.detach();
       chart.remove();
       chartRef.current = null;
       candleSeriesRef.current = null;
       volumeSeriesRef.current = null;
+      drawingManagerRef.current = null;
     };
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!drawingsRestoredRef.current && drawingManagerRef.current) {
+      const savedDrawings = loadDrawings(ticker);
+      if (savedDrawings.length > 0) {
+        const registry = ToolRegistry.getInstance();
+        drawingManagerRef.current.importDrawings(
+          savedDrawings,
+          (type: string, data: SerializedDrawing): IDrawing | null => {
+            return registry.createDrawing(
+              type,
+              data.id,
+              data.anchors,
+              data.style,
+              data.options,
+            );
+          },
+        );
+      }
+      drawingsRestoredRef.current = true;
+    }
+  }, [ticker]);
+
+  useEffect(() => {
+    saveChartSettings(ticker, { interval, rangeIdx });
+  }, [ticker, interval, rangeIdx]);
 
   useEffect(() => {
     let cancelled = false;
@@ -173,6 +275,40 @@ export default function CandlestickChart({ ticker }: Props) {
     setInterval(RANGES[idx].defaultInterval);
   };
 
+  const handleSelectTool = (type: string | null) => {
+    setActiveTool(type);
+    activeToolRef.current = type;
+    pendingAnchorsRef.current = [];
+
+    if (type) {
+      const registry = ToolRegistry.getInstance();
+      const def = registry.get(type);
+      requiredAnchorsRef.current = def?.requiredAnchors ?? 2;
+      drawingManagerRef.current?.deselectAll();
+      setHasSelection(false);
+    } else {
+      requiredAnchorsRef.current = 0;
+    }
+
+    drawingManagerRef.current?.setActiveTool(type);
+  };
+
+  const handleClearAll = () => {
+    drawingManagerRef.current?.clearAll();
+    setHasSelection(false);
+    saveDrawings(ticker, []);
+  };
+
+  const handleDeleteSelected = () => {
+    const mgr = drawingManagerRef.current;
+    if (!mgr) return;
+    const selected = mgr.getSelectedDrawing();
+    if (selected) {
+      mgr.removeDrawing(selected.id);
+      setHasSelection(false);
+    }
+  };
+
   return (
     <div>
       <div className="flex items-center gap-1.5 mb-2 flex-wrap">
@@ -206,6 +342,16 @@ export default function CandlestickChart({ ticker }: Props) {
             </button>
           ))}
         </div>
+      </div>
+
+      <div className="mb-2">
+        <DrawingToolbar
+          activeTool={activeTool}
+          onSelectTool={handleSelectTool}
+          onClearAll={handleClearAll}
+          onDeleteSelected={handleDeleteSelected}
+          hasSelection={hasSelection}
+        />
       </div>
 
       {error && <Alert variant="destructive" className="mb-2">{error}</Alert>}
