@@ -87,7 +87,8 @@
                 </p>
             </div>
         </div>
-        <div class="row g-4">
+        <!-- Desktop: grid -->
+        <div class="row g-4 d-none d-md-flex">
             <div class="col-md-4">
                 <div class="problem-card">
                     <div class="problem-icon"><i class="bi bi-emoji-dizzy"></i></div>
@@ -113,6 +114,48 @@
                 </div>
             </div>
         </div>
+        <!-- Mobile: carousel -->
+        <div id="problemCarousel" class="carousel slide d-md-none" data-bs-ride="carousel" data-bs-interval="5000">
+            <div class="carousel-indicators">
+                <button type="button" data-bs-target="#problemCarousel" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
+                <button type="button" data-bs-target="#problemCarousel" data-bs-slide-to="1" aria-label="Slide 2"></button>
+                <button type="button" data-bs-target="#problemCarousel" data-bs-slide-to="2" aria-label="Slide 3"></button>
+            </div>
+            <div class="carousel-inner">
+                <div class="carousel-item active">
+                    <div class="problem-card mx-2">
+                        <div class="problem-icon"><i class="bi bi-emoji-dizzy"></i></div>
+                        <h5>Эмоции стирают факты</h5>
+                        <p>Через неделю плохая сделка превращается в&nbsp;«ну, рынок был против».
+                        А&nbsp;была ли стратегия рабочей? Без записи — никогда не&nbsp;узнаете.</p>
+                    </div>
+                </div>
+                <div class="carousel-item">
+                    <div class="problem-card mx-2">
+                        <div class="problem-icon"><i class="bi bi-shuffle"></i></div>
+                        <h5>Стратегии путаются</h5>
+                        <p>«Кажется, скальп работает лучше свинга». Кажется или работает?
+                        Без отдельного учёта каждая стратегия — это надежда, а&nbsp;не&nbsp;система.</p>
+                    </div>
+                </div>
+                <div class="carousel-item">
+                    <div class="problem-card mx-2">
+                        <div class="problem-icon"><i class="bi bi-arrow-repeat"></i></div>
+                        <h5>Одни и те же ошибки</h5>
+                        <p>Ранний вход. Передержанный стоп. Усреднение лосса. Если ошибки
+                        не&nbsp;фиксировать — мозг повторит их в&nbsp;следующий вторник.</p>
+                    </div>
+                </div>
+            </div>
+            <button class="carousel-control-prev" type="button" data-bs-target="#problemCarousel" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Назад</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#problemCarousel" data-bs-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Вперёд</span>
+            </button>
+        </div>
     </div>
 </section>
 
@@ -127,7 +170,8 @@
             </div>
         </div>
 
-        <div class="row g-4">
+        <!-- Desktop: grid -->
+        <div class="row g-4 d-none d-md-flex">
             <div class="col-md-6 col-lg-4">
                 <div class="card h-100 feature-card" id="tutorial-card-1">
                     <div class="card-body p-4">
@@ -200,6 +244,87 @@
                     </div>
                 </div>
             </div>
+        </div>
+        <!-- Mobile: carousel -->
+        <div id="featureCarousel" class="carousel slide d-md-none" data-bs-ride="carousel" data-bs-interval="4000">
+            <div class="carousel-indicators">
+                <button type="button" data-bs-target="#featureCarousel" data-bs-slide-to="0" class="active" aria-current="true"></button>
+                <button type="button" data-bs-target="#featureCarousel" data-bs-slide-to="1"></button>
+                <button type="button" data-bs-target="#featureCarousel" data-bs-slide-to="2"></button>
+                <button type="button" data-bs-target="#featureCarousel" data-bs-slide-to="3"></button>
+                <button type="button" data-bs-target="#featureCarousel" data-bs-slide-to="4"></button>
+                <button type="button" data-bs-target="#featureCarousel" data-bs-slide-to="5"></button>
+            </div>
+            <div class="carousel-inner">
+                <div class="carousel-item active">
+                    <div class="card feature-card mx-2" id="tutorial-card-1">
+                        <div class="card-body p-4">
+                            <div class="feature-icon"><i class="bi bi-journal-text"></i></div>
+                            <h5 class="card-title">Каждая сделка под учётом</h5>
+                            <p class="card-text text-muted">Открытие, усреднения, частичные закрытия, фиксация прибыли.
+                            Дневник понимает структуру позиции — а&nbsp;не&nbsp;«сумму строк».</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="carousel-item">
+                    <div class="card feature-card mx-2">
+                        <div class="card-body p-4">
+                            <div class="feature-icon"><i class="bi bi-bar-chart-line"></i></div>
+                            <h5 class="card-title">Честная статистика</h5>
+                            <p class="card-text text-muted">Win rate, средняя сделка, P&L&nbsp;в&nbsp;пипсах — пересчитываются
+                            автоматически по реальным закрытиям, а&nbsp;не&nbsp;«на&nbsp;глазок».</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="carousel-item">
+                    <div class="card feature-card mx-2">
+                        <div class="card-body p-4">
+                            <div class="feature-icon"><i class="bi bi-diagram-3"></i></div>
+                            <h5 class="card-title">Стратегии под микроскопом</h5>
+                            <p class="card-text text-muted">Сравните «Breakout Pro» против «Mean Reversion» — какая на&nbsp;вашем
+                            рынке зарабатывает, а&nbsp;какая только кажется живой.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="carousel-item">
+                    <div class="card feature-card mx-2">
+                        <div class="card-body p-4">
+                            <div class="feature-icon"><i class="bi bi-camera"></i></div>
+                            <h5 class="card-title">Скриншоты графиков</h5>
+                            <p class="card-text text-muted">Прикрепите вход и выход — увидите паттерны, которые повторяются.
+                            Графики память не подведёт, в&nbsp;отличие от вашей.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="carousel-item">
+                    <div class="card feature-card mx-2">
+                        <div class="card-body p-4">
+                            <div class="feature-icon"><i class="bi bi-emoji-smile"></i></div>
+                            <h5 class="card-title">Эмоции и теги ошибок</h5>
+                            <p class="card-text text-muted">Помечайте каждую сделку: «FOMO», «передержал стоп», «спокойно».
+                            Через месяц увидите свой эмоциональный профиль чёрным по белому.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="carousel-item">
+                    <div class="card feature-card mx-2">
+                        <div class="card-body p-4">
+                            <div class="feature-icon"><i class="bi bi-moon-stars"></i></div>
+                            <h5 class="card-title">Тёмная тема для долгих сессий</h5>
+                            <p class="card-text text-muted">Midnight Glass — интерфейс, который не выжигает глаза в&nbsp;3&nbsp;часа ночи,
+                            когда вы разбираете торговый день.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button class="carousel-control-prev" type="button" data-bs-target="#featureCarousel" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Назад</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#featureCarousel" data-bs-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Вперёд</span>
+            </button>
         </div>
     </div>
 </section>
@@ -591,6 +716,17 @@
     font-weight: 600;
 }
 .cta-band .btn-light:hover { box-shadow: var(--mg-glow-blue); color: #03101f; }
+
+/* Carousel styling */
+.carousel { padding-bottom: 40px; }
+.carousel-indicators { bottom: 0; }
+.carousel-indicators [data-bs-target] {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--mg-glass-brd-strong); border: none; opacity: 0.5;
+}
+.carousel-indicators .active { background: var(--mg-cyan); opacity: 1; }
+.carousel-control-prev, .carousel-control-next { width: 32px; opacity: 0.6; }
+.carousel-control-prev:hover, .carousel-control-next:hover { opacity: 1; }
 
 @media (max-width: 575.98px) {
     .hero-section { padding: 40px 0 32px !important; margin-top: 0; }

@@ -68,9 +68,45 @@ body {
 h1, h2, h3, h4 { color: var(--color-foreground); margin: 0 0 12px; font-weight: 600; }
 p { color: var(--color-soft-foreground); }
 
+@layer base {
+  a { color: var(--color-cyan); text-decoration: none; }
+  a:hover { color: var(--color-blue); }
+}
+
 .auth-page { max-width: 420px; margin: 60px auto; }
 @media (max-width: 640px) {
   .auth-page { margin: 32px auto; }
+}
+
+/* Sheet / Dialog animations */
+.sheet-overlay {
+  animation: sheet-fade-in .25s ease-out;
+}
+.sheet-overlay[data-state="closed"] {
+  animation: sheet-fade-out .2s ease-in forwards;
+}
+@keyframes sheet-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes sheet-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+.sheet-content {
+  animation: sheet-slide-in .3s cubic-bezier(.4,0,.2,1);
+}
+.sheet-content[data-state="closed"] {
+  animation: sheet-slide-out .25s cubic-bezier(.4,0,.2,1) forwards;
+}
+@keyframes sheet-slide-in {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+@keyframes sheet-slide-out {
+  from { transform: translateX(0); }
+  to { transform: translateX(-100%); }
 }
 
 .stat-label {
