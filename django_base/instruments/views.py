@@ -1,3 +1,6 @@
+from datetime import date, timedelta
+
+from django.core.cache import cache
 from django.db.models import Count, Prefetch, Q
 from rest_framework import status
 from rest_framework.generics import ListAPIView, RetrieveAPIView
@@ -131,3 +134,75 @@ class InstrumentStatsView(APIView):
                 'type_distribution': type_distribution,
             }
         )
+
+
+class CandleDataView(APIView):
+    """OHLCV candle data for charting."""
+
+    INTERVAL_CHOICES = {1, 5, 15, 30, 60, 240, 1440}
+    MAX_CANDLES = 5000
+
+    def get(self, request, ticker):
+        from instruments.moex_candles import (
+            candles_to_json,
+            read_candles,
+            resample_candles,
+        )
+
+        if not Instrument.objects.filter(ticker=ticker, is_active=True).exists():
+            return Response(
+                {"detail": "Инструмент не найден."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        today = date.today()
+        from_date = request.GET.get("from")
+        till_date = request.GET.get("till")
+        interval = request.GET.get("interval", "1")
+
+        try:
+            interval = int(interval)
+        except (TypeError, ValueError):
+            interval = 1
+        if interval not in self.INTERVAL_CHOICES:
+            interval = 1
+
+        try:
+            from_date = date.fromisoformat(from_date) if from_date else today
+        except ValueError:
+            from_date = today
+        try:
+            till_date = date.fromisoformat(till_date) if till_date else today
+        except ValueError:
+            till_date = today
+
+        if from_date > till_date:
+            from_date, till_date = till_date, from_date
+
+        cache_key = f"candles:{ticker}:{from_date}:{till_date}:{interval}"
+        cached = cache.get(cache_key)
+        if cached is not None:
+            return Response(cached)
+
+        df = read_candles(ticker, from_date, till_date)
+        if not df.empty and interval > 1:
+            df = resample_candles(df, interval)
+
+        candles = candles_to_json(df)
+
+        if len(candles) > self.MAX_CANDLES:
+            candles = candles[-self.MAX_CANDLES:]
+
+        result = {
+            "ticker": ticker,
+            "interval": interval,
+            "from": from_date.isoformat(),
+            "till": till_date.isoformat(),
+            "count": len(candles),
+            "candles": candles,
+        }
+
+        ttl = 300 if till_date >= today else 86400
+        cache.set(cache_key, result, ttl)
+
+        return Response(result)

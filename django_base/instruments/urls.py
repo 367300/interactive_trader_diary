@@ -9,5 +9,6 @@ urlpatterns = [
     path('taxonomy/', views.TaxonomyView.as_view(), name='taxonomy'),
     path('stats/', views.InstrumentStatsView.as_view(), name='instrument_stats'),
     path('futures/<str:ticker>/', views.FuturesDetailView.as_view(), name='futures_detail'),
+    path('<str:ticker>/candles/', views.CandleDataView.as_view(), name='candle_data'),
     path('<str:ticker>/', views.InstrumentDetailView.as_view(), name='instrument_detail'),
 ]
