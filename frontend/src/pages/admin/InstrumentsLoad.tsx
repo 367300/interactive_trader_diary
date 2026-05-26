@@ -1,7 +1,14 @@
 import { FormEvent, useRef, useState } from 'react';
 import { coreApi } from '../../api/endpoints';
 import { ApiError } from '../../api/client';
-import Select from '../../components/Select';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { Alert } from '@/components/ui/alert';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Upload } from 'lucide-react';
 
 export default function InstrumentsLoad() {
   const [type, setType] = useState('STOCK');
@@ -33,50 +40,54 @@ export default function InstrumentsLoad() {
   return (
     <section>
       <h1>Загрузка инструментов с MOEX</h1>
-      <p className="muted">
+      <p className="text-muted-foreground text-sm mb-4">
         Запускает фоновую задачу Celery, которая обращается к ISS Мосбиржи и пополняет/обновляет
         справочник.
       </p>
-      <form onSubmit={onSubmit} className="card" style={{ maxWidth: 560 }}>
-        {result && <div className="flash flash-success">{result}</div>}
-        {error && <div className="flash flash-error">{error}</div>}
-        <div className="form-row">
-          <label>Тип инструмента</label>
-          <Select
-            value={type}
-            options={[
-              { value: 'STOCK', label: 'Акции' },
-              { value: 'FUTURES', label: 'Фьючерсы' },
-            ]}
-            onChange={setType}
-          />
-        </div>
-        <div className="form-row">
-          <label>
-            <input
-              type="checkbox"
-              checked={updateExisting}
-              onChange={(e) => setUpdateExisting(e.target.checked)}
-              style={{ width: 'auto', marginRight: 8, verticalAlign: 'middle' }}
-            />
-            Обновлять существующие записи
-          </label>
-        </div>
-        <div className="form-row">
-          <label>Лимит (необязательно)</label>
-          <input
-            type="number"
-            min={1}
-            value={limit}
-            onChange={(e) => setLimit(e.target.value)}
-            placeholder="например, 50"
-          />
-          <div className="hint">Пусто — без ограничения.</div>
-        </div>
-        <button className="btn btn-primary" disabled={busy}>
-          {busy ? 'Запускаем…' : 'Запустить задачу'}
-        </button>
-      </form>
+      <Card className="max-w-[560px]">
+        <CardContent className="pt-6">
+          <form onSubmit={onSubmit}>
+            {result && <Alert variant="success" className="mb-4">{result}</Alert>}
+            {error && <Alert variant="destructive" className="mb-4">{error}</Alert>}
+            <div className="space-y-2 mb-4">
+              <Label>Тип инструмента</Label>
+              <Select value={type} onValueChange={setType}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="STOCK">Акции</SelectItem>
+                  <SelectItem value="FUTURES">Фьючерсы</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-2 mb-4">
+              <Checkbox
+                id="update_existing"
+                checked={updateExisting}
+                onCheckedChange={(checked) => setUpdateExisting(checked === true)}
+              />
+              <Label htmlFor="update_existing" className="cursor-pointer">
+                Обновлять существующие записи
+              </Label>
+            </div>
+            <div className="space-y-2 mb-4">
+              <Label>Лимит (необязательно)</Label>
+              <Input
+                type="number"
+                min={1}
+                value={limit}
+                onChange={(e) => setLimit(e.target.value)}
+                placeholder="например, 50"
+              />
+              <p className="text-xs text-muted-foreground">Пусто — без ограничения.</p>
+            </div>
+            <Button variant="primary" disabled={busy}>
+              {busy ? 'Запускаем…' : 'Запустить задачу'}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
 
       <CsvUpload />
     </section>
@@ -116,34 +127,41 @@ function CsvUpload() {
   };
 
   return (
-    <div className="card" style={{ maxWidth: 560, marginTop: 20 }}>
-      <h3>CSV-файл обогащения</h3>
-      <p className="muted" style={{ fontSize: 13, margin: '0 0 14px' }}>
-        Загрузите <code>moex_stocks_enriched.csv</code> — при запуске задачи скрипт
-        автоматически обогатит инструменты данными из этого файла.
-      </p>
-      {msg && <div className="flash flash-success">{msg}</div>}
-      {err && <div className="flash flash-error">{err}</div>}
-      <div className="row-flex">
-        <label className="btn btn-sm" style={{ cursor: 'pointer' }}>
-          Выбрать файл
-          <input
-            ref={fileRef}
-            type="file"
-            accept=".csv"
-            onChange={onFileChange}
-            style={{ display: 'none' }}
-          />
-        </label>
-        {fileName && <span className="muted" style={{ fontSize: 13 }}>{fileName}</span>}
-        <button
-          className="btn btn-primary btn-sm"
-          disabled={!fileName || uploading}
-          onClick={onUpload}
-        >
-          {uploading ? 'Загрузка…' : 'Загрузить CSV'}
-        </button>
-      </div>
-    </div>
+    <Card className="max-w-[560px] mt-5">
+      <CardHeader>
+        <CardTitle>CSV-файл обогащения</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="text-muted-foreground text-[13px] mb-3.5">
+          Загрузите <code className="bg-glass-strong px-1 rounded text-xs">moex_stocks_enriched.csv</code> — при запуске задачи скрипт
+          автоматически обогатит инструменты данными из этого файла.
+        </p>
+        {msg && <Alert variant="success" className="mb-3">{msg}</Alert>}
+        {err && <Alert variant="destructive" className="mb-3">{err}</Alert>}
+        <div className="flex items-center gap-3 flex-wrap">
+          <Button size="sm" asChild className="cursor-pointer">
+            <label>
+              <Upload className="h-3.5 w-3.5" /> Выбрать файл
+              <input
+                ref={fileRef}
+                type="file"
+                accept=".csv"
+                onChange={onFileChange}
+                className="hidden"
+              />
+            </label>
+          </Button>
+          {fileName && <span className="text-muted-foreground text-[13px]">{fileName}</span>}
+          <Button
+            variant="primary"
+            size="sm"
+            disabled={!fileName || uploading}
+            onClick={onUpload}
+          >
+            {uploading ? 'Загрузка…' : 'Загрузить CSV'}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

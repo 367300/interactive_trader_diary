@@ -4,7 +4,14 @@ import { instrumentsApi, type InstrumentListParams } from '../../api/endpoints';
 import { useApi } from '../../lib/useApi';
 import { staticUrl } from '../../lib/urls';
 import type { FuturesListItem, InstrumentListItem, Taxonomy } from '../../api/types';
-import Select from '../../components/Select';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Alert } from '@/components/ui/alert';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const PAGE_SIZE = 24;
 
@@ -69,95 +76,121 @@ export default function InstrumentList() {
     <section>
       <h1>Инструменты</h1>
 
-      <div className="card">
-        <div className="grid grid-2" style={{ alignItems: 'end' }}>
-          <div className="form-row" style={{ marginBottom: 0 }}>
-            <label>Поиск</label>
-            <input
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="Тикер или название"
-            />
+      <Card className="mb-4">
+        <CardContent className="pt-4.5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Поиск</Label>
+              <Input
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                placeholder="Тикер или название"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Тип списка</Label>
+              <Select
+                value={params.type ?? 'STOCK'}
+                onValueChange={(v) => updateParam('type', v as 'STOCK' | 'FUTURES')}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="STOCK">Акции</SelectItem>
+                  <SelectItem value="FUTURES">Фьючерсы</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-          <div className="form-row" style={{ marginBottom: 0 }}>
-            <label>Тип списка</label>
-            <Select
-              value={params.type ?? 'STOCK'}
-              options={[
-                { value: 'STOCK', label: 'Акции' },
-                { value: 'FUTURES', label: 'Фьючерсы' },
-              ]}
-              onChange={(v) => updateParam('type', v as 'STOCK' | 'FUTURES')}
-            />
-          </div>
-        </div>
 
-        <div className="grid grid-4" style={{ marginTop: 14 }}>
-          <div className="form-row" style={{ marginBottom: 0 }}>
-            <label>Сектор</label>
-            <Select<number | ''>
-              value={params.sector ?? ''}
-              options={[
-                { value: '', label: 'Все' },
-                ...(taxonomy?.sectors.map((s) => ({ value: s.id, label: s.name })) ?? []),
-              ]}
-              onChange={(v) => updateParam('sector', v === '' ? undefined : Number(v))}
-              searchable={(taxonomy?.sectors.length ?? 0) > 8}
-            />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-3.5">
+            <div className="space-y-2">
+              <Label>Сектор</Label>
+              <Select
+                value={String(params.sector ?? '__all__')}
+                onValueChange={(v) => updateParam('sector', v === '__all__' ? undefined : Number(v))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Все" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">Все</SelectItem>
+                  {(taxonomy?.sectors ?? []).map((s) => (
+                    <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Группа индустрий</Label>
+              <Select
+                value={String(params.industry_group ?? '__all__')}
+                onValueChange={(v) => updateParam('industry_group', v === '__all__' ? undefined : Number(v))}
+                disabled={!params.sector}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Все" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">Все</SelectItem>
+                  {industryGroups.map((g) => (
+                    <SelectItem key={g.id} value={String(g.id)}>{g.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Индустрия</Label>
+              <Select
+                value={String(params.industry ?? '__all__')}
+                onValueChange={(v) => updateParam('industry', v === '__all__' ? undefined : Number(v))}
+                disabled={!params.industry_group}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Все" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">Все</SelectItem>
+                  {industries.map((i) => (
+                    <SelectItem key={i.id} value={String(i.id)}>{i.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Подгруппа</Label>
+              <Select
+                value={String(params.sub_industry ?? '__all__')}
+                onValueChange={(v) => updateParam('sub_industry', v === '__all__' ? undefined : Number(v))}
+                disabled={!params.industry}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Все" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">Все</SelectItem>
+                  {subIndustries.map((s) => (
+                    <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-          <div className="form-row" style={{ marginBottom: 0 }}>
-            <label>Группа индустрий</label>
-            <Select<number | ''>
-              value={params.industry_group ?? ''}
-              options={[
-                { value: '', label: 'Все' },
-                ...industryGroups.map((g) => ({ value: g.id, label: g.name })),
-              ]}
-              onChange={(v) => updateParam('industry_group', v === '' ? undefined : Number(v))}
-              disabled={!params.sector}
-              searchable={industryGroups.length > 8}
-            />
-          </div>
-          <div className="form-row" style={{ marginBottom: 0 }}>
-            <label>Индустрия</label>
-            <Select<number | ''>
-              value={params.industry ?? ''}
-              options={[
-                { value: '', label: 'Все' },
-                ...industries.map((i) => ({ value: i.id, label: i.name })),
-              ]}
-              onChange={(v) => updateParam('industry', v === '' ? undefined : Number(v))}
-              disabled={!params.industry_group}
-              searchable={industries.length > 8}
-            />
-          </div>
-          <div className="form-row" style={{ marginBottom: 0 }}>
-            <label>Подгруппа</label>
-            <Select<number | ''>
-              value={params.sub_industry ?? ''}
-              options={[
-                { value: '', label: 'Все' },
-                ...subIndustries.map((s) => ({ value: s.id, label: s.name })),
-              ]}
-              onChange={(v) => updateParam('sub_industry', v === '' ? undefined : Number(v))}
-              disabled={!params.industry}
-              searchable={subIndustries.length > 8}
-            />
-          </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
-      <div className="muted" style={{ margin: '12px 4px' }}>
+      <div className="text-muted-foreground text-sm mb-3 px-1">
         Найдено: {total}
       </div>
 
       {listQ.loading ? (
-        <div className="empty">Загрузка…</div>
+        <div className="flex items-center justify-center py-20 text-muted-foreground">Загрузка…</div>
       ) : listQ.error ? (
-        <div className="flash flash-error">{listQ.error}</div>
+        <Alert variant="destructive">{listQ.error}</Alert>
       ) : (
         <>
-          <div className="grid grid-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
             {listQ.data?.results.map((item) => (
               isFutures
                 ? <FuturesCard key={item.id} item={item as FuturesListItem} />
@@ -165,22 +198,22 @@ export default function InstrumentList() {
             ))}
           </div>
           {numPages > 1 && (
-            <div className="row-flex" style={{ justifyContent: 'center', marginTop: 18 }}>
-              <button
-                className="btn btn-sm"
+            <div className="flex items-center justify-center gap-3 mt-4.5">
+              <Button
+                size="sm"
                 disabled={params.page === 1}
                 onClick={() => setParams((p) => ({ ...p, page: (p.page ?? 1) - 1 }))}
               >
-                ←
-              </button>
-              <span className="muted">{params.page ?? 1} / {numPages}</span>
-              <button
-                className="btn btn-sm"
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="text-muted-foreground text-sm">{params.page ?? 1} / {numPages}</span>
+              <Button
+                size="sm"
                 disabled={(params.page ?? 1) >= numPages}
                 onClick={() => setParams((p) => ({ ...p, page: (p.page ?? 1) + 1 }))}
               >
-                →
-              </button>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
             </div>
           )}
         </>
@@ -191,56 +224,60 @@ export default function InstrumentList() {
 
 function InstrumentCard({ item }: { item: InstrumentListItem }) {
   return (
-    <Link to={`/instruments/${item.ticker}`} className="card" style={{ display: 'block', textDecoration: 'none' }}>
-      <div className="row-flex" style={{ alignItems: 'flex-start' }}>
-        {item.logo_url && (
-          <img
-            src={staticUrl(item.logo_url)}
-            alt=""
-            style={{ width: 36, height: 36, borderRadius: 8, objectFit: 'contain', background: '#fff' }}
-          />
+    <Link to={`/instruments/${item.ticker}`} className="block no-underline">
+      <Card className="p-4 hover:bg-glass-strong transition-colors">
+        <div className="flex items-start gap-2.5">
+          {item.logo_url && (
+            <img
+              src={staticUrl(item.logo_url)}
+              alt=""
+              className="w-9 h-9 rounded-lg object-contain bg-white"
+            />
+          )}
+          <div className="flex-1 min-w-0">
+            <div className="font-semibold text-foreground">{item.ticker}</div>
+            <div className="text-muted-foreground text-[13px] truncate">{item.name}</div>
+          </div>
+          <Badge>{item.instrument_type_display}</Badge>
+        </div>
+        <div className="text-muted-foreground text-xs mt-2">
+          {item.taxonomy.sector ?? '—'} · лот {item.lot_size} · шаг {item.min_price_step}
+        </div>
+        {item.trades_count > 0 && (
+          <div className="text-muted-foreground text-xs mt-1">
+            Ваши сделки: {item.trades_count} (закрытых {item.closed_trades_count})
+          </div>
         )}
-        <div style={{ flex: 1 }}>
-          <div style={{ fontWeight: 600 }}>{item.ticker}</div>
-          <div className="muted" style={{ fontSize: 13 }}>{item.name}</div>
-        </div>
-        <span className="badge">{item.instrument_type_display}</span>
-      </div>
-      <div className="muted" style={{ fontSize: 12, marginTop: 8 }}>
-        {item.taxonomy.sector ?? '—'} · лот {item.lot_size} · шаг {item.min_price_step}
-      </div>
-      {item.trades_count > 0 && (
-        <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>
-          Ваши сделки: {item.trades_count} (закрытых {item.closed_trades_count})
-        </div>
-      )}
+      </Card>
     </Link>
   );
 }
 
 function FuturesCard({ item }: { item: FuturesListItem }) {
   return (
-    <Link to={`/instruments/futures/${item.ticker}`} className="card" style={{ display: 'block', textDecoration: 'none' }}>
-      <div className="row-flex" style={{ alignItems: 'flex-start' }}>
-        {item.logo_url && (
-          <img
-            src={staticUrl(item.logo_url)}
-            alt=""
-            style={{ width: 36, height: 36, borderRadius: 8, objectFit: 'contain', background: '#fff' }}
-          />
-        )}
-        <div style={{ flex: 1 }}>
-          <div style={{ fontWeight: 600 }}>{item.ticker}</div>
-          <div className="muted" style={{ fontSize: 13 }}>
-            Базовый актив: {item.base_asset_ticker}
+    <Link to={`/instruments/futures/${item.ticker}`} className="block no-underline">
+      <Card className="p-4 hover:bg-glass-strong transition-colors">
+        <div className="flex items-start gap-2.5">
+          {item.logo_url && (
+            <img
+              src={staticUrl(item.logo_url)}
+              alt=""
+              className="w-9 h-9 rounded-lg object-contain bg-white"
+            />
+          )}
+          <div className="flex-1 min-w-0">
+            <div className="font-semibold text-foreground">{item.ticker}</div>
+            <div className="text-muted-foreground text-[13px]">
+              Базовый актив: {item.base_asset_ticker}
+            </div>
           </div>
+          <Badge variant="info">Фьючерс</Badge>
         </div>
-        <span className="badge badge-blue">Фьючерс</span>
-      </div>
-      <div className="muted" style={{ fontSize: 12, marginTop: 8 }}>
-        {item.expiration_date ? `Экспирация: ${item.expiration_date}` : 'Без даты'} ·
-        лот {item.lot_size ?? '—'} · шаг {item.min_price_step ?? '—'}
-      </div>
+        <div className="text-muted-foreground text-xs mt-2">
+          {item.expiration_date ? `Экспирация: ${item.expiration_date}` : 'Без даты'} ·
+          лот {item.lot_size ?? '—'} · шаг {item.min_price_step ?? '—'}
+        </div>
+      </Card>
     </Link>
   );
 }

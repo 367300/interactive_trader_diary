@@ -4,7 +4,14 @@ import { strategiesApi } from '../../api/endpoints';
 import { ApiError } from '../../api/client';
 import { useApi } from '../../lib/useApi';
 import type { Strategy, StrategyChoices, StrategyType, StrategyInstruments } from '../../api/types';
-import Select from '../../components/Select';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { Alert } from '@/components/ui/alert';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 type FormState = {
   name: string;
@@ -75,75 +82,91 @@ export default function StrategyForm() {
     }
   };
 
-  if (choicesQ.loading || editQ.loading) return <div className="empty">Загрузка…</div>;
+  if (choicesQ.loading || editQ.loading)
+    return <div className="flex items-center justify-center py-20 text-muted-foreground">Загрузка…</div>;
 
   return (
     <section>
       <h1>{isEdit ? 'Редактирование стратегии' : 'Новая стратегия'}</h1>
-      <form onSubmit={onSubmit} className="card" style={{ maxWidth: 720 }}>
-        {errors._ && <div className="flash flash-error">{errors._}</div>}
-        <div className="form-row">
-          <label>Название</label>
-          <input
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-            minLength={3}
-            required
-          />
-          {errors.name && <div className="error">{errors.name}</div>}
-        </div>
-        <div className="form-row">
-          <label>Описание</label>
-          <textarea
-            value={form.description}
-            onChange={(e) => setForm({ ...form, description: e.target.value })}
-            rows={4}
-            placeholder="Подробное описание, правила входа и выхода…"
-          />
-          {errors.description && <div className="error">{errors.description}</div>}
-        </div>
-        <div className="grid grid-2">
-          <div className="form-row">
-            <label>Тип стратегии</label>
-            <Select<StrategyType>
-              value={form.strategy_type}
-              options={(choicesQ.data?.strategy_types ?? []).map((c) => ({ value: c.value as StrategyType, label: c.label }))}
-              onChange={(v) => setForm({ ...form, strategy_type: v })}
-            />
-          </div>
-          <div className="form-row">
-            <label>Инструменты</label>
-            <Select<StrategyInstruments>
-              value={form.instruments}
-              options={(choicesQ.data?.instruments ?? []).map((c) => ({ value: c.value as StrategyInstruments, label: c.label }))}
-              onChange={(v) => setForm({ ...form, instruments: v })}
-            />
-          </div>
-        </div>
-        <div className="form-row">
-          <label>
-            <input
-              type="checkbox"
-              checked={form.is_active}
-              onChange={(e) => setForm({ ...form, is_active: e.target.checked })}
-              style={{ width: 'auto', marginRight: 8, verticalAlign: 'middle' }}
-            />
-            Активная стратегия (доступна при создании сделок)
-          </label>
-        </div>
-        <div className="row-flex">
-          <button className="btn btn-primary" disabled={busy}>
-            {busy ? 'Сохраняем…' : isEdit ? 'Сохранить' : 'Создать'}
-          </button>
-          <button
-            type="button"
-            className="btn btn-ghost"
-            onClick={() => navigate('/strategies')}
-          >
-            Отмена
-          </button>
-        </div>
-      </form>
+      <Card className="max-w-[720px]">
+        <CardContent className="pt-6">
+          <form onSubmit={onSubmit}>
+            {errors._ && <Alert variant="destructive" className="mb-4">{errors._}</Alert>}
+            <div className="space-y-2 mb-4">
+              <Label>Название</Label>
+              <Input
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                minLength={3}
+                required
+              />
+              {errors.name && <p className="text-xs text-red">{errors.name}</p>}
+            </div>
+            <div className="space-y-2 mb-4">
+              <Label>Описание</Label>
+              <Textarea
+                value={form.description}
+                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                rows={4}
+                placeholder="Подробное описание, правила входа и выхода…"
+              />
+              {errors.description && <p className="text-xs text-red">{errors.description}</p>}
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div className="space-y-2">
+                <Label>Тип стратегии</Label>
+                <Select
+                  value={form.strategy_type}
+                  onValueChange={(v) => setForm({ ...form, strategy_type: v as StrategyType })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(choicesQ.data?.strategy_types ?? []).map((c) => (
+                      <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Инструменты</Label>
+                <Select
+                  value={form.instruments}
+                  onValueChange={(v) => setForm({ ...form, instruments: v as StrategyInstruments })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(choicesQ.data?.instruments ?? []).map((c) => (
+                      <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 mb-4">
+              <Checkbox
+                id="is_active"
+                checked={form.is_active}
+                onCheckedChange={(checked) => setForm({ ...form, is_active: checked === true })}
+              />
+              <Label htmlFor="is_active" className="cursor-pointer">
+                Активная стратегия (доступна при создании сделок)
+              </Label>
+            </div>
+            <div className="flex items-center gap-3">
+              <Button variant="primary" disabled={busy}>
+                {busy ? 'Сохраняем…' : isEdit ? 'Сохранить' : 'Создать'}
+              </Button>
+              <Button type="button" variant="ghost" onClick={() => navigate('/strategies')}>
+                Отмена
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
     </section>
   );
 }
