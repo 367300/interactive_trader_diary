@@ -1,5 +1,7 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
+import path from 'path';
 
 const django = process.env.VITE_DJANGO_PROXY_TARGET || 'http://web:8000';
 
@@ -11,7 +13,12 @@ const trustedHosts = (process.env.CSRF_TRUSTED_ORIGINS ?? '')
 const allowedHosts = [...new Set(['localhost', 'frontend', ...trustedHosts])];
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
   server: {
     host: '0.0.0.0',
     port: 3000,
