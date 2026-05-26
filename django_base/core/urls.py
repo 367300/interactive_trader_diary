@@ -21,4 +21,9 @@ urlpatterns = [
         views.AdminCandlesLoadView.as_view(),
         name='admin_candles_load',
     ),
+    path(
+        'admin/flush-cache/',
+        views.AdminFlushCacheView.as_view(),
+        name='admin_flush_cache',
+    ),
 ]

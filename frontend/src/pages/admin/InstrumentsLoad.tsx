@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Alert } from '@/components/ui/alert';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Upload } from 'lucide-react';
+import { Trash2, Upload } from 'lucide-react';
 
 export default function InstrumentsLoad() {
   const [type, setType] = useState('STOCK');
@@ -91,6 +91,7 @@ export default function InstrumentsLoad() {
 
       <CsvUpload />
       <CandlesLoad />
+      <CacheFlush />
     </section>
   );
 }
@@ -216,6 +217,55 @@ function CandlesLoad() {
             {busy ? 'Запускаем…' : 'Загрузить котировки'}
           </Button>
         </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function CacheFlush() {
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<{ detail: string; cleared: string[] } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const onFlush = async () => {
+    setBusy(true);
+    setResult(null);
+    setError(null);
+    try {
+      const res = await coreApi.flushCache();
+      setResult(res);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Ошибка сброса кэша');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Card className="max-w-[560px] mt-5">
+      <CardHeader>
+        <CardTitle>Сброс кэша</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="text-muted-foreground text-[13px] mb-3.5">
+          Полная очистка всех кэшей проекта: Redis (кэш свечей и прочие данные),
+          манифест статических файлов (перечитает хешированные URL).
+        </p>
+        {result && (
+          <Alert variant="success" className="mb-3">
+            <p>{result.detail}</p>
+            {result.cleared.length > 0 && (
+              <ul className="mt-1 text-[12px] list-disc pl-4">
+                {result.cleared.map((item, i) => <li key={i}>{item}</li>)}
+              </ul>
+            )}
+          </Alert>
+        )}
+        {error && <Alert variant="destructive" className="mb-3">{error}</Alert>}
+        <Button variant="destructive" size="sm" disabled={busy} onClick={onFlush}>
+          <Trash2 className="h-3.5 w-3.5" />
+          {busy ? 'Сбрасываем…' : 'Сбросить весь кэш'}
+        </Button>
       </CardContent>
     </Card>
   );

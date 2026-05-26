@@ -1,6 +1,8 @@
+import logging
 from pathlib import Path
 
 from django.conf import settings
+from django.core.cache import cache
 from django.views.generic import TemplateView
 from rest_framework import status
 from rest_framework.parsers import MultiPartParser
@@ -16,6 +18,8 @@ from trades.utils import (
     annotate_recent_trades_with_pips,
     calculate_user_aggregate_stats,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class PublicTemplateView(TemplateView):
@@ -176,4 +180,43 @@ class AdminCandlesLoadView(APIView):
                 "message": f"Загрузка котировок за {year} год поставлена в очередь.",
             },
             status=status.HTTP_202_ACCEPTED,
+        )
+
+
+class AdminFlushCacheView(APIView):
+    """Сброс всего кэша проекта: Redis, манифест статики."""
+
+    permission_classes = (IsAuthenticated, IsAdminUser)
+
+    def post(self, request):
+        cleared = []
+
+        # 1. Redis / Django cache
+        try:
+            cache.clear()
+            cleared.append("Redis-кэш Django (свечи, сессии, прочее)")
+        except Exception as e:
+            logger.exception("Ошибка очистки Redis-кэша")
+            return Response(
+                {"detail": f"Ошибка очистки Redis: {e}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        # 2. Манифест статических файлов (CompressedManifestStaticFilesStorage)
+        try:
+            from django.contrib.staticfiles.storage import staticfiles_storage
+
+            if hasattr(staticfiles_storage, 'hashed_files'):
+                staticfiles_storage.hashed_files.clear()
+                staticfiles_storage.read_manifest()
+                cleared.append("Манифест статики (staticfiles.json перечитан)")
+        except Exception as e:
+            logger.warning("Не удалось сбросить манифест статики: %s", e)
+
+        return Response(
+            {
+                "detail": "Кэш успешно сброшен.",
+                "cleared": cleared,
+            },
+            status=status.HTTP_200_OK,
         )

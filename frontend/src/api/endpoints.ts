@@ -127,4 +127,6 @@ export const coreApi = {
       isFormData: true,
     });
   },
+  flushCache: () =>
+    api.post<{ detail: string; cleared: string[] }>('/admin/flush-cache/'),
 };
