@@ -2,6 +2,12 @@ import { FormEvent, useState } from 'react';
 import { ApiError } from '../../api/client';
 import { tradesApi, type ChildTradePayload } from '../../api/endpoints';
 import { inputToIso, nowForInput } from '../../lib/datetime';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { Alert } from '@/components/ui/alert';
+import { DateTimePicker } from '@/components/ui/date-time-picker';
 
 export type ChildAction = 'average' | 'partial-close' | 'close';
 
@@ -56,62 +62,62 @@ export default function ChildTradeModal({ tradeId, action, availableVolume, onCl
   };
 
   return (
-    <div
-      style={{
-        position: 'fixed', inset: 0, background: 'rgba(7,11,24,.7)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50,
-      }}
-      onClick={onClose}
-    >
-      <form
-        className="card"
-        style={{ width: 480, maxWidth: '92vw' }}
-        onClick={(e) => e.stopPropagation()}
-        onSubmit={onSubmit}
-      >
-        <h3>{titles[action]}</h3>
-        {errors._ && <div className="flash flash-error">{errors._}</div>}
-        <div className="form-row">
-          <label>Дата и время</label>
-          <input type="datetime-local" value={date} onChange={(e) => setDate(e.target.value)} required />
-        </div>
-        <div className="form-row">
-          <label>Цена</label>
-          <input
-            type="number"
-            step="0.0001"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-            required
-          />
-          {errors.price && <div className="error">{errors.price}</div>}
-        </div>
-        {action !== 'close' && (
-          <div className="form-row">
-            <label>Объём, % от капитала</label>
-            <input
-              type="number"
-              min={1}
-              max={action === 'partial-close' ? availableVolume - 1 : 100}
-              value={volume}
-              onChange={(e) => setVolume(Number(e.target.value))}
-              required
-            />
-            <div className="hint">
-              Доступный объём: {availableVolume}%
-              {action === 'partial-close' && ` (для полного закрытия используйте отдельную кнопку)`}
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-md">
+        <form onSubmit={onSubmit}>
+          <DialogHeader>
+            <DialogTitle>{titles[action]}</DialogTitle>
+            <DialogDescription>
+              {action === 'close'
+                ? `Будет закрыт весь доступный объём (${availableVolume}%).`
+                : `Доступный объём: ${availableVolume}%`}
+            </DialogDescription>
+          </DialogHeader>
+
+          {errors._ && <Alert variant="destructive" className="mt-3">{errors._}</Alert>}
+
+          <div className="space-y-4 mt-4">
+            <div className="space-y-2">
+              <Label>Дата и время</Label>
+              <DateTimePicker value={date} onChange={setDate} required />
             </div>
-            {errors.volume_from_capital && <div className="error">{errors.volume_from_capital}</div>}
+            <div className="space-y-2">
+              <Label>Цена</Label>
+              <Input
+                type="number"
+                step="0.0001"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                required
+              />
+              {errors.price && <p className="text-xs text-red">{errors.price}</p>}
+            </div>
+            {action !== 'close' && (
+              <div className="space-y-2">
+                <Label>Объём, % от капитала</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={action === 'partial-close' ? availableVolume - 1 : 100}
+                  value={volume}
+                  onChange={(e) => setVolume(Number(e.target.value))}
+                  required
+                />
+                <p className="text-xs text-muted-foreground">
+                  Доступный объём: {availableVolume}%
+                  {action === 'partial-close' && ' (для полного закрытия используйте отдельную кнопку)'}
+                </p>
+                {errors.volume_from_capital && <p className="text-xs text-red">{errors.volume_from_capital}</p>}
+              </div>
+            )}
           </div>
-        )}
-        {action === 'close' && (
-          <div className="hint">Будет закрыт весь доступный объём ({availableVolume}%).</div>
-        )}
-        <div className="row-flex" style={{ marginTop: 14 }}>
-          <button className="btn btn-primary" disabled={busy}>{busy ? 'Сохраняем…' : 'Применить'}</button>
-          <button type="button" className="btn btn-ghost" onClick={onClose}>Отмена</button>
-        </div>
-      </form>
-    </div>
+
+          <DialogFooter className="mt-4">
+            <Button variant="primary" disabled={busy}>{busy ? 'Сохраняем…' : 'Применить'}</Button>
+            <Button type="button" variant="ghost" onClick={onClose}>Отмена</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

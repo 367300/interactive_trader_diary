@@ -1,6 +1,11 @@
 import { ChangeEvent, useState } from 'react';
 import { tradesApi } from '../../api/endpoints';
 import type { TradeScreenshot } from '../../api/types';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Alert } from '@/components/ui/alert';
+import { Upload, Trash2 } from 'lucide-react';
 
 interface Props {
   tradeId: string;
@@ -45,53 +50,61 @@ export default function TradeScreenshots({ tradeId, initial }: Props) {
   };
 
   return (
-    <div className="card" style={{ marginTop: 14 }}>
-      <h3>Скриншоты</h3>
-      {error && <div className="flash flash-error">{error}</div>}
-      <div className="row-flex" style={{ marginBottom: 10 }}>
-        <input
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Описание (необязательно)"
-          style={{ flex: 1, minWidth: 200 }}
-        />
-        <label className="btn">
-          {busy ? 'Загружаем…' : 'Добавить файл'}
-          <input
-            type="file"
-            accept="image/*"
-            multiple
-            disabled={busy}
-            onChange={onUpload}
-            style={{ display: 'none' }}
+    <Card className="mt-3.5">
+      <CardHeader>
+        <CardTitle>Скриншоты</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {error && <Alert variant="destructive" className="mb-3">{error}</Alert>}
+        <div className="flex items-center gap-3 mb-4 flex-wrap">
+          <Input
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Описание (необязательно)"
+            className="flex-1 min-w-[200px]"
           />
-        </label>
-      </div>
-      {items.length === 0 ? (
-        <div className="muted">Скриншотов пока нет.</div>
-      ) : (
-        <div className="grid grid-3">
-          {items.map((s) => (
-            <div key={s.id} className="card" style={{ padding: 8 }}>
-              <a href={s.image_url} target="_blank" rel="noreferrer">
-                <img
-                  src={s.image_url}
-                  alt={s.description}
-                  style={{ width: '100%', borderRadius: 8, display: 'block' }}
-                />
-              </a>
-              {s.description && <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>{s.description}</div>}
-              <button
-                className="btn btn-sm btn-danger"
-                style={{ marginTop: 8 }}
-                onClick={() => remove(s.id)}
-              >
-                Удалить
-              </button>
-            </div>
-          ))}
+          <Button asChild className="cursor-pointer">
+            <label>
+              <Upload className="h-4 w-4" />
+              {busy ? 'Загружаем…' : 'Добавить файл'}
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                disabled={busy}
+                onChange={onUpload}
+                className="hidden"
+              />
+            </label>
+          </Button>
         </div>
-      )}
-    </div>
+        {items.length === 0 ? (
+          <div className="text-muted-foreground text-sm">Скриншотов пока нет.</div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+            {items.map((s) => (
+              <Card key={s.id} className="p-2">
+                <a href={s.image_url} target="_blank" rel="noreferrer">
+                  <img
+                    src={s.image_url}
+                    alt={s.description}
+                    className="w-full rounded-lg block"
+                  />
+                </a>
+                {s.description && <div className="text-muted-foreground text-xs mt-1.5 px-1">{s.description}</div>}
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="mt-2"
+                  onClick={() => remove(s.id)}
+                >
+                  <Trash2 className="h-3.5 w-3.5" /> Удалить
+                </Button>
+              </Card>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

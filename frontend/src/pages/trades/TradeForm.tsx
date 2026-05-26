@@ -5,7 +5,14 @@ import { instrumentsApi, strategiesApi, tradesApi } from '../../api/endpoints';
 import { useApi } from '../../lib/useApi';
 import { isoToInput, nowForInput, inputToIso } from '../../lib/datetime';
 import type { EmotionalState, InstrumentListItem, Trade, TradeAnalysis } from '../../api/types';
-import Select from '../../components/Select';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { Alert } from '@/components/ui/alert';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DateTimePicker } from '@/components/ui/date-time-picker';
 
 interface FormState {
   strategy: string;
@@ -41,8 +48,8 @@ const emptyForm: FormState = {
   tags: '',
 };
 
-const emotionChoices: { value: EmotionalState; label: string }[] = [
-  { value: '', label: 'Не выбрано' },
+const emotionChoices: { value: string; label: string }[] = [
+  { value: '__none__', label: 'Не выбрано' },
   { value: 'CALM', label: 'Спокойное' },
   { value: 'EXCITED', label: 'Возбужденное' },
   { value: 'FEARFUL', label: 'Страх' },
@@ -79,17 +86,12 @@ export default function TradeForm() {
   const strategyOptions = useMemo(() => {
     const list = strategiesQ.data?.results ?? [];
     return [
-      { value: '', label: 'Без стратегии' },
+      { value: '__none__', label: 'Без стратегии' },
       ...list
         .filter((s) => s.is_active || String(s.id) === form.strategy)
         .map((s) => ({ value: String(s.id), label: s.name })),
     ];
   }, [strategiesQ.data, form.strategy]);
-
-  const directionOptions = [
-    { value: 'LONG', label: 'Лонг' },
-    { value: 'SHORT', label: 'Шорт' },
-  ];
 
   useEffect(() => {
     if (editQ.data) {
@@ -181,182 +183,207 @@ export default function TradeForm() {
     }
   };
 
-  if ((isEdit && editQ.loading) || strategiesQ.loading) return <div className="empty">Загрузка…</div>;
+  if ((isEdit && editQ.loading) || strategiesQ.loading)
+    return <div className="flex items-center justify-center py-20 text-muted-foreground">Загрузка…</div>;
 
   return (
     <section>
       <h1>{isEdit ? 'Редактирование сделки' : 'Новая сделка'}</h1>
-      <form onSubmit={onSubmit} className="card" style={{ maxWidth: 900 }}>
-        {errors._ && <div className="flash flash-error">{errors._}</div>}
+      <Card className="max-w-[900px]">
+        <CardContent className="pt-6">
+          <form onSubmit={onSubmit}>
+            {errors._ && <Alert variant="destructive" className="mb-4">{errors._}</Alert>}
 
-        <div className="grid grid-2">
-          <div className="form-row">
-            <label>Стратегия</label>
-            <Select
-              value={form.strategy}
-              options={strategyOptions}
-              onChange={(v) => setForm({ ...form, strategy: v })}
-              placeholder="Без стратегии"
-              searchable={strategyOptions.length > 8}
-            />
-            {errors.strategy && <div className="error">{errors.strategy}</div>}
-          </div>
-
-          <div className="form-row" style={{ position: 'relative' }}>
-            <label>Инструмент</label>
-            <input
-              value={form.instrument_search}
-              onChange={(e) => setForm({ ...form, instrument_search: e.target.value, instrument: '' })}
-              placeholder="Введите тикер или часть названия"
-              disabled={isEdit}
-              autoComplete="off"
-            />
-            {!isEdit && showInstruments && (
-              <div
-                className="card"
-                style={{
-                  position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 5,
-                  padding: 6, maxHeight: 240, overflowY: 'auto',
-                }}
-              >
-                {instruments.slice(0, 12).map((i) => (
-                  <div
-                    key={i.id}
-                    style={{ padding: '6px 10px', cursor: 'pointer', borderRadius: 6 }}
-                    onClick={() => {
-                      setForm((prev) => ({
-                        ...prev,
-                        instrument: String(i.id),
-                        instrument_search: i.ticker,
-                      }));
-                    }}
-                  >
-                    <strong>{i.ticker}</strong> <span className="muted">— {i.name}</span>
-                  </div>
-                ))}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div className="space-y-2">
+                <Label>Стратегия</Label>
+                <Select
+                  value={form.strategy || '__none__'}
+                  onValueChange={(v) => setForm({ ...form, strategy: v === '__none__' ? '' : v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Без стратегии" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {strategyOptions.map((o) => (
+                      <SelectItem key={o.value} value={o.value}>
+                        {o.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.strategy && <p className="text-xs text-red">{errors.strategy}</p>}
               </div>
-            )}
-            {errors.instrument && <div className="error">{errors.instrument}</div>}
-          </div>
-        </div>
 
-        <div className="grid grid-3">
-          <div className="form-row">
-            <label>Дата и время</label>
-            <input
-              type="datetime-local"
-              value={form.trade_date}
-              onChange={(e) => setForm({ ...form, trade_date: e.target.value })}
-              required
-            />
-          </div>
-          <div className="form-row">
-            <label>Направление</label>
-            <Select
-              value={form.direction}
-              options={directionOptions}
-              onChange={(v) => setForm({ ...form, direction: v as 'LONG' | 'SHORT' })}
-            />
-          </div>
-          <div className="form-row">
-            <label>Объём от капитала, %</label>
-            <input
-              type="number"
-              min={1}
-              max={100}
-              value={form.volume_from_capital}
-              onChange={(e) => setForm({ ...form, volume_from_capital: Number(e.target.value) })}
-              required
-            />
-          </div>
-        </div>
+              <div className="space-y-2 relative">
+                <Label>Инструмент</Label>
+                <Input
+                  value={form.instrument_search}
+                  onChange={(e) => setForm({ ...form, instrument_search: e.target.value, instrument: '' })}
+                  placeholder="Введите тикер или часть названия"
+                  disabled={isEdit}
+                  autoComplete="off"
+                />
+                {!isEdit && showInstruments && (
+                  <Card className="absolute top-full left-0 right-0 z-10 p-1.5 max-h-60 overflow-y-auto">
+                    {instruments.slice(0, 12).map((i) => (
+                      <div
+                        key={i.id}
+                        className="px-2.5 py-1.5 cursor-pointer rounded-lg hover:bg-blue/14 text-sm"
+                        onClick={() => {
+                          setForm((prev) => ({
+                            ...prev,
+                            instrument: String(i.id),
+                            instrument_search: i.ticker,
+                          }));
+                        }}
+                      >
+                        <strong>{i.ticker}</strong>{' '}
+                        <span className="text-muted-foreground">— {i.name}</span>
+                      </div>
+                    ))}
+                  </Card>
+                )}
+                {errors.instrument && <p className="text-xs text-red">{errors.instrument}</p>}
+              </div>
+            </div>
 
-        <div className="grid grid-3">
-          <div className="form-row">
-            <label>Цена входа</label>
-            <input
-              type="number"
-              step="0.0001"
-              value={form.price}
-              onChange={(e) => setForm({ ...form, price: e.target.value })}
-              required
-            />
-            {errors.price && <div className="error">{errors.price}</div>}
-          </div>
-          <div className="form-row">
-            <label>Стоп-лосс</label>
-            <input
-              type="number"
-              step="0.0001"
-              value={form.planned_stop_loss}
-              onChange={(e) => setForm({ ...form, planned_stop_loss: e.target.value })}
-            />
-          </div>
-          <div className="form-row">
-            <label>Тейк-профит</label>
-            <input
-              type="number"
-              step="0.0001"
-              value={form.planned_take_profit}
-              onChange={(e) => setForm({ ...form, planned_take_profit: e.target.value })}
-            />
-          </div>
-        </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div className="space-y-2">
+                <Label>Дата и время</Label>
+                <DateTimePicker
+                  value={form.trade_date}
+                  onChange={(v) => setForm({ ...form, trade_date: v })}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Направление</Label>
+                <Select
+                  value={form.direction}
+                  onValueChange={(v) => setForm({ ...form, direction: v as 'LONG' | 'SHORT' })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="LONG">Лонг</SelectItem>
+                    <SelectItem value="SHORT">Шорт</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Объём от капитала, %</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={100}
+                  value={form.volume_from_capital}
+                  onChange={(e) => setForm({ ...form, volume_from_capital: Number(e.target.value) })}
+                  required
+                />
+              </div>
+            </div>
 
-        <div className="form-row">
-          <label>Комиссия (₽)</label>
-          <input
-            type="number"
-            step="0.01"
-            value={form.commission}
-            onChange={(e) => setForm({ ...form, commission: e.target.value })}
-          />
-        </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div className="space-y-2">
+                <Label>Цена входа</Label>
+                <Input
+                  type="number"
+                  step="0.0001"
+                  value={form.price}
+                  onChange={(e) => setForm({ ...form, price: e.target.value })}
+                  required
+                />
+                {errors.price && <p className="text-xs text-red">{errors.price}</p>}
+              </div>
+              <div className="space-y-2">
+                <Label>Стоп-лосс</Label>
+                <Input
+                  type="number"
+                  step="0.0001"
+                  value={form.planned_stop_loss}
+                  onChange={(e) => setForm({ ...form, planned_stop_loss: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Тейк-профит</Label>
+                <Input
+                  type="number"
+                  step="0.0001"
+                  value={form.planned_take_profit}
+                  onChange={(e) => setForm({ ...form, planned_take_profit: e.target.value })}
+                />
+              </div>
+            </div>
 
-        <h3 style={{ marginTop: 20 }}>Анализ</h3>
-        <div className="form-row">
-          <label>Основание</label>
-          <textarea
-            rows={3}
-            value={form.analysis}
-            onChange={(e) => setForm({ ...form, analysis: e.target.value })}
-          />
-        </div>
-        <div className="form-row">
-          <label>Выводы на будущее</label>
-          <textarea
-            rows={3}
-            value={form.conclusions}
-            onChange={(e) => setForm({ ...form, conclusions: e.target.value })}
-          />
-        </div>
-        <div className="grid grid-2">
-          <div className="form-row">
-            <label>Эмоциональное состояние</label>
-            <Select
-              value={form.emotional_state}
-              options={emotionChoices.map((c) => ({ value: c.value, label: c.label }))}
-              onChange={(v) => setForm({ ...form, emotional_state: v as EmotionalState })}
-              placeholder="Не выбрано"
-            />
-          </div>
-          <div className="form-row">
-            <label>Теги (через запятую)</label>
-            <input
-              value={form.tags}
-              onChange={(e) => setForm({ ...form, tags: e.target.value })}
-              placeholder="ошибка, эмоции, тренд"
-            />
-          </div>
-        </div>
+            <div className="space-y-2 mb-4">
+              <Label>Комиссия (₽)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                value={form.commission}
+                onChange={(e) => setForm({ ...form, commission: e.target.value })}
+              />
+            </div>
 
-        <div className="row-flex" style={{ marginTop: 16 }}>
-          <button className="btn btn-primary" disabled={busy}>
-            {busy ? 'Сохраняем…' : isEdit ? 'Сохранить' : 'Создать сделку'}
-          </button>
-          <Link to="/trades" className="btn btn-ghost">Отмена</Link>
-        </div>
-      </form>
+            <h3 className="mt-5">Анализ</h3>
+            <div className="space-y-2 mb-4">
+              <Label>Основание</Label>
+              <Textarea
+                rows={3}
+                value={form.analysis}
+                onChange={(e) => setForm({ ...form, analysis: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2 mb-4">
+              <Label>Выводы на будущее</Label>
+              <Textarea
+                rows={3}
+                value={form.conclusions}
+                onChange={(e) => setForm({ ...form, conclusions: e.target.value })}
+              />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div className="space-y-2">
+                <Label>Эмоциональное состояние</Label>
+                <Select
+                  value={form.emotional_state || '__none__'}
+                  onValueChange={(v) => setForm({ ...form, emotional_state: (v === '__none__' ? '' : v) as EmotionalState })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Не выбрано" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {emotionChoices.map((c) => (
+                      <SelectItem key={c.value} value={c.value}>
+                        {c.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Теги (через запятую)</Label>
+                <Input
+                  value={form.tags}
+                  onChange={(e) => setForm({ ...form, tags: e.target.value })}
+                  placeholder="ошибка, эмоции, тренд"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 mt-4">
+              <Button variant="primary" disabled={busy}>
+                {busy ? 'Сохраняем…' : isEdit ? 'Сохранить' : 'Создать сделку'}
+              </Button>
+              <Button variant="ghost" asChild>
+                <Link to="/trades">Отмена</Link>
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
     </section>
   );
 }
