@@ -101,7 +101,7 @@ services:
     working_dir: /app/django_base
     command: celery -A django_base worker --loglevel=info
     volumes:
-      - ./uploads:/app/uploads:ro
+      - ./uploads:/app/uploads
     env_file:
       - .env
     environment:
