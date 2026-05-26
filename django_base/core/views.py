@@ -184,14 +184,13 @@ class AdminCandlesLoadView(APIView):
 
 
 class AdminFlushCacheView(APIView):
-    """Сброс всего кэша проекта: Redis, манифест статики."""
+    """Сброс всего кэша проекта (Redis)."""
 
     permission_classes = (IsAuthenticated, IsAdminUser)
 
     def post(self, request):
         cleared = []
 
-        # 1. Redis / Django cache
         try:
             cache.clear()
             cleared.append("Redis-кэш Django (свечи, сессии, прочее)")
@@ -201,17 +200,6 @@ class AdminFlushCacheView(APIView):
                 {"detail": f"Ошибка очистки Redis: {e}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
-
-        # 2. Манифест статических файлов (CompressedManifestStaticFilesStorage)
-        try:
-            from django.contrib.staticfiles.storage import staticfiles_storage
-
-            if hasattr(staticfiles_storage, 'hashed_files'):
-                staticfiles_storage.hashed_files.clear()
-                staticfiles_storage.read_manifest()
-                cleared.append("Манифест статики (staticfiles.json перечитан)")
-        except Exception as e:
-            logger.warning("Не удалось сбросить манифест статики: %s", e)
 
         return Response(
             {

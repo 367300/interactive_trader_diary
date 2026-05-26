@@ -50,7 +50,7 @@ services:
     working_dir: /app/django_base
     user: root
     command: >
-      sh -c "mkdir -p /app/uploads/data_instruments &&
+      sh -c "mkdir -p /app/uploads/data_instruments /app/uploads/candles &&
              chown -R 5678:5678 /app/uploads &&
              su -s /bin/sh appuser -c '
                python manage.py migrate --noinput &&
@@ -77,7 +77,7 @@ services:
       - CELERY_BROKER_URL=${CELERY_BROKER_URL}
       - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
     volumes:
-      - ./uploads:/app/uploads
+      - uploads_data:/app/uploads
     depends_on:
       - db
       - rabbitmq
@@ -101,7 +101,7 @@ services:
     working_dir: /app/django_base
     command: celery -A django_base worker --loglevel=info
     volumes:
-      - ./uploads:/app/uploads
+      - uploads_data:/app/uploads
     env_file:
       - .env
     environment:
@@ -186,6 +186,7 @@ services:
 volumes:
   postgres_data:
   pgadmin_data:
+  uploads_data:
 
 # `default` — внутренняя сеть стека (создаётся docker compose'ом автоматически),
 # по ней web/frontend/celery/db общаются между собой.
