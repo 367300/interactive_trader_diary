@@ -51,3 +51,4 @@ djangorestframework-simplejwt==5.3.1
 django-cors-headers==4.4.0
 django-filter==24.3
 whitenoise==6.7.0
+django-redis==5.4.0
