@@ -26,10 +26,10 @@ export function formatPips(value: number | null | undefined) {
 }
 
 export function pnlClass(value: number | null | undefined) {
-  if (value === null || value === undefined) return 'stat-mute';
-  if (value > 0) return 'stat-pos';
-  if (value < 0) return 'stat-neg';
-  return 'stat-mute';
+  if (value === null || value === undefined) return 'text-soft-foreground';
+  if (value > 0) return 'text-green';
+  if (value < 0) return 'text-red';
+  return 'text-soft-foreground';
 }
 
 export function directionLabel(direction: string) {
