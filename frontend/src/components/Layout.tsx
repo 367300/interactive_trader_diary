@@ -1,6 +1,9 @@
 import { useCallback, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { LogOut, Menu, Plus } from 'lucide-react';
 
 const navItems = [
   { to: '/dashboard', label: 'Дашборд' },
@@ -81,27 +84,37 @@ export default function Layout() {
         )}
 
         <div className="user-pill">
-          <span className="avatar">{initials}</span>
+          <Avatar>
+            <AvatarFallback>{initials}</AvatarFallback>
+          </Avatar>
           <span className="user-meta">
             <span className="user-name">{user.username}</span>
             <span className="user-role">{user.is_staff ? 'Администратор' : 'Трейдер'}</span>
           </span>
-          <button className="btn-icon" onClick={onLogout} title="Выйти">→</button>
+          <Button variant="ghost" size="icon" onClick={onLogout} title="Выйти" className="h-8 w-8">
+            <LogOut className="h-4 w-4" />
+          </Button>
         </div>
       </aside>
 
       <div className="content">
         <header className="topbar">
-          <button
-            className="btn-icon sidebar-toggle"
+          <Button
+            variant="ghost"
+            size="icon"
+            className="sidebar-toggle h-8 w-8"
             onClick={() => setSidebarOpen((o) => !o)}
             aria-label="Меню"
           >
-            ☰
-          </button>
-          <NavLink to="/profile" className="user-name text-soft">Профиль</NavLink>
-          <span className="spacer" />
-          <NavLink to="/trades/new" className="btn btn-primary btn-sm">+ Новая сделка</NavLink>
+            <Menu className="h-5 w-5" />
+          </Button>
+          <NavLink to="/profile" className="text-soft-foreground text-sm hover:text-foreground transition-colors">
+            Профиль
+          </NavLink>
+          <span className="flex-1" />
+          <Button variant="primary" size="sm" asChild>
+            <NavLink to="/trades/new"><Plus className="h-4 w-4" /> Новая сделка</NavLink>
+          </Button>
         </header>
         <main className="page">
           <Outlet />

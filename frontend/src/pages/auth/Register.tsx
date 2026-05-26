@@ -2,6 +2,10 @@ import { FormEvent, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthContext';
 import { ApiError } from '../../api/client';
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 
 export default function Register() {
   const { register } = useAuth();
@@ -34,46 +38,53 @@ export default function Register() {
   return (
     <section className="auth-page">
       <h1>Регистрация</h1>
-      <form onSubmit={onSubmit} className="card">
-        <div className="form-row">
-          <label>Имя пользователя</label>
-          <input
-            value={data.username}
-            onChange={(e) => setData({ ...data, username: e.target.value })}
-            required
-            minLength={3}
-          />
-          {errors.username && <div className="error">{errors.username}</div>}
-        </div>
-        <div className="form-row">
-          <label>Email</label>
-          <input
-            type="email"
-            value={data.email}
-            onChange={(e) => setData({ ...data, email: e.target.value })}
-            required
-          />
-          {errors.email && <div className="error">{errors.email}</div>}
-        </div>
-        <div className="form-row">
-          <label>Пароль</label>
-          <input
-            type="password"
-            value={data.password}
-            onChange={(e) => setData({ ...data, password: e.target.value })}
-            required
-            minLength={8}
-          />
-          {errors.password && <div className="error">{errors.password}</div>}
-          <div className="hint">Минимум 8 символов.</div>
-        </div>
-        <button className="btn btn-primary" disabled={busy}>
-          {busy ? 'Создаём…' : 'Создать аккаунт'}
-        </button>
-        <p className="hint" style={{ marginTop: 14 }}>
-          Уже есть аккаунт? <Link to="/login">Войдите</Link>
-        </p>
-      </form>
+      <Card>
+        <form onSubmit={onSubmit}>
+          <CardHeader className="pb-0" />
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>Имя пользователя</Label>
+              <Input
+                value={data.username}
+                onChange={(e) => setData({ ...data, username: e.target.value })}
+                required
+                minLength={3}
+              />
+              {errors.username && <p className="text-xs text-red">{errors.username}</p>}
+            </div>
+            <div className="space-y-2">
+              <Label>Email</Label>
+              <Input
+                type="email"
+                value={data.email}
+                onChange={(e) => setData({ ...data, email: e.target.value })}
+                required
+              />
+              {errors.email && <p className="text-xs text-red">{errors.email}</p>}
+            </div>
+            <div className="space-y-2">
+              <Label>Пароль</Label>
+              <Input
+                type="password"
+                value={data.password}
+                onChange={(e) => setData({ ...data, password: e.target.value })}
+                required
+                minLength={8}
+              />
+              {errors.password && <p className="text-xs text-red">{errors.password}</p>}
+              <p className="text-xs text-muted-foreground">Минимум 8 символов.</p>
+            </div>
+          </CardContent>
+          <CardFooter className="flex-col items-start gap-3">
+            <Button variant="primary" disabled={busy} className="w-full">
+              {busy ? 'Создаём…' : 'Создать аккаунт'}
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              Уже есть аккаунт? <Link to="/login">Войдите</Link>
+            </p>
+          </CardFooter>
+        </form>
+      </Card>
     </section>
   );
 }

@@ -1,4 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 
 const landingHref = (() => {
   const apiBase = import.meta.env.VITE_API_BASE_URL || '';
@@ -17,8 +18,12 @@ export default function PublicLayout() {
           <a href={`${landingHref}about/`}>О проекте</a>
           <a href={`${landingHref}help/`}>Помощь</a>
         </nav>
-        <NavLink to="/login" className="btn btn-ghost">Войти</NavLink>
-        <NavLink to="/register" className="btn btn-primary">Создать аккаунт</NavLink>
+        <Button variant="ghost" asChild>
+          <NavLink to="/login">Войти</NavLink>
+        </Button>
+        <Button variant="primary" asChild>
+          <NavLink to="/register">Создать аккаунт</NavLink>
+        </Button>
       </header>
       <div className="public-content">
         <Outlet />
