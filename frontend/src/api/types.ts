@@ -248,3 +248,21 @@ export interface AnalyticsResponse {
   strategies: { id: number; name: string; trades_count: number }[];
   instruments: { id: number; ticker: string; name: string; trades_count: number }[];
 }
+
+export interface CandleData {
+  time: number;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+}
+
+export interface CandleResponse {
+  ticker: string;
+  interval: number;
+  from: string;
+  till: string;
+  count: number;
+  candles: CandleData[];
+}

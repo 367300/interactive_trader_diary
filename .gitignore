@@ -216,3 +216,6 @@ certbot
 certbot/*
 
 uploads/*
+
+.playwright-mcp/*
+.certs/*

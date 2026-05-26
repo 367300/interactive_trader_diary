@@ -8,7 +8,7 @@ from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from instruments.tasks import load_instruments_from_moex_task
+from instruments.tasks import load_all_candles, load_instruments_from_moex_task
 from strategies.models import TradingStrategy
 from trades.models import Trade
 from trades.serializers import TradeListSerializer
@@ -145,4 +145,35 @@ class AdminUploadEnrichmentCSVView(APIView):
         return Response(
             {'detail': f'Файл сохранён ({file.size} байт).'},
             status=status.HTTP_200_OK,
+        )
+
+
+class AdminCandlesLoadView(APIView):
+    """Trigger bulk candle download from MOEX for all active stocks."""
+
+    permission_classes = (IsAuthenticated, IsAdminUser)
+
+    def post(self, request):
+        year_raw = request.data.get("year")
+        from datetime import date
+
+        year = date.today().year
+        if year_raw is not None:
+            try:
+                year = int(year_raw)
+                if year < 2011 or year > date.today().year:
+                    raise ValueError
+            except (TypeError, ValueError):
+                return Response(
+                    {"detail": "Некорректный год (допустимо: 2011 — текущий)."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        task = load_all_candles.delay(year=year)
+        return Response(
+            {
+                "task_id": task.id,
+                "message": f"Загрузка котировок за {year} год поставлена в очередь.",
+            },
+            status=status.HTTP_202_ACCEPTED,
         )

@@ -198,6 +198,29 @@ CHANNEL_LAYERS = {
     },
 }
 
+# Redis cache for candle data
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://redis:6379/1",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
+        "TIMEOUT": 1800,  # 30 min default TTL
+    }
+}
+
+# Path to candle CSV storage
+CANDLES_ROOT = Path(BASE_DIR).parent / "uploads" / "candles"
+
+# Celery Beat periodic tasks
+CELERY_BEAT_SCHEDULE = {
+    "update-today-candles": {
+        "task": "instruments.tasks.update_today_candles",
+        "schedule": 1800.0,  # every 30 minutes
+    },
+}
+
 # Easy Thumbnails settings
 THUMBNAIL_ALIASES = {
     '': {

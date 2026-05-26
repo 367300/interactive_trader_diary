@@ -18,7 +18,7 @@ const navItems = [
 ];
 
 const adminItems = [
-  { to: '/admin/instruments', label: 'Загрузка инструментов' },
+  { to: '/admin/instruments', label: 'Загрузка данных' },
 ];
 
 function NavContent({ user, initials, onLogout, onNavClick }: {
