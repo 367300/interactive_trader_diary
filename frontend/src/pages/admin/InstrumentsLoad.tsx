@@ -90,6 +90,7 @@ export default function InstrumentsLoad() {
       </Card>
 
       <CsvUpload />
+      <CandlesLoad />
     </section>
   );
 }
@@ -159,6 +160,60 @@ function CsvUpload() {
             onClick={onUpload}
           >
             {uploading ? 'Загрузка…' : 'Загрузить CSV'}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function CandlesLoad() {
+  const currentYear = new Date().getFullYear();
+  const [year, setYear] = useState(String(currentYear));
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const onLoad = async () => {
+    setBusy(true);
+    setResult(null);
+    setError(null);
+    try {
+      const res = await coreApi.loadCandles({ year: Number(year) });
+      setResult(res.message + ` Task ID: ${res.task_id}`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Ошибка запуска задачи');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Card className="max-w-[560px] mt-5">
+      <CardHeader>
+        <CardTitle>Загрузка котировок с MOEX</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="text-muted-foreground text-[13px] mb-3.5">
+          Загружает минутные свечи с ISS Мосбиржи для всех активных акций за выбранный год.
+          Задача выполняется в фоне через Celery.
+        </p>
+        {result && <Alert variant="success" className="mb-3">{result}</Alert>}
+        {error && <Alert variant="destructive" className="mb-3">{error}</Alert>}
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="space-y-1">
+            <Label>Год</Label>
+            <Input
+              type="number"
+              min={2011}
+              max={currentYear}
+              value={year}
+              onChange={(e) => setYear(e.target.value)}
+              className="w-28"
+            />
+          </div>
+          <Button variant="primary" size="sm" disabled={busy} onClick={onLoad} className="mt-5">
+            {busy ? 'Запускаем…' : 'Загрузить котировки'}
           </Button>
         </div>
       </CardContent>

@@ -2,6 +2,7 @@ import { api } from './client';
 import type {
   AnalyticsResponse,
   AuthTokens,
+  CandleResponse,
   Dashboard,
   FuturesListItem,
   InstrumentDetail,
@@ -60,6 +61,8 @@ export const instrumentsApi = {
   getFutures: (ticker: string) => api.get<FuturesListItem>(`/instruments/futures/${ticker}/`),
   taxonomy: () => api.get<Taxonomy>('/instruments/taxonomy/'),
   stats: () => api.get<InstrumentStats>('/instruments/stats/'),
+  candles: (ticker: string, params?: { from?: string; till?: string; interval?: number }) =>
+    api.get<CandleResponse>(`/instruments/${ticker}/candles/`, { query: params }),
 };
 
 export interface ChildTradePayload {
@@ -115,6 +118,8 @@ export const coreApi = {
     update_existing?: boolean;
     limit?: number | null;
   }) => api.post<{ task_id: string; message: string }>('/admin/instruments/load/', data),
+  loadCandles: (data: { year?: number }) =>
+    api.post<{ task_id: string; message: string }>('/admin/candles/load/', data),
   uploadEnrichmentCsv: (file: File) => {
     const fd = new FormData();
     fd.append('file', file);
