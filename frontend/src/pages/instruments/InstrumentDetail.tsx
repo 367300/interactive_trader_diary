@@ -2,6 +2,7 @@ import { Link, useParams } from 'react-router-dom';
 import { instrumentsApi } from '../../api/endpoints';
 import { useApi } from '../../lib/useApi';
 import { staticUrl } from '../../lib/urls';
+import CandlestickChart from '../../components/CandlestickChart';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert } from '@/components/ui/alert';
@@ -52,6 +53,13 @@ export default function InstrumentDetail() {
           </CardContent>
         </Card>
       </div>
+
+      <Card className="mt-3.5">
+        <CardHeader><CardTitle>График котировок</CardTitle></CardHeader>
+        <CardContent>
+          <CandlestickChart ticker={data.ticker} />
+        </CardContent>
+      </Card>
 
       {data.description && (
         <Card className="mt-3.5">
