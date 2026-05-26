@@ -68,7 +68,7 @@ export function DateTimePicker({ value, onChange, required }: DateTimePickerProp
           mode="single"
           selected={date}
           onSelect={onSelectDate}
-          initialFocus
+          autoFocus
         />
         <div className="border-t border-border px-3 py-2">
           <Input
