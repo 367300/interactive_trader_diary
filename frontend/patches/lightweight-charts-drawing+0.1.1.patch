@@ -1,0 +1,97 @@
+diff --git a/node_modules/lightweight-charts-drawing/dist/lightweight-charts-drawing.es.js b/node_modules/lightweight-charts-drawing/dist/lightweight-charts-drawing.es.js
+index f956d42..b72d8ef 100644
+--- a/node_modules/lightweight-charts-drawing/dist/lightweight-charts-drawing.es.js
++++ b/node_modules/lightweight-charts-drawing/dist/lightweight-charts-drawing.es.js
+@@ -2198,7 +2198,7 @@ class ds {
+       l * e,
+       h * e
+     )), ne(t, c, l, h, !1, e), this._drawing.rectangleOptions.showDimensions) {
+-      const g = `$${this._drawing.getPriceRange().range.toFixed(2)}`, _ = c.x + l / 2, y = c.y + h / 2;
++      const g = `${this._drawing.getPriceRange().range.toFixed(2)}`, _ = c.x + l / 2, y = c.y + h / 2;
+       F(
+         t,
+         g,
+@@ -2659,7 +2659,7 @@ class ws {
+     const c = Math.min(r, a), l = Math.max(r, a), h = l - c;
+     A(t, this._drawing.style, e), this._drawing.style.fillColor && (t.fillStyle = this._drawing.style.fillColor, t.fillRect(0, c * e, n.width * e, h * e)), b(t, { x: 0, y: c }, { x: n.width, y: c }, e), b(t, { x: 0, y: l }, { x: n.width, y: l }, e);
+     const d = this._drawing.priceRangeOptions, f = this._drawing.getRangeInfo(), g = (c + l) / 2, _ = [];
+-    if (d.showRange && _.push(`$${f.range.toFixed(2)}`), d.showPercentage) {
++    if (d.showRange && _.push(`${f.range.toFixed(2)}`), d.showPercentage) {
+       const x = f.percentage >= 0 ? "+" : "";
+       _.push(`${x}${f.percentage.toFixed(2)}%`);
+     }
+@@ -6907,11 +6907,11 @@ class Hi {
+     const w = r.x + d + 5;
+     t.fillStyle = "#2196F3";
+     let P = "Entry";
+-    l.showPrices && (P += `: $${h.entry.toFixed(2)}`), t.fillText(P, w * e, r.y * e), t.fillStyle = "#ef5350";
++    l.showPrices && (P += `: ${h.entry.toFixed(2)}`), t.fillText(P, w * e, r.y * e), t.fillStyle = "#ef5350";
+     let O = "Stop";
+-    l.showPrices && (O += `: $${h.stopLoss.toFixed(2)}`), l.showPercentage && (O += ` (-${h.riskPercent.toFixed(2)}%)`), t.fillText(O, w * e, a.y * e), t.fillStyle = "#26a69a";
++    l.showPrices && (O += `: ${h.stopLoss.toFixed(2)}`), l.showPercentage && (O += ` (-${h.riskPercent.toFixed(2)}%)`), t.fillText(O, w * e, a.y * e), t.fillStyle = "#26a69a";
+     let m = "Target";
+-    if (l.showPrices && (m += `: $${h.takeProfit.toFixed(2)}`), l.showPercentage && (m += ` (+${h.rewardPercent.toFixed(2)}%)`), t.fillText(m, w * e, c.y * e), l.showRiskReward) {
++    if (l.showPrices && (m += `: ${h.takeProfit.toFixed(2)}`), l.showPercentage && (m += ` (+${h.rewardPercent.toFixed(2)}%)`), t.fillText(m, w * e, c.y * e), l.showRiskReward) {
+       t.fillStyle = "#ffffff";
+       const R = `R:R = 1:${h.riskRewardRatio.toFixed(2)}`, S = (r.y + c.y) / 2;
+       t.fillText(R, (r.x + 10) * e, S * e);
+@@ -7058,11 +7058,11 @@ class Ii {
+     const w = r.x + d + 5;
+     t.fillStyle = "#2196F3";
+     let P = "Entry";
+-    l.showPrices && (P += `: $${h.entry.toFixed(2)}`), t.fillText(P, w * e, r.y * e), t.fillStyle = "#ef5350";
++    l.showPrices && (P += `: ${h.entry.toFixed(2)}`), t.fillText(P, w * e, r.y * e), t.fillStyle = "#ef5350";
+     let O = "Stop";
+-    l.showPrices && (O += `: $${h.stopLoss.toFixed(2)}`), l.showPercentage && (O += ` (-${h.riskPercent.toFixed(2)}%)`), t.fillText(O, w * e, a.y * e), t.fillStyle = "#26a69a";
++    l.showPrices && (O += `: ${h.stopLoss.toFixed(2)}`), l.showPercentage && (O += ` (-${h.riskPercent.toFixed(2)}%)`), t.fillText(O, w * e, a.y * e), t.fillStyle = "#26a69a";
+     let m = "Target";
+-    if (l.showPrices && (m += `: $${h.takeProfit.toFixed(2)}`), l.showPercentage && (m += ` (+${h.rewardPercent.toFixed(2)}%)`), t.fillText(m, w * e, c.y * e), l.showRiskReward) {
++    if (l.showPrices && (m += `: ${h.takeProfit.toFixed(2)}`), l.showPercentage && (m += ` (+${h.rewardPercent.toFixed(2)}%)`), t.fillText(m, w * e, c.y * e), l.showRiskReward) {
+       t.fillStyle = "#ffffff";
+       const R = `R:R = 1:${h.riskRewardRatio.toFixed(2)}`, S = (r.y + c.y) / 2;
+       t.fillText(R, (r.x + 10) * e, S * e);
+@@ -7351,7 +7351,7 @@ class Mi {
+     const w = (h + d) / 2, P = (f + g) / 2, O = 11, m = O + 4, T = 8, R = [];
+     if (c.showPrices) {
+       const C = l.priceChange >= 0 ? "+" : "";
+-      R.push(`${C}$${l.priceChange.toFixed(2)}`);
++      R.push(`${C}${l.priceChange.toFixed(2)}`);
+     }
+     if (c.showPercentage) {
+       const C = l.priceChangePercent >= 0 ? "+" : "";
+@@ -7534,7 +7534,7 @@ class vi {
+       t.fillStyle = m === "D" ? y : d, t.beginPath(), t.arc(O.x * e, O.y * e, 6 * e, 0, Math.PI * 2), t.fill(), t.fillStyle = "#ffffff", t.fillText(m, O.x * e, O.y * e);
+     if (l.showLabels) {
+       const O = _.x + 15, m = _.y, T = 6, R = w + 3, S = [];
+-      if (l.showPrices && S.push(`Target: $${h.targetPrice.toFixed(2)}`), l.showPercentage) {
++      if (l.showPrices && S.push(`Target: ${h.targetPrice.toFixed(2)}`), l.showPercentage) {
+         const C = h.movePercent >= 0 ? "+" : "";
+         S.push(`Move: ${C}${h.movePercent.toFixed(2)}%`);
+       }
+@@ -7719,7 +7719,7 @@ class zi {
+     const g = 11;
+     if (t.font = `bold ${g * e}px sans-serif`, t.textAlign = "center", t.textBaseline = "middle", t.fillStyle = d, t.beginPath(), t.arc(r.x * e, r.y * e, 5 * e, 0, Math.PI * 2), t.fill(), t.fillStyle = h, t.beginPath(), t.arc(a.x * e, a.y * e, 5 * e, 0, Math.PI * 2), t.fill(), c.showLabels) {
+       const y = [];
+-      if (c.showPrices && y.push(`Target: $${l.targetPrice.toFixed(2)}`), c.showPercentage) {
++      if (c.showPrices && y.push(`Target: ${l.targetPrice.toFixed(2)}`), c.showPercentage) {
+         const x = l.percentChange >= 0 ? "+" : "";
+         y.push(`${x}${l.percentChange.toFixed(2)}%`);
+       }
+@@ -9087,7 +9087,7 @@ class or {
+     const a = this._drawing.noteOptions, c = (a.fontSize ?? 11) * e, l = a.backgroundColor ?? "rgba(30, 34, 45, 0.95)", h = a.priceColor ?? "#26a69a", d = a.noteColor ?? "#d1d4dc", f = 6 * e, g = 6 * e, _ = r.x * e, y = r.y * e;
+     t.save();
+     const x = [];
+-    a.showPrice && x.push({ text: `$${o.price.toFixed(2)}`, color: h }), a.note && x.push({ text: a.note, color: d }), x.length === 0 && x.push({ text: `$${o.price.toFixed(2)}`, color: h }), t.font = `${c}px sans-serif`;
++    a.showPrice && x.push({ text: `${o.price.toFixed(2)}`, color: h }), a.note && x.push({ text: a.note, color: d }), x.length === 0 && x.push({ text: `${o.price.toFixed(2)}`, color: h }), t.font = `${c}px sans-serif`;
+     let w = 0;
+     for (const C of x) {
+       const E = t.measureText(C.text);
+@@ -9209,7 +9209,7 @@ class cr {
+     if (!a) return;
+     const c = this._drawing.labelOptions, l = (c.fontSize ?? 11) * n, h = c.backgroundColor ?? "#2962FF", d = c.textColor ?? "#FFFFFF", f = c.decimals ?? 2, g = 4 * n, _ = 6 * n, y = a.x * n, x = a.y * n, w = e.width;
+     t.save(), t.strokeStyle = h, t.lineWidth = 1 * n, t.setLineDash([4 * n, 2 * n]), t.beginPath(), t.moveTo(y, x), t.lineTo(w, x), t.stroke(), t.setLineDash([]);
+-    const P = `$${r.price.toFixed(f)}`;
++    const P = `${r.price.toFixed(f)}`;
+     t.font = `bold ${l}px sans-serif`;
+     const T = t.measureText(P).width + g * 2, R = l + g * 2, S = w - T - 2 * n, C = x - R / 2;
+     t.fillStyle = h, t.beginPath(), c.showArrow ? (t.moveTo(S, C), t.lineTo(S + T, C), t.lineTo(S + T, C + R), t.lineTo(S, C + R), t.lineTo(S - _, x), t.closePath()) : t.roundRect(S, C, T, R, 2 * n), t.fill(), t.fillStyle = d, t.textAlign = "center", t.textBaseline = "middle", t.fillText(P, S + T / 2, x), t.fillStyle = h, t.beginPath(), t.arc(y, x, 4 * n, 0, Math.PI * 2), t.fill(), t.restore();
