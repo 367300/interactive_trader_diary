@@ -40,6 +40,16 @@ _MOEX_CANDLES_URLS = {
 
 _MOEX_PAGE_SIZE = 500
 
+MOEX_HTTP_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/136.0.0.0 Safari/537.36"
+    ),
+    "Accept": "application/json, text/javascript, */*; q=0.01",
+    "Accept-Language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7",
+}
+
 _MOSCOW_UTC_OFFSET = timedelta(hours=3)
 
 # Маппинг interval_minutes → pandas freq-строка для resample
@@ -150,7 +160,7 @@ def fetch_moex_candles(
     while True:
         params["start"] = page * _MOEX_PAGE_SIZE
         try:
-            resp = requests.get(url, params=params, timeout=30)
+            resp = requests.get(url, params=params, headers=MOEX_HTTP_HEADERS, timeout=30)
             resp.raise_for_status()
         except requests.RequestException as exc:
             logger.error(

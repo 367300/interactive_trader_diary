@@ -8,6 +8,8 @@ from celery import shared_task
 from django.conf import settings
 from django.core.management import call_command
 
+from instruments.moex_candles import MOEX_HTTP_HEADERS
+
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +32,7 @@ def _probe_moex(check_url: str, check_params: dict) -> None:
             response = requests.get(
                 check_url,
                 params=check_params,
+                headers=MOEX_HTTP_HEADERS,
                 timeout=timeout,
             )
             response.raise_for_status()

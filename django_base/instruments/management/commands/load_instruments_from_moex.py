@@ -14,6 +14,7 @@ from typing import Any
 
 import requests
 import pandas as pd
+from instruments.moex_candles import MOEX_HTTP_HEADERS
 from pathlib import Path
 from decimal import Decimal, InvalidOperation
 from django.core.management.base import BaseCommand, CommandError
@@ -378,7 +379,7 @@ class Command(BaseCommand):
 
         try:
             logger.info("load_instruments_from_moex: запрос списка фьючерсов FORTS...")
-            response = requests.get(url, params=params, timeout=60)
+            response = requests.get(url, params=params, headers=MOEX_HTTP_HEADERS, timeout=60)
             response.raise_for_status()
             data = response.json()
             securities = data.get('securities', {}).get('data', [])
@@ -407,7 +408,7 @@ class Command(BaseCommand):
 
         try:
             logger.info("load_instruments_from_moex: запрос списка акций (limit=unlimited)...")
-            response = requests.get(securities_url, params=params, timeout=30)
+            response = requests.get(securities_url, params=params, headers=MOEX_HTTP_HEADERS, timeout=30)
             response.raise_for_status()
             logger.info("load_instruments_from_moex: ответ получен, разбор JSON...")
             data = response.json()
