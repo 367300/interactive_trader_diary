@@ -1,6 +1,7 @@
 import { FormEvent, useRef, useState } from 'react';
 import { coreApi } from '../../api/endpoints';
 import { ApiError } from '../../api/client';
+import { useAuth } from '@/auth/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,6 +13,8 @@ import { ShieldCheck, Trash2, Upload } from 'lucide-react';
 import { useSiteSettings } from '@/lib/useSiteSettings';
 
 export default function InstrumentsLoad() {
+  const { profile } = useAuth();
+  const tinvestConnected = profile?.has_tinkoff_token ?? false;
   const [type, setType] = useState('STOCK');
   const [updateExisting, setUpdateExisting] = useState(false);
   const [limit, setLimit] = useState<string>('');
@@ -45,6 +48,10 @@ export default function InstrumentsLoad() {
         Запускает фоновую задачу Celery, которая обращается к ISS Мосбиржи и пополняет/обновляет
         справочник.
       </p>
+      <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium mb-4 ${tinvestConnected ? 'bg-green/10 text-green' : 'bg-yellow/10 text-yellow'}`}>
+        <span className={`w-1.5 h-1.5 rounded-full ${tinvestConnected ? 'bg-green' : 'bg-yellow'}`} />
+        {tinvestConnected ? 'T-Invest подключён' : 'T-Invest: токен admin не задан'}
+      </div>
       <Card className="max-w-[560px]">
         <CardContent className="pt-6">
           <form onSubmit={onSubmit}>
