@@ -78,8 +78,22 @@ def issue_tokens_for(user):
 
 class TraderProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
+    tinkoff_token = serializers.CharField(
+        write_only=True, required=False, allow_blank=True
+    )
+    tinkoff_token_masked = serializers.CharField(read_only=True)
+    has_tinkoff_token = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = TraderProfile
-        fields = ('user', 'created_at', 'updated_at')
+        fields = (
+            'user', 'created_at', 'updated_at',
+            'tinkoff_token', 'tinkoff_token_masked', 'has_tinkoff_token',
+        )
         read_only_fields = ('created_at', 'updated_at')
+
+    def update(self, instance, validated_data):
+        token = validated_data.pop('tinkoff_token', None)
+        if token is not None:
+            instance.tinkoff_token = token
+        return super().update(instance, validated_data)

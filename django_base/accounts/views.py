@@ -86,7 +86,28 @@ class MeView(APIView):
 
     def patch(self, request):
         user = request.user
-        serializer = UserSerializer(user, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data)
+        profile, _ = TraderProfile.objects.get_or_create(user=user)
+
+        tinkoff_token = request.data.get('tinkoff_token')
+        if tinkoff_token:
+            from instruments.tinkoff_candles import validate_token
+            if not validate_token(tinkoff_token):
+                return Response(
+                    {"tinkoff_token": ["Невалидный токен T-Invest API."]},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        profile_serializer = TraderProfileSerializer(
+            profile, data=request.data, partial=True
+        )
+        profile_serializer.is_valid(raise_exception=True)
+        profile_serializer.save()
+
+        user_data = request.data.copy()
+        user_data.pop('tinkoff_token', None)
+        if user_data:
+            user_serializer = UserSerializer(user, data=user_data, partial=True)
+            user_serializer.is_valid(raise_exception=True)
+            user_serializer.save()
+
+        return Response(TraderProfileSerializer(profile).data)
