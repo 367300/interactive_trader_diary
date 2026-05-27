@@ -233,7 +233,7 @@ docker compose -f docker-compose.dev.yml logs -f celery
 **Локальная проверка prod-сборки (без Traefik):**
 
 ```bash
-DOMAIN=midas-hand.ru docker compose -f docker-compose.prod.yml up --build -d
+DOMAIN=example.com docker compose -f docker-compose.prod.yml up --build -d
 docker compose -f docker-compose.prod.yml logs -f web
 docker compose -f docker-compose.prod.yml down
 ```

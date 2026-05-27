@@ -30,14 +30,12 @@ DEBUG = config('DJANGO_DEBUG', default=False, cast=bool)
 
 ALLOWED_HOSTS = config('DJANGO_ALLOWED_HOSTS', default='', cast=Csv())
 
-# CSRF trusted origins. Продакшен-домены заданы в коде, чтобы не зависеть от .env в контейнере.
+# CSRF trusted origins. Продакшен-домены берутся из CSRF_TRUSTED_ORIGINS в .env.
 _extra_origins = config('CSRF_TRUSTED_ORIGINS', default='', cast=Csv())
 _extra_origins = [x.strip() for x in _extra_origins if x.strip()]
 CSRF_TRUSTED_ORIGINS = list({
     'http://localhost:8000',
     'http://localhost:3000',
-    'https://midas-hand.ru',
-    'https://www.midas-hand.ru',
     *_extra_origins,
 })
 
