@@ -96,6 +96,22 @@ const COLOR_PRESETS = [
   '#a855f7', '#06b6d4', '#ec4899', '#ffffff',
 ];
 
+const LINE_DASH_PRESETS: { label: string; value: number[] | undefined; preview: string }[] = [
+  { label: 'Сплошная', value: undefined, preview: '───' },
+  { label: 'Пунктир', value: [6, 3], preview: '- - -' },
+  { label: 'Точка-пунктир', value: [6, 3, 1, 3], preview: '- · -' },
+];
+
+function MagnetIcon({ className }: { className?: string }) {
+  return (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+      <path d="M1 6V9C1 12.866 4.13401 16 8 16C11.866 16 15 12.866 15 9V6H10V9C10 10.1046 9.10457 11 8 11C6.89543 11 6 10.1046 6 9V6H1Z" fill="currentColor"/>
+      <path d="M1 4H6V1H1V4Z" fill="currentColor"/>
+      <path d="M10 4H15V1H10V4Z" fill="currentColor"/>
+    </svg>
+  );
+}
+
 interface Props {
   activeTool: string | null;
   onSelectTool: (type: string | null) => void;
@@ -103,9 +119,12 @@ interface Props {
   onDeleteSelected: () => void;
   onResetAll: () => void;
   onChangeColor: (color: string) => void;
+  onChangeLineDash: (dash: number[] | undefined) => void;
   hasSelection: boolean;
   magnetMode: boolean;
   onToggleMagnet: () => void;
+  activeColor: string;
+  activeLineDash: number[] | undefined;
 }
 
 function DropdownMenu({
@@ -156,6 +175,10 @@ function DropdownMenu({
   );
 }
 
+function dashKey(dash: number[] | undefined): string {
+  return dash ? dash.join(',') : 'solid';
+}
+
 export default function DrawingToolbar({
   activeTool,
   onSelectTool,
@@ -163,9 +186,12 @@ export default function DrawingToolbar({
   onDeleteSelected,
   onResetAll,
   onChangeColor,
+  onChangeLineDash,
   hasSelection,
   magnetMode,
   onToggleMagnet,
+  activeColor,
+  activeLineDash,
 }: Props) {
   const [openGroup, setOpenGroup] = useState<string | null>(null);
 
@@ -173,19 +199,21 @@ export default function DrawingToolbar({
     ? TOOL_GROUPS.flatMap((g) => g.tools).find((t) => t.type === activeTool)?.label
     : null;
 
+  const showStyleControls = activeTool || hasSelection;
+
   return (
     <div className="flex items-center gap-1 flex-wrap">
       {/* Magnet toggle */}
       <button
         onClick={onToggleMagnet}
-        className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+        className={`p-1.5 rounded transition-colors ${
           magnetMode
             ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
             : 'text-muted-foreground hover:bg-glass-soft hover:text-foreground'
         }`}
         title={magnetMode ? 'Магнит вкл. — привязка к OHLC' : 'Магнит выкл.'}
       >
-        ◎ Магнит
+        <MagnetIcon />
       </button>
 
       <div className="w-px h-4 bg-border mx-1" />
@@ -230,29 +258,50 @@ export default function DrawingToolbar({
         </button>
       )}
 
-      {hasSelection && (
+      {/* Color + line style — shown when tool active OR drawing selected */}
+      {showStyleControls && (
         <>
           <div className="w-px h-4 bg-border mx-1" />
-          {/* Color swatches */}
           <div className="flex items-center gap-0.5">
             {COLOR_PRESETS.map((color) => (
               <button
                 key={color}
                 onClick={() => onChangeColor(color)}
-                className="w-4 h-4 rounded-full border border-white/20 hover:scale-125 transition-transform cursor-pointer"
+                className={`w-4 h-4 rounded-full border hover:scale-125 transition-transform cursor-pointer ${
+                  activeColor === color ? 'border-white ring-1 ring-white/40' : 'border-white/20'
+                }`}
                 style={{ backgroundColor: color }}
                 title={`Цвет: ${color}`}
               />
             ))}
           </div>
-          <button
-            onClick={onDeleteSelected}
-            className="px-2 py-1 rounded text-xs font-medium text-red hover:bg-red/20 transition-colors"
-            title="Удалить выделенный"
-          >
-            Удалить
-          </button>
+          <div className="flex items-center gap-0.5 ml-1">
+            {LINE_DASH_PRESETS.map((preset) => (
+              <button
+                key={preset.preview}
+                onClick={() => onChangeLineDash(preset.value)}
+                className={`px-1.5 py-0.5 rounded text-[10px] font-mono transition-colors ${
+                  dashKey(activeLineDash) === dashKey(preset.value)
+                    ? 'bg-blue/20 text-blue border border-blue/30'
+                    : 'text-muted-foreground hover:bg-glass-soft hover:text-foreground'
+                }`}
+                title={preset.label}
+              >
+                {preset.preview}
+              </button>
+            ))}
+          </div>
         </>
+      )}
+
+      {hasSelection && (
+        <button
+          onClick={onDeleteSelected}
+          className="px-2 py-1 rounded text-xs font-medium text-red hover:bg-red/20 transition-colors"
+          title="Удалить выделенный"
+        >
+          Удалить
+        </button>
       )}
 
       <button

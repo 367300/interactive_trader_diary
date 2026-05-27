@@ -115,6 +115,8 @@ export default function CandlestickChart({ ticker }: Props) {
   const candleDataRef = useRef<CandlestickData<Time>[]>([]);
   const dataTimestampsRef = useRef<number[]>([]);
   const magnetModeRef = useRef(false);
+  const activeColorRef = useRef('#5a8cff');
+  const activeLineDashRef = useRef<number[] | undefined>(undefined);
 
   const saved = loadChartSettings(ticker);
   const [interval, setInterval] = useState(saved.interval ?? 5);
@@ -125,6 +127,8 @@ export default function CandlestickChart({ ticker }: Props) {
   const [activeTool, setActiveTool] = useState<string | null>(null);
   const [hasSelection, setHasSelection] = useState(false);
   const [magnetMode, setMagnetMode] = useState(false);
+  const [activeColor, setActiveColor] = useState('#5a8cff');
+  const [activeLineDash, setActiveLineDash] = useState<number[] | undefined>(undefined);
 
   const persistDrawings = useCallback(() => {
     if (persistTimerRef.current) clearTimeout(persistTimerRef.current);
@@ -270,7 +274,7 @@ export default function CandlestickChart({ ticker }: Props) {
         if (required === 1) {
           const drawing = registry.createDrawing(
             toolType, nextDrawingId(), [anchor],
-            { lineColor: '#5a8cff', lineWidth: 2, fillColor: 'rgba(90,140,255,0.15)', fillOpacity: 0.15 },
+            { lineColor: activeColorRef.current, lineWidth: 2, lineDash: activeLineDashRef.current, fillColor: 'rgba(90,140,255,0.15)', fillOpacity: 0.15 },
           );
           if (drawing) mgr.addDrawing(drawing);
           activeToolRef.current = null;
@@ -282,7 +286,7 @@ export default function CandlestickChart({ ticker }: Props) {
           const id = nextDrawingId();
           const drawing = registry.createDrawing(
             toolType, id, anchors,
-            { lineColor: '#5a8cff', lineWidth: 2, fillColor: 'rgba(90,140,255,0.15)', fillOpacity: 0.15 },
+            { lineColor: activeColorRef.current, lineWidth: 2, lineDash: activeLineDashRef.current, fillColor: 'rgba(90,140,255,0.15)', fillOpacity: 0.15 },
           );
           if (drawing) {
             mgr.addDrawing(drawing);
@@ -513,6 +517,12 @@ export default function CandlestickChart({ ticker }: Props) {
     if (type) {
       drawingManagerRef.current?.deselectAll();
       setHasSelection(false);
+      // Ray defaults to dashed
+      if (type === 'ray') {
+        const dash = [6, 3];
+        activeLineDashRef.current = dash;
+        setActiveLineDash(dash);
+      }
     }
 
     drawingManagerRef.current?.setActiveTool(type);
@@ -558,11 +568,25 @@ export default function CandlestickChart({ ticker }: Props) {
   };
 
   const handleChangeColor = useCallback((color: string) => {
+    activeColorRef.current = color;
+    setActiveColor(color);
     const mgr = drawingManagerRef.current;
     if (!mgr) return;
     const selected = mgr.getSelectedDrawing();
     if (selected) {
       selected.updateStyle({ lineColor: color });
+      persistDrawings();
+    }
+  }, [persistDrawings]);
+
+  const handleChangeLineDash = useCallback((dash: number[] | undefined) => {
+    activeLineDashRef.current = dash;
+    setActiveLineDash(dash);
+    const mgr = drawingManagerRef.current;
+    if (!mgr) return;
+    const selected = mgr.getSelectedDrawing();
+    if (selected) {
+      selected.updateStyle({ lineDash: dash });
       persistDrawings();
     }
   }, [persistDrawings]);
@@ -631,9 +655,12 @@ export default function CandlestickChart({ ticker }: Props) {
           onDeleteSelected={handleDeleteSelected}
           onResetAll={handleResetAll}
           onChangeColor={handleChangeColor}
+          onChangeLineDash={handleChangeLineDash}
           hasSelection={hasSelection}
           magnetMode={magnetMode}
           onToggleMagnet={toggleMagnet}
+          activeColor={activeColor}
+          activeLineDash={activeLineDash}
         />
       </div>
 
