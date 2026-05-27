@@ -91,13 +91,21 @@ const TOOL_GROUPS: ToolGroup[] = [
   },
 ];
 
+const COLOR_PRESETS = [
+  '#5a8cff', '#22c55e', '#ef4444', '#f59e0b',
+  '#a855f7', '#06b6d4', '#ec4899', '#ffffff',
+];
+
 interface Props {
   activeTool: string | null;
   onSelectTool: (type: string | null) => void;
   onClearAll: () => void;
   onDeleteSelected: () => void;
   onResetAll: () => void;
+  onChangeColor: (color: string) => void;
   hasSelection: boolean;
+  magnetMode: boolean;
+  onToggleMagnet: () => void;
 }
 
 function DropdownMenu({
@@ -154,7 +162,10 @@ export default function DrawingToolbar({
   onClearAll,
   onDeleteSelected,
   onResetAll,
+  onChangeColor,
   hasSelection,
+  magnetMode,
+  onToggleMagnet,
 }: Props) {
   const [openGroup, setOpenGroup] = useState<string | null>(null);
 
@@ -164,6 +175,22 @@ export default function DrawingToolbar({
 
   return (
     <div className="flex items-center gap-1 flex-wrap">
+      {/* Magnet toggle */}
+      <button
+        onClick={onToggleMagnet}
+        className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+          magnetMode
+            ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+            : 'text-muted-foreground hover:bg-glass-soft hover:text-foreground'
+        }`}
+        title={magnetMode ? 'Магнит вкл. — привязка к OHLC' : 'Магнит выкл.'}
+      >
+        ◎ Магнит
+      </button>
+
+      <div className="w-px h-4 bg-border mx-1" />
+
+      {/* Tool groups */}
       {TOOL_GROUPS.map((group) => {
         const hasActive = group.tools.some((t) => t.type === activeTool);
         return (
@@ -204,13 +231,28 @@ export default function DrawingToolbar({
       )}
 
       {hasSelection && (
-        <button
-          onClick={onDeleteSelected}
-          className="px-2 py-1 rounded text-xs font-medium text-red hover:bg-red/20 transition-colors"
-          title="Удалить выделенный"
-        >
-          Удалить
-        </button>
+        <>
+          <div className="w-px h-4 bg-border mx-1" />
+          {/* Color swatches */}
+          <div className="flex items-center gap-0.5">
+            {COLOR_PRESETS.map((color) => (
+              <button
+                key={color}
+                onClick={() => onChangeColor(color)}
+                className="w-4 h-4 rounded-full border border-white/20 hover:scale-125 transition-transform cursor-pointer"
+                style={{ backgroundColor: color }}
+                title={`Цвет: ${color}`}
+              />
+            ))}
+          </div>
+          <button
+            onClick={onDeleteSelected}
+            className="px-2 py-1 rounded text-xs font-medium text-red hover:bg-red/20 transition-colors"
+            title="Удалить выделенный"
+          >
+            Удалить
+          </button>
+        </>
       )}
 
       <button

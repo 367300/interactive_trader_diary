@@ -9,6 +9,7 @@ import {
   type HistogramData,
   type Time,
   ColorType,
+  CrosshairMode,
 } from 'lightweight-charts';
 import {
   DrawingManager,
@@ -41,7 +42,7 @@ const INTERVALS = [
 
 function parseCustomInterval(input: string): number | null {
   const s = input.trim().toLowerCase();
-  let match = s.match(/^(\d+)\s*([mмhчdд]?)$/);
+  const match = s.match(/^(\d+)\s*([mмhчdд]?)$/);
   if (!match) return null;
   const num = parseInt(match[1]);
   if (isNaN(num) || num <= 0) return null;
@@ -55,6 +56,38 @@ function formatInterval(minutes: number): string {
   if (minutes >= 1440 && minutes % 1440 === 0) return `${minutes / 1440}д`;
   if (minutes >= 60 && minutes % 60 === 0) return `${minutes / 60}ч`;
   return `${minutes}м`;
+}
+
+function binarySearchNearest(timestamps: number[], target: number): number {
+  if (timestamps.length === 0) return -1;
+  if (target <= timestamps[0]) return 0;
+  if (target >= timestamps[timestamps.length - 1]) return timestamps.length - 1;
+  let lo = 0, hi = timestamps.length - 1;
+  while (lo < hi - 1) {
+    const mid = (lo + hi) >> 1;
+    if (timestamps[mid] <= target) lo = mid;
+    else hi = mid;
+  }
+  return (target - timestamps[lo] <= timestamps[hi] - target) ? lo : hi;
+}
+
+function nearestOHLC(candle: CandlestickData<Time>, price: number): number {
+  const values = [
+    candle.open as number,
+    candle.high as number,
+    candle.low as number,
+    candle.close as number,
+  ];
+  let nearest = values[0];
+  let minDist = Math.abs(price - nearest);
+  for (let i = 1; i < values.length; i++) {
+    const dist = Math.abs(price - values[i]);
+    if (dist < minDist) {
+      minDist = dist;
+      nearest = values[i];
+    }
+  }
+  return nearest;
 }
 
 let drawingIdCounter = Date.now();
@@ -77,8 +110,11 @@ export default function CandlestickChart({ ticker }: Props) {
   const persistTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const activeToolRef = useRef<string | null>(null);
-  const pendingAnchorsRef = useRef<Anchor[]>([]);
-  const requiredAnchorsRef = useRef<number>(0);
+  const previewDrawingIdRef = useRef<string | null>(null);
+  const previewAnchorIdxRef = useRef<number>(0);
+  const candleDataRef = useRef<CandlestickData<Time>[]>([]);
+  const dataTimestampsRef = useRef<number[]>([]);
+  const magnetModeRef = useRef(false);
 
   const saved = loadChartSettings(ticker);
   const [interval, setInterval] = useState(saved.interval ?? 5);
@@ -88,6 +124,7 @@ export default function CandlestickChart({ ticker }: Props) {
   const [noData, setNoData] = useState(false);
   const [activeTool, setActiveTool] = useState<string | null>(null);
   const [hasSelection, setHasSelection] = useState(false);
+  const [magnetMode, setMagnetMode] = useState(false);
 
   const persistDrawings = useCallback(() => {
     if (persistTimerRef.current) clearTimeout(persistTimerRef.current);
@@ -114,6 +151,7 @@ export default function CandlestickChart({ ticker }: Props) {
     };
   }, []);
 
+  // Chart creation (once)
   useEffect(() => {
     if (!containerRef.current) return;
 
@@ -128,6 +166,7 @@ export default function CandlestickChart({ ticker }: Props) {
         horzLines: { color: 'rgba(255, 255, 255, 0.04)' },
       },
       crosshair: {
+        mode: CrosshairMode.Normal,
         vertLine: { color: 'rgba(255, 255, 255, 0.2)', labelBackgroundColor: '#2a2e39' },
         horzLine: { color: 'rgba(255, 255, 255, 0.2)', labelBackgroundColor: '#2a2e39' },
       },
@@ -164,6 +203,29 @@ export default function CandlestickChart({ ticker }: Props) {
     candleSeriesRef.current = candleSeries;
     volumeSeriesRef.current = volumeSeries;
 
+    // Patch timeToCoordinate for cross-timeframe drawing support
+    const ts = chart.timeScale();
+    const origTimeToCoord = ts.timeToCoordinate.bind(ts);
+    try {
+      (ts as any).timeToCoordinate = (time: Time) => {
+        const coord = origTimeToCoord(time);
+        if (coord !== null) return coord;
+        const timestamps = dataTimestampsRef.current;
+        const t = time as number;
+        if (timestamps.length < 2) return null;
+        if (t < timestamps[0] || t > timestamps[timestamps.length - 1]) return null;
+        let lo = 0, hi = timestamps.length - 1;
+        while (lo < hi - 1) {
+          const mid = (lo + hi) >> 1;
+          if (timestamps[mid] <= t) lo = mid;
+          else hi = mid;
+        }
+        const t0 = timestamps[lo], t1 = timestamps[hi];
+        const frac = t1 > t0 ? (t - t0) / (t1 - t0) : 0;
+        return ts.logicalToCoordinate((lo + frac) as any);
+      };
+    } catch { /* frozen object — skip patch */ }
+
     const mgr = new DrawingManager();
     mgr.attach(chart, candleSeries, containerRef.current);
 
@@ -179,32 +241,126 @@ export default function CandlestickChart({ ticker }: Props) {
 
     const registry = ToolRegistry.getInstance();
 
+    // Click handler — creates drawings with preview for multi-anchor tools
     chart.subscribeClick((param) => {
       const toolType = activeToolRef.current;
       if (!toolType || !param.time || !param.point) return;
 
-      const price = candleSeries.coordinateToPrice(param.point.y);
+      let price = candleSeries.coordinateToPrice(param.point.y);
       if (price === null) return;
 
-      const anchor: Anchor = { time: param.time, price };
-      pendingAnchorsRef.current.push(anchor);
+      let anchor: Anchor = { time: param.time, price: price as number };
 
-      if (pendingAnchorsRef.current.length >= requiredAnchorsRef.current) {
-        const drawing = registry.createDrawing(
-          toolType,
-          nextDrawingId(),
-          [...pendingAnchorsRef.current],
-          { lineColor: '#5a8cff', lineWidth: 2, fillColor: 'rgba(90,140,255,0.15)', fillOpacity: 0.15 },
-        );
-        if (drawing) {
-          mgr.addDrawing(drawing);
+      // Magnet snap to OHLC
+      if (magnetModeRef.current) {
+        const idx = binarySearchNearest(dataTimestampsRef.current, param.time as number);
+        if (idx >= 0 && idx < candleDataRef.current.length) {
+          const candle = candleDataRef.current[idx];
+          anchor = { time: candle.time, price: nearestOHLC(candle, price as number) };
         }
-        pendingAnchorsRef.current = [];
+      }
+
+      const previewId = previewDrawingIdRef.current;
+
+      if (!previewId) {
+        // First click — create drawing
+        const def = registry.get(toolType);
+        const required = def?.requiredAnchors ?? 2;
+
+        if (required === 1) {
+          const drawing = registry.createDrawing(
+            toolType, nextDrawingId(), [anchor],
+            { lineColor: '#5a8cff', lineWidth: 2, fillColor: 'rgba(90,140,255,0.15)', fillOpacity: 0.15 },
+          );
+          if (drawing) mgr.addDrawing(drawing);
+          activeToolRef.current = null;
+          setActiveTool(null);
+          mgr.setActiveTool(null);
+        } else {
+          // Multi-anchor: create with all anchors at first click, preview the rest
+          const anchors = Array.from({ length: required }, () => ({ ...anchor }));
+          const id = nextDrawingId();
+          const drawing = registry.createDrawing(
+            toolType, id, anchors,
+            { lineColor: '#5a8cff', lineWidth: 2, fillColor: 'rgba(90,140,255,0.15)', fillOpacity: 0.15 },
+          );
+          if (drawing) {
+            mgr.addDrawing(drawing);
+            previewDrawingIdRef.current = id;
+            previewAnchorIdxRef.current = 1;
+          }
+        }
+      } else {
+        // Subsequent click — fix anchor
+        const drawing = mgr.getDrawing(previewId);
+        if (drawing) {
+          drawing.updateAnchor(previewAnchorIdxRef.current, anchor);
+
+          const def = registry.get(toolType);
+          const required = def?.requiredAnchors ?? 2;
+
+          if (previewAnchorIdxRef.current >= required - 1) {
+            // All anchors placed — finalize + auto-deactivate
+            previewDrawingIdRef.current = null;
+            previewAnchorIdxRef.current = 0;
+            activeToolRef.current = null;
+            setActiveTool(null);
+            mgr.setActiveTool(null);
+          } else {
+            previewAnchorIdxRef.current++;
+          }
+        }
       }
     });
 
-    // Disable chart scroll/scale during anchor drag
+    // Mouse handlers on container
     const container = containerRef.current;
+
+    // Preview tracking + magnet crosshair
+    const onMouseMove = (e: MouseEvent) => {
+      const rect = container.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      const time = chart.timeScale().coordinateToTime(x);
+      const price = candleSeries.coordinateToPrice(y);
+      if (time === null || price === null) return;
+
+      // Preview drawing — update tracked anchor
+      const previewId = previewDrawingIdRef.current;
+      if (previewId) {
+        let anchor: Anchor = { time, price: price as number };
+        if (magnetModeRef.current) {
+          const idx = binarySearchNearest(dataTimestampsRef.current, time as number);
+          if (idx >= 0 && idx < candleDataRef.current.length) {
+            const candle = candleDataRef.current[idx];
+            anchor = { time: candle.time, price: nearestOHLC(candle, price as number) };
+          }
+        }
+        const drawing = mgr.getDrawing(previewId);
+        if (drawing) {
+          drawing.updateAnchor(previewAnchorIdxRef.current, anchor);
+        }
+      }
+
+      // Magnet crosshair — snap to nearest OHLC
+      if (magnetModeRef.current) {
+        const idx = binarySearchNearest(dataTimestampsRef.current, time as number);
+        if (idx >= 0 && idx < candleDataRef.current.length) {
+          const candle = candleDataRef.current[idx];
+          const snappedPrice = nearestOHLC(candle, price as number);
+          chart.setCrosshairPosition(snappedPrice, candle.time, candleSeries);
+        }
+      }
+    };
+
+    const onMouseLeave = () => {
+      if (magnetModeRef.current) {
+        chart.clearCrosshairPosition();
+      }
+    };
+
+    // Disable chart scroll/scale during anchor drag
     const onMouseDown = (e: MouseEvent) => {
       if (!mgr.getSelectedDrawing()) return;
       const rect = container.getBoundingClientRect();
@@ -217,6 +373,9 @@ export default function CandlestickChart({ ticker }: Props) {
     const onMouseUp = () => {
       chart.applyOptions({ handleScroll: true, handleScale: true });
     };
+
+    container.addEventListener('mousemove', onMouseMove);
+    container.addEventListener('mouseleave', onMouseLeave);
     container.addEventListener('mousedown', onMouseDown);
     container.addEventListener('mouseup', onMouseUp);
 
@@ -227,10 +386,7 @@ export default function CandlestickChart({ ticker }: Props) {
       rangeTimer = setTimeout(() => {
         if (range) {
           saveChartSettings(ticker, {
-            visibleRange: {
-              from: range.from as number,
-              to: range.to as number,
-            },
+            visibleRange: { from: range.from as number, to: range.to as number },
           });
         }
       }, 500);
@@ -238,6 +394,8 @@ export default function CandlestickChart({ ticker }: Props) {
 
     return () => {
       if (rangeTimer) clearTimeout(rangeTimer);
+      container.removeEventListener('mousemove', onMouseMove);
+      container.removeEventListener('mouseleave', onMouseLeave);
       container.removeEventListener('mousedown', onMouseDown);
       container.removeEventListener('mouseup', onMouseUp);
       mgr.detach();
@@ -258,13 +416,7 @@ export default function CandlestickChart({ ticker }: Props) {
         drawingManagerRef.current.importDrawings(
           savedDrawings,
           (type: string, data: SerializedDrawing): IDrawing | null => {
-            return registry.createDrawing(
-              type,
-              data.id,
-              data.anchors,
-              data.style,
-              data.options,
-            );
+            return registry.createDrawing(type, data.id, data.anchors, data.style, data.options);
           },
         );
       }
@@ -310,6 +462,10 @@ export default function CandlestickChart({ ticker }: Props) {
           color: c.close >= c.open ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)',
         }));
 
+        // Update refs BEFORE setData so cross-timeframe interpolation uses new timestamps
+        candleDataRef.current = candleData;
+        dataTimestampsRef.current = candleData.map((c) => c.time as number);
+
         candleSeriesRef.current?.setData(candleData);
         volumeSeriesRef.current?.setData(volumeData);
 
@@ -344,18 +500,19 @@ export default function CandlestickChart({ ticker }: Props) {
   }, [ticker, interval, getDateRange]);
 
   const handleSelectTool = (type: string | null) => {
+    // Cancel preview if deactivating
+    if (!type && previewDrawingIdRef.current) {
+      drawingManagerRef.current?.removeDrawing(previewDrawingIdRef.current);
+      previewDrawingIdRef.current = null;
+      previewAnchorIdxRef.current = 0;
+    }
+
     setActiveTool(type);
     activeToolRef.current = type;
-    pendingAnchorsRef.current = [];
 
     if (type) {
-      const registry = ToolRegistry.getInstance();
-      const def = registry.get(type);
-      requiredAnchorsRef.current = def?.requiredAnchors ?? 2;
       drawingManagerRef.current?.deselectAll();
       setHasSelection(false);
-    } else {
-      requiredAnchorsRef.current = 0;
     }
 
     drawingManagerRef.current?.setActiveTool(type);
@@ -364,6 +521,8 @@ export default function CandlestickChart({ ticker }: Props) {
   const handleClearAll = () => {
     drawingManagerRef.current?.clearAll();
     setHasSelection(false);
+    previewDrawingIdRef.current = null;
+    previewAnchorIdxRef.current = 0;
     saveDrawings(ticker, []);
   };
 
@@ -383,6 +542,8 @@ export default function CandlestickChart({ ticker }: Props) {
     setHasSelection(false);
     setActiveTool(null);
     activeToolRef.current = null;
+    previewDrawingIdRef.current = null;
+    previewAnchorIdxRef.current = 0;
     setInterval(5);
     isInitialLoadRef.current = false;
     chartRef.current?.timeScale().fitContent();
@@ -395,6 +556,25 @@ export default function CandlestickChart({ ticker }: Props) {
       setCustomInput('');
     }
   };
+
+  const handleChangeColor = useCallback((color: string) => {
+    const mgr = drawingManagerRef.current;
+    if (!mgr) return;
+    const selected = mgr.getSelectedDrawing();
+    if (selected) {
+      selected.updateStyle({ lineColor: color });
+      persistDrawings();
+    }
+  }, [persistDrawings]);
+
+  const toggleMagnet = useCallback(() => {
+    const newMode = !magnetModeRef.current;
+    magnetModeRef.current = newMode;
+    setMagnetMode(newMode);
+    if (!newMode) {
+      chartRef.current?.clearCrosshairPosition();
+    }
+  }, []);
 
   const isCustomInterval = !INTERVALS.some((iv) => iv.value === interval);
 
@@ -450,7 +630,10 @@ export default function CandlestickChart({ ticker }: Props) {
           onClearAll={handleClearAll}
           onDeleteSelected={handleDeleteSelected}
           onResetAll={handleResetAll}
+          onChangeColor={handleChangeColor}
           hasSelection={hasSelection}
+          magnetMode={magnetMode}
+          onToggleMagnet={toggleMagnet}
         />
       </div>
 
