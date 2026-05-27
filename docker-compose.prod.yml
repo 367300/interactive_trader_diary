@@ -20,6 +20,8 @@ services:
     env_file:
       - .env
     environment:
+      TZ: Europe/Moscow
+      PGTZ: Europe/Moscow
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -30,6 +32,7 @@ services:
   rabbitmq:
     image: rabbitmq:4.1.1-management
     environment:
+      TZ: Europe/Moscow
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
     healthcheck:
@@ -42,6 +45,8 @@ services:
 
   redis:
     image: redis:8
+    environment:
+      TZ: Europe/Moscow
     restart: unless-stopped
 
   web:
@@ -60,6 +65,7 @@ services:
     env_file:
       - .env
     environment:
+      - TZ=Europe/Moscow
       - PYTHONPATH=/app/django_base
       - DJANGO_DEBUG=${DJANGO_DEBUG}
       - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
@@ -105,6 +111,7 @@ services:
     env_file:
       - .env
     environment:
+      - TZ=Europe/Moscow
       - MEDIA_ROOT=/app/uploads
       - CELERY_BROKER_URL=${CELERY_BROKER_URL}
       - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
@@ -121,6 +128,8 @@ services:
         # Same-origin: фронт зовёт `/api`, Traefik отдаст это Django (web).
         VITE_API_BASE_URL: /api
     image: trader-diary-frontend:latest
+    environment:
+      - TZ=Europe/Moscow
     restart: unless-stopped
     networks:
       - default
@@ -137,6 +146,7 @@ services:
   flower:
     image: mher/flower:2.0.1
     environment:
+      - TZ=Europe/Moscow
       - CELERY_BROKER_URL=${CELERY_BROKER_URL}
       - FLOWER_BASIC_AUTH=${FLOWER_BASIC_AUTH}
     depends_on:
@@ -159,6 +169,7 @@ services:
   pgadmin:
     image: dpage/pgadmin4
     environment:
+      TZ: Europe/Moscow
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
       # pgAdmin за reverse-proxy: подсказываем ему о внешнем https-домене,
