@@ -298,34 +298,38 @@ function ChartPickerContent({
     drawingManagerRef.current = mgr;
 
     chart.subscribeClick((param) => {
-      if (!param.time || !param.point) return;
-
-      const candle = candleDataRef.current.find((c) => c.time === param.time);
-      if (!candle) return;
+      if (!param.point) return;
 
       const cursorPrice = candleSeries.coordinateToPrice(param.point.y);
       if (cursorPrice === null) return;
 
       const price = cursorPrice as number;
-      const candleTime = candle.time as number;
       const currentStep = stepRef.current;
       const currentMode = slTpModeRef.current;
 
       if (currentStep === 'entry') {
+        if (!param.time) return;
+        const candle = candleDataRef.current.find((c) => c.time === param.time);
+        if (!candle) return;
+        const candleTime = candle.time as number;
         const point = { time: candleTime, price };
         setEntryPoint(point);
         entryPointRef.current = point;
         updateMarkers(point, null, null);
       } else if (currentStep === 'stop_loss' && currentMode === 'manual') {
-        const point = { time: candleTime, price };
+        const entry = entryPointRef.current;
+        if (!entry) return;
+        const point = { time: entry.time, price };
         setStopLossPoint(point);
         setStep('take_profit');
-        updateMarkers(entryPointRef.current, point, null);
+        updateMarkers(entry, null, null);
       } else if (currentStep === 'take_profit' && currentMode === 'manual') {
-        const point = { time: candleTime, price };
+        const entry = entryPointRef.current;
+        if (!entry) return;
+        const point = { time: entry.time, price };
         setTakeProfitPoint(point);
         setStep('done');
-        updateMarkers(entryPointRef.current, stopLossPointRef.current, point);
+        updateMarkers(entry, null, null);
       }
     });
 
@@ -500,6 +504,21 @@ function ChartPickerContent({
     }
     if (entryPoint) {
       updateMarkers(entryPoint, null, null);
+    }
+  };
+
+  const handleResetAll = () => {
+    setEntryPoint(null);
+    entryPointRef.current = null;
+    setStopLossPoint(null);
+    stopLossPointRef.current = null;
+    setTakeProfitPoint(null);
+    setStep('entry');
+    setSlTpMode('pending');
+    markersRef.current?.setMarkers([]);
+    if (positionDrawingIdRef.current && drawingManagerRef.current) {
+      drawingManagerRef.current.removeDrawing(positionDrawingIdRef.current);
+      positionDrawingIdRef.current = null;
     }
   };
 
@@ -755,6 +774,11 @@ function ChartPickerContent({
       )}
 
       <DialogFooter className="mt-4">
+        {entryPoint && (
+          <Button variant="ghost" size="sm" onClick={handleResetAll} className="mr-auto text-muted-foreground">
+            Начать заново
+          </Button>
+        )}
         <Button variant="primary" disabled={!canApply} onClick={handleApply}>
           Применить
         </Button>
