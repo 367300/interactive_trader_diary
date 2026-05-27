@@ -1,5 +1,5 @@
 diff --git a/node_modules/lightweight-charts-drawing/dist/lightweight-charts-drawing.es.js b/node_modules/lightweight-charts-drawing/dist/lightweight-charts-drawing.es.js
-index f956d42..b72d8ef 100644
+index f956d42..6caee83 100644
 --- a/node_modules/lightweight-charts-drawing/dist/lightweight-charts-drawing.es.js
 +++ b/node_modules/lightweight-charts-drawing/dist/lightweight-charts-drawing.es.js
 @@ -2198,7 +2198,7 @@ class ds {
@@ -20,36 +20,56 @@ index f956d42..b72d8ef 100644
        const x = f.percentage >= 0 ? "+" : "";
        _.push(`${x}${f.percentage.toFixed(2)}%`);
      }
-@@ -6907,11 +6907,11 @@ class Hi {
+@@ -6906,17 +6906,17 @@ class Hi {
+     t.font = `${x * e}px sans-serif`, t.textAlign = "left", t.textBaseline = "middle";
      const w = r.x + d + 5;
      t.fillStyle = "#2196F3";
-     let P = "Entry";
+-    let P = "Entry";
 -    l.showPrices && (P += `: $${h.entry.toFixed(2)}`), t.fillText(P, w * e, r.y * e), t.fillStyle = "#ef5350";
-+    l.showPrices && (P += `: ${h.entry.toFixed(2)}`), t.fillText(P, w * e, r.y * e), t.fillStyle = "#ef5350";
-     let O = "Stop";
+-    let O = "Stop";
 -    l.showPrices && (O += `: $${h.stopLoss.toFixed(2)}`), l.showPercentage && (O += ` (-${h.riskPercent.toFixed(2)}%)`), t.fillText(O, w * e, a.y * e), t.fillStyle = "#26a69a";
-+    l.showPrices && (O += `: ${h.stopLoss.toFixed(2)}`), l.showPercentage && (O += ` (-${h.riskPercent.toFixed(2)}%)`), t.fillText(O, w * e, a.y * e), t.fillStyle = "#26a69a";
-     let m = "Target";
+-    let m = "Target";
 -    if (l.showPrices && (m += `: $${h.takeProfit.toFixed(2)}`), l.showPercentage && (m += ` (+${h.rewardPercent.toFixed(2)}%)`), t.fillText(m, w * e, c.y * e), l.showRiskReward) {
++    let P = "Вход";
++    l.showPrices && (P += `: ${h.entry.toFixed(2)}`), t.fillText(P, w * e, r.y * e), t.fillStyle = "#ef5350";
++    let O = "Стоп";
++    l.showPrices && (O += `: ${h.stopLoss.toFixed(2)}`), l.showPercentage && (O += ` (-${h.riskPercent.toFixed(2)}%)`), t.fillText(O, w * e, a.y * e), t.fillStyle = "#26a69a";
++    let m = "Цель";
 +    if (l.showPrices && (m += `: ${h.takeProfit.toFixed(2)}`), l.showPercentage && (m += ` (+${h.rewardPercent.toFixed(2)}%)`), t.fillText(m, w * e, c.y * e), l.showRiskReward) {
        t.fillStyle = "#ffffff";
        const R = `R:R = 1:${h.riskRewardRatio.toFixed(2)}`, S = (r.y + c.y) / 2;
        t.fillText(R, (r.x + 10) * e, S * e);
-@@ -7058,11 +7058,11 @@ class Ii {
+     }
+-    t.fillStyle = "#26a69a", t.font = `bold ${14 * e}px sans-serif`, t.fillText("LONG", (r.x + 10) * e, (r.y - 15) * e);
++    t.fillStyle = "#26a69a", t.font = `bold ${14 * e}px sans-serif`, t.fillText("ЛОНГ", (r.x + 10) * e, (r.y - 15) * e);
+     const T = this._drawing.state;
+     if (T === "selected" || T === "editing") {
+       const R = this._drawing.getControlPoints(n);
+@@ -7057,17 +7057,17 @@ class Ii {
+     t.font = `${x * e}px sans-serif`, t.textAlign = "left", t.textBaseline = "middle";
      const w = r.x + d + 5;
      t.fillStyle = "#2196F3";
-     let P = "Entry";
+-    let P = "Entry";
 -    l.showPrices && (P += `: $${h.entry.toFixed(2)}`), t.fillText(P, w * e, r.y * e), t.fillStyle = "#ef5350";
-+    l.showPrices && (P += `: ${h.entry.toFixed(2)}`), t.fillText(P, w * e, r.y * e), t.fillStyle = "#ef5350";
-     let O = "Stop";
+-    let O = "Stop";
 -    l.showPrices && (O += `: $${h.stopLoss.toFixed(2)}`), l.showPercentage && (O += ` (-${h.riskPercent.toFixed(2)}%)`), t.fillText(O, w * e, a.y * e), t.fillStyle = "#26a69a";
-+    l.showPrices && (O += `: ${h.stopLoss.toFixed(2)}`), l.showPercentage && (O += ` (-${h.riskPercent.toFixed(2)}%)`), t.fillText(O, w * e, a.y * e), t.fillStyle = "#26a69a";
-     let m = "Target";
+-    let m = "Target";
 -    if (l.showPrices && (m += `: $${h.takeProfit.toFixed(2)}`), l.showPercentage && (m += ` (+${h.rewardPercent.toFixed(2)}%)`), t.fillText(m, w * e, c.y * e), l.showRiskReward) {
++    let P = "Вход";
++    l.showPrices && (P += `: ${h.entry.toFixed(2)}`), t.fillText(P, w * e, r.y * e), t.fillStyle = "#ef5350";
++    let O = "Стоп";
++    l.showPrices && (O += `: ${h.stopLoss.toFixed(2)}`), l.showPercentage && (O += ` (-${h.riskPercent.toFixed(2)}%)`), t.fillText(O, w * e, a.y * e), t.fillStyle = "#26a69a";
++    let m = "Цель";
 +    if (l.showPrices && (m += `: ${h.takeProfit.toFixed(2)}`), l.showPercentage && (m += ` (+${h.rewardPercent.toFixed(2)}%)`), t.fillText(m, w * e, c.y * e), l.showRiskReward) {
        t.fillStyle = "#ffffff";
        const R = `R:R = 1:${h.riskRewardRatio.toFixed(2)}`, S = (r.y + c.y) / 2;
        t.fillText(R, (r.x + 10) * e, S * e);
+     }
+-    t.fillStyle = "#ef5350", t.font = `bold ${14 * e}px sans-serif`, t.fillText("SHORT", (r.x + 10) * e, (r.y + 15) * e);
++    t.fillStyle = "#ef5350", t.font = `bold ${14 * e}px sans-serif`, t.fillText("ШОРТ", (r.x + 10) * e, (r.y + 15) * e);
+     const T = this._drawing.state;
+     if (T === "selected" || T === "editing") {
+       const R = this._drawing.getControlPoints(n);
 @@ -7351,7 +7351,7 @@ class Mi {
      const w = (h + d) / 2, P = (f + g) / 2, O = 11, m = O + 4, T = 8, R = [];
      if (c.showPrices) {
