@@ -48,16 +48,17 @@ interface ChartPricePickerProps {
   minDate?: string;
 }
 
-const MSK_OFFSET_SEC = 3 * 3600;
-
+// lightweight-charts мутирует timestamps в setData(), добавляя offset
+// браузера. Поэтому candle.time и param.time уже содержат локальное время
+// в формате UTC. Используем getUTC* без дополнительного смещения.
 function timestampToDatetimeLocal(ts: number): string {
-  const d = new Date((ts + MSK_OFFSET_SEC) * 1000);
+  const d = new Date(ts * 1000);
   const pad = (n: number) => String(n).padStart(2, '0');
   return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}T${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`;
 }
 
 function formatDisplayDate(ts: number): string {
-  const d = new Date((ts + MSK_OFFSET_SEC) * 1000);
+  const d = new Date(ts * 1000);
   const pad = (n: number) => String(n).padStart(2, '0');
   return `${pad(d.getUTCDate())}.${pad(d.getUTCMonth() + 1)}.${d.getUTCFullYear()}, ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`;
 }
@@ -282,14 +283,16 @@ function ChartPickerContent({
       </div>
 
       {selected && (
-        <div className="mt-3 p-3 rounded-lg border border-border bg-glass-soft flex items-center gap-6">
-          <div>
-            <div className="text-xs text-muted-foreground">Дата и время</div>
-            <div className="text-sm font-medium">{formatDisplayDate(selected.time)}</div>
-          </div>
-          <div>
-            <div className="text-xs text-muted-foreground">Цена</div>
-            <div className="text-sm font-medium">{formatPrice(selected.price)}</div>
+        <div className="mt-3 p-3 rounded-lg border border-border bg-glass-soft">
+          <div className="flex items-center gap-6">
+            <div>
+              <div className="text-xs text-muted-foreground">Дата и время</div>
+              <div className="text-sm font-medium">{formatDisplayDate(selected.time)}</div>
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground">Цена</div>
+              <div className="text-sm font-medium">{formatPrice(selected.price)}</div>
+            </div>
           </div>
         </div>
       )}
