@@ -142,7 +142,7 @@ class CandleDataView(APIView):
     MAX_CANDLES = 5000
 
     def get(self, request, ticker):
-        from instruments.moex_candles import (
+        from instruments.candles import (
             candles_to_json,
             read_candles,
             resample_candles,

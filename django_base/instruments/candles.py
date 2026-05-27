@@ -1,8 +1,7 @@
 """
-Утилиты для получения, хранения и обработки свечей MOEX ISS.
+Утилиты для хранения и обработки свечей (source-agnostic).
 
 Функции:
-- fetch_moex_candles  — загрузка 1-мин OHLCV свечей с пагинацией
 - save_candles_to_csv — сохранение свечей в CSV (по дням)
 - read_candles        — чтение свечей из CSV за диапазон дат
 - resample_candles    — пересэмплирование до 5m/15m/30m/1h/4h/1D
@@ -12,13 +11,11 @@
 from __future__ import annotations
 
 import logging
-import time
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
-import requests
 from django.conf import settings
 
 logger = logging.getLogger(__name__)
@@ -26,29 +23,6 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Константы
 # ---------------------------------------------------------------------------
-
-_MOEX_CANDLES_URLS = {
-    "stock": (
-        "https://iss.moex.com/iss/engines/stock/markets/shares"
-        "/boards/TQBR/securities/{ticker}/candles.json"
-    ),
-    "futures": (
-        "https://iss.moex.com/iss/engines/futures/markets/forts"
-        "/securities/{ticker}/candles.json"
-    ),
-}
-
-_MOEX_PAGE_SIZE = 500
-
-MOEX_HTTP_HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/136.0.0.0 Safari/537.36"
-    ),
-    "Accept": "application/json, text/javascript, */*; q=0.01",
-    "Accept-Language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7",
-}
 
 _MOSCOW_UTC_OFFSET = timedelta(hours=3)
 
@@ -111,101 +85,6 @@ def month_csv_count(ticker: str, year: int, month: int) -> int:
 
 
 # ---------------------------------------------------------------------------
-# Загрузка с MOEX ISS
-# ---------------------------------------------------------------------------
-
-def fetch_moex_candles(
-    ticker: str,
-    from_date: date,
-    till_date: date,
-    interval: int = 1,
-    request_delay: float = 0.3,
-    market: str = "stock",
-) -> list[dict[str, Any]]:
-    """
-    Загрузить свечи с MOEX ISS API с автоматической пагинацией.
-
-    Parameters
-    ----------
-    ticker : str
-        Тикер инструмента (например «SBER» или «SiM6»).
-    from_date, till_date : date
-        Диапазон дат (включительно).
-    interval : int
-        Интервал свечей MOEX (1 = 1 мин, 10 = 10 мин, 60 = 1 ч, 24 = 1 д).
-    request_delay : float
-        Пауза между запросами для rate-limit.
-    market : str
-        Рынок MOEX: ``"stock"`` (акции) или ``"futures"`` (фьючерсы).
-
-    Returns
-    -------
-    list[dict]
-        Список словарей с ключами:
-        open, close, high, low, value, volume, begin, end.
-    """
-    url_template = _MOEX_CANDLES_URLS.get(market, _MOEX_CANDLES_URLS["stock"])
-    url = url_template.format(ticker=ticker.upper())
-    params: dict[str, str | int] = {
-        "from": from_date.isoformat(),
-        "till": till_date.isoformat(),
-        "interval": interval,
-        "iss.meta": "off",
-        "start": 0,
-    }
-
-    all_candles: list[dict[str, Any]] = []
-    page = 0
-
-    while True:
-        params["start"] = page * _MOEX_PAGE_SIZE
-        try:
-            resp = requests.get(url, params=params, headers=MOEX_HTTP_HEADERS, timeout=30)
-            resp.raise_for_status()
-        except requests.RequestException as exc:
-            logger.error(
-                "MOEX candles request failed for %s (page %d): %s",
-                ticker, page, exc,
-            )
-            break
-
-        try:
-            body = resp.json()
-            columns: list[str] = body["candles"]["columns"]
-            data: list[list] = body["candles"]["data"]
-        except (KeyError, ValueError) as exc:
-            logger.error(
-                "MOEX candles: unexpected response structure for %s: %s",
-                ticker, exc,
-            )
-            break
-
-        if not data:
-            break
-
-        for row in data:
-            all_candles.append(dict(zip(columns, row)))
-
-        logger.debug(
-            "MOEX candles %s page %d: got %d rows (total %d)",
-            ticker, page, len(data), len(all_candles),
-        )
-
-        if len(data) < _MOEX_PAGE_SIZE:
-            break
-
-        page += 1
-        if request_delay > 0:
-            time.sleep(request_delay)
-
-    logger.info(
-        "MOEX candles %s %s..%s interval=%d: fetched %d candles",
-        ticker, from_date, till_date, interval, len(all_candles),
-    )
-    return all_candles
-
-
-# ---------------------------------------------------------------------------
 # CSV — запись
 # ---------------------------------------------------------------------------
 
@@ -224,7 +103,7 @@ def save_candles_to_csv(ticker: str, candles: list[dict[str, Any]]) -> int:
     if not candles:
         return 0
 
-    df = _candles_list_to_df(candles)
+    df = _normalize_candles_df(candles)
     if df.empty:
         return 0
 
@@ -262,11 +141,11 @@ def save_candles_to_csv(ticker: str, candles: list[dict[str, Any]]) -> int:
     return files_written
 
 
-def _candles_list_to_df(candles: list[dict[str, Any]]) -> pd.DataFrame:
-    """Преобразовать список словарей MOEX ISS → нормализованный DataFrame."""
+def _normalize_candles_df(candles: list[dict[str, Any]]) -> pd.DataFrame:
+    """Нормализовать список словарей свечей → DataFrame со стандартными столбцами."""
     df = pd.DataFrame(candles)
 
-    # MOEX ISS возвращает «begin» как timestamp свечи
+    # Поддержка MOEX ISS (поле «begin») и стандартного «datetime»
     time_col = "begin" if "begin" in df.columns else "datetime"
     df["datetime"] = pd.to_datetime(df[time_col])
 
