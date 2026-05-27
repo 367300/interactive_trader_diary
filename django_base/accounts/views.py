@@ -10,6 +10,8 @@ from strategies.models import TradingStrategy
 from trades.models import Trade
 
 from .models import TraderProfile
+from core.models import SiteSettings
+
 from .serializers import (
     LoginSerializer,
     RegisterSerializer,
@@ -25,6 +27,11 @@ class RegisterView(APIView):
     permission_classes = (AllowAny,)
 
     def post(self, request):
+        if not SiteSettings.load().registration_enabled:
+            return Response(
+                {"detail": "Регистрация временно закрыта."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
         serializer = RegisterSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()

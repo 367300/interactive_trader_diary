@@ -129,4 +129,10 @@ export const coreApi = {
   },
   flushCache: () =>
     api.post<{ detail: string; cleared: string[] }>('/admin/flush-cache/'),
+  toggleRegistration: () =>
+    api.post<{ registration_enabled: boolean; detail: string }>('/admin/toggle-registration/'),
+};
+
+export const siteApi = {
+  settings: () => api.get<{ registration_enabled: boolean }>('/site-settings/'),
 };

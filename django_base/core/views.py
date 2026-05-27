@@ -10,6 +10,7 @@ from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from core.models import SiteSettings
 from instruments.tasks import load_all_candles, load_instruments_from_moex_task
 from strategies.models import TradingStrategy
 from trades.models import Trade
@@ -181,6 +182,31 @@ class AdminCandlesLoadView(APIView):
             },
             status=status.HTTP_202_ACCEPTED,
         )
+
+
+class SiteSettingsPublicView(APIView):
+    """Публичные настройки сайта (без авторизации)."""
+
+    permission_classes = ()
+
+    def get(self, request):
+        s = SiteSettings.load()
+        return Response({"registration_enabled": s.registration_enabled})
+
+
+class AdminToggleRegistrationView(APIView):
+    """Переключение регистрации (только для админа)."""
+
+    permission_classes = (IsAuthenticated, IsAdminUser)
+
+    def post(self, request):
+        s = SiteSettings.load()
+        s.registration_enabled = not s.registration_enabled
+        s.save()
+        return Response({
+            "registration_enabled": s.registration_enabled,
+            "detail": "Регистрация " + ("открыта" if s.registration_enabled else "закрыта") + ".",
+        })
 
 
 class AdminFlushCacheView(APIView):

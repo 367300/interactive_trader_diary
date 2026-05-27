@@ -1,7 +1,8 @@
 import { FormEvent, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useSiteSettings } from '@/lib/useSiteSettings';
 import { useAuth } from '../../auth/AuthContext';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -9,6 +10,7 @@ import { Alert } from '@/components/ui/alert';
 
 export default function Login() {
   const { login, error } = useAuth();
+  const { registrationEnabled } = useSiteSettings();
   const navigate = useNavigate();
   const location = useLocation() as { state?: { from?: { pathname?: string } } };
 
@@ -63,9 +65,11 @@ export default function Login() {
             <Button variant="primary" type="submit" disabled={busy} className="w-full">
               {busy ? 'Входим…' : 'Войти'}
             </Button>
-            <p className="text-xs text-muted-foreground">
-              Нет аккаунта? <Link to="/register">Зарегистрируйтесь</Link>
-            </p>
+            {registrationEnabled && (
+              <p className="text-xs text-muted-foreground">
+                Нет аккаунта? <Link to="/register">Зарегистрируйтесь</Link>
+              </p>
+            )}
           </CardFooter>
         </form>
       </Card>

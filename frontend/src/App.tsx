@@ -12,9 +12,13 @@ import InstrumentsLoad from './pages/admin/InstrumentsLoad';
 import InstrumentsRouter from './pages/instruments';
 import StrategiesRouter from './pages/strategies';
 import TradesRouter from './pages/trades';
+import { SiteSettingsContext, useSiteSettingsLoader } from './lib/useSiteSettings';
 
 export default function App() {
+  const siteSettings = useSiteSettingsLoader();
+
   return (
+    <SiteSettingsContext.Provider value={siteSettings}>
     <AuthProvider>
       <Routes>
         <Route element={<PublicLayout />}>
@@ -22,10 +26,12 @@ export default function App() {
             path="/login"
             element={<RequireGuest><Login /></RequireGuest>}
           />
-          <Route
-            path="/register"
-            element={<RequireGuest><Register /></RequireGuest>}
-          />
+          {siteSettings.registrationEnabled && (
+            <Route
+              path="/register"
+              element={<RequireGuest><Register /></RequireGuest>}
+            />
+          )}
         </Route>
         <Route
           element={
@@ -45,5 +51,6 @@ export default function App() {
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </AuthProvider>
+    </SiteSettingsContext.Provider>
   );
 }

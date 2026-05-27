@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { useSiteSettings } from '@/lib/useSiteSettings';
 
 const landingHref = (() => {
   const apiBase = import.meta.env.VITE_API_BASE_URL || '';
@@ -7,6 +8,8 @@ const landingHref = (() => {
 })();
 
 export default function PublicLayout() {
+  const { registrationEnabled } = useSiteSettings();
+
   return (
     <div className="min-h-screen flex flex-col">
       <header className="flex items-center px-4 sm:px-7 py-3.5 border-b border-border bg-glass-soft backdrop-blur-[12px] gap-4 sm:gap-6 flex-wrap">
@@ -22,9 +25,11 @@ export default function PublicLayout() {
           <Button variant="ghost" asChild>
             <NavLink to="/login">Войти</NavLink>
           </Button>
-          <Button variant="primary" asChild>
-            <NavLink to="/register">Создать аккаунт</NavLink>
-          </Button>
+          {registrationEnabled && (
+            <Button variant="primary" asChild>
+              <NavLink to="/register">Создать аккаунт</NavLink>
+            </Button>
+          )}
         </div>
       </header>
       <div className="flex-1 p-5 sm:p-8 max-w-[1100px] mx-auto w-full">

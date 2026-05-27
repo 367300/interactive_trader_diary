@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Alert } from '@/components/ui/alert';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Trash2, Upload } from 'lucide-react';
+import { ShieldCheck, Trash2, Upload } from 'lucide-react';
+import { useSiteSettings } from '@/lib/useSiteSettings';
 
 export default function InstrumentsLoad() {
   const [type, setType] = useState('STOCK');
@@ -92,6 +93,7 @@ export default function InstrumentsLoad() {
       <CsvUpload />
       <CandlesLoad />
       <CacheFlush />
+      <RegistrationToggle />
     </section>
   );
 }
@@ -265,6 +267,52 @@ function CacheFlush() {
         <Button variant="destructive" size="sm" disabled={busy} onClick={onFlush}>
           <Trash2 className="h-3.5 w-3.5" />
           {busy ? 'Сбрасываем…' : 'Сбросить весь кэш'}
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
+function RegistrationToggle() {
+  const { registrationEnabled } = useSiteSettings();
+  const [enabled, setEnabled] = useState<boolean | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const current = enabled ?? registrationEnabled;
+
+  const onToggle = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await coreApi.toggleRegistration();
+      setEnabled(res.registration_enabled);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Ошибка');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Card className="max-w-[560px] mt-5">
+      <CardHeader>
+        <CardTitle>Регистрация пользователей</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="text-muted-foreground text-[13px] mb-3.5">
+          Текущий статус: <strong>{current ? 'открыта' : 'закрыта'}</strong>.
+          Когда регистрация закрыта, новые аккаунты можно создать только через Django Admin.
+        </p>
+        {error && <Alert variant="destructive" className="mb-3">{error}</Alert>}
+        <Button
+          variant={current ? 'destructive' : 'primary'}
+          size="sm"
+          disabled={busy}
+          onClick={onToggle}
+        >
+          <ShieldCheck className="h-3.5 w-3.5" />
+          {busy ? 'Переключаем…' : current ? 'Закрыть регистрацию' : 'Открыть регистрацию'}
         </Button>
       </CardContent>
     </Card>

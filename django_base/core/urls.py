@@ -5,6 +5,7 @@ from . import views
 app_name = 'core'
 
 urlpatterns = [
+    path('site-settings/', views.SiteSettingsPublicView.as_view(), name='site_settings'),
     path('dashboard/', views.DashboardView.as_view(), name='dashboard'),
     path(
         'admin/instruments/load/',
@@ -25,5 +26,10 @@ urlpatterns = [
         'admin/flush-cache/',
         views.AdminFlushCacheView.as_view(),
         name='admin_flush_cache',
+    ),
+    path(
+        'admin/toggle-registration/',
+        views.AdminToggleRegistrationView.as_view(),
+        name='admin_toggle_registration',
     ),
 ]
