@@ -96,6 +96,7 @@ interface Props {
   onSelectTool: (type: string | null) => void;
   onClearAll: () => void;
   onDeleteSelected: () => void;
+  onResetAll: () => void;
   hasSelection: boolean;
 }
 
@@ -152,6 +153,7 @@ export default function DrawingToolbar({
   onSelectTool,
   onClearAll,
   onDeleteSelected,
+  onResetAll,
   hasSelection,
 }: Props) {
   const [openGroup, setOpenGroup] = useState<string | null>(null);
@@ -217,6 +219,14 @@ export default function DrawingToolbar({
         title="Очистить все объекты"
       >
         Очистить всё
+      </button>
+
+      <button
+        onClick={onResetAll}
+        className="px-2 py-1 rounded text-xs font-medium text-red/80 hover:bg-red/20 hover:text-red transition-colors"
+        title="Сбросить все настройки графика, рисунки и позицию"
+      >
+        Сбросить всё
       </button>
 
       {activeToolLabel && (

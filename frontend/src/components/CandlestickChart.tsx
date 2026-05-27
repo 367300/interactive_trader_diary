@@ -26,6 +26,7 @@ import {
   saveChartSettings,
   saveDrawings,
   loadDrawings,
+  clearChartSettings,
 } from '@/lib/chartStorage';
 
 const INTERVALS = [
@@ -38,14 +39,23 @@ const INTERVALS = [
   { value: 1440, label: '1д' },
 ] as const;
 
-const RANGES = [
-  { label: '1д', days: 1, defaultInterval: 1 },
-  { label: '1н', days: 7, defaultInterval: 5 },
-  { label: '1м', days: 30, defaultInterval: 15 },
-  { label: '3м', days: 90, defaultInterval: 60 },
-  { label: '6м', days: 180, defaultInterval: 240 },
-  { label: 'YTD', days: 0, defaultInterval: 1440 },
-] as const;
+function parseCustomInterval(input: string): number | null {
+  const s = input.trim().toLowerCase();
+  let match = s.match(/^(\d+)\s*([mмhчdд]?)$/);
+  if (!match) return null;
+  const num = parseInt(match[1]);
+  if (isNaN(num) || num <= 0) return null;
+  const unit = match[2];
+  if (unit === 'h' || unit === 'ч') return num * 60;
+  if (unit === 'd' || unit === 'д') return num * 1440;
+  return num;
+}
+
+function formatInterval(minutes: number): string {
+  if (minutes >= 1440 && minutes % 1440 === 0) return `${minutes / 1440}д`;
+  if (minutes >= 60 && minutes % 60 === 0) return `${minutes / 60}ч`;
+  return `${minutes}м`;
+}
 
 let drawingIdCounter = Date.now();
 function nextDrawingId(): string {
@@ -63,6 +73,8 @@ export default function CandlestickChart({ ticker }: Props) {
   const volumeSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null);
   const drawingManagerRef = useRef<DrawingManager | null>(null);
   const drawingsRestoredRef = useRef(false);
+  const isInitialLoadRef = useRef(true);
+  const persistTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const activeToolRef = useRef<string | null>(null);
   const pendingAnchorsRef = useRef<Anchor[]>([]);
@@ -70,7 +82,7 @@ export default function CandlestickChart({ ticker }: Props) {
 
   const saved = loadChartSettings(ticker);
   const [interval, setInterval] = useState(saved.interval ?? 5);
-  const [rangeIdx, setRangeIdx] = useState(saved.rangeIdx ?? 1);
+  const [customInput, setCustomInput] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [noData, setNoData] = useState(false);
@@ -78,26 +90,29 @@ export default function CandlestickChart({ ticker }: Props) {
   const [hasSelection, setHasSelection] = useState(false);
 
   const persistDrawings = useCallback(() => {
-    const mgr = drawingManagerRef.current;
-    if (!mgr) return;
-    const data = mgr.exportDrawings();
-    saveDrawings(ticker, data);
+    if (persistTimerRef.current) clearTimeout(persistTimerRef.current);
+    persistTimerRef.current = setTimeout(() => {
+      const mgr = drawingManagerRef.current;
+      if (!mgr) return;
+      const data = mgr.exportDrawings();
+      saveDrawings(ticker, data);
+    }, 500);
   }, [ticker]);
 
+  useEffect(() => {
+    return () => {
+      if (persistTimerRef.current) clearTimeout(persistTimerRef.current);
+    };
+  }, []);
+
   const getDateRange = useCallback(() => {
-    const range = RANGES[rangeIdx];
     const till = new Date();
-    const from = new Date();
-    if (range.days === 0) {
-      from.setMonth(0, 1);
-    } else {
-      from.setDate(from.getDate() - range.days);
-    }
+    const from = new Date(till.getFullYear(), 0, 1);
     return {
       from: from.toISOString().slice(0, 10),
       till: till.toISOString().slice(0, 10),
     };
-  }, [rangeIdx]);
+  }, []);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -188,7 +203,43 @@ export default function CandlestickChart({ ticker }: Props) {
       }
     });
 
+    // Disable chart scroll/scale during anchor drag
+    const container = containerRef.current;
+    const onMouseDown = (e: MouseEvent) => {
+      if (!mgr.getSelectedDrawing()) return;
+      const rect = container.getBoundingClientRect();
+      const point = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+      const anchorIdx = mgr.hitTestAnchor(point);
+      if (anchorIdx !== null) {
+        chart.applyOptions({ handleScroll: false, handleScale: false });
+      }
+    };
+    const onMouseUp = () => {
+      chart.applyOptions({ handleScroll: true, handleScale: true });
+    };
+    container.addEventListener('mousedown', onMouseDown);
+    container.addEventListener('mouseup', onMouseUp);
+
+    // Save visible range (debounced)
+    let rangeTimer: ReturnType<typeof setTimeout> | null = null;
+    chart.timeScale().subscribeVisibleTimeRangeChange((range) => {
+      if (rangeTimer) clearTimeout(rangeTimer);
+      rangeTimer = setTimeout(() => {
+        if (range) {
+          saveChartSettings(ticker, {
+            visibleRange: {
+              from: range.from as number,
+              to: range.to as number,
+            },
+          });
+        }
+      }, 500);
+    });
+
     return () => {
+      if (rangeTimer) clearTimeout(rangeTimer);
+      container.removeEventListener('mousedown', onMouseDown);
+      container.removeEventListener('mouseup', onMouseUp);
       mgr.detach();
       chart.remove();
       chartRef.current = null;
@@ -198,6 +249,7 @@ export default function CandlestickChart({ ticker }: Props) {
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Restore drawings (once per ticker)
   useEffect(() => {
     if (!drawingsRestoredRef.current && drawingManagerRef.current) {
       const savedDrawings = loadDrawings(ticker);
@@ -220,10 +272,12 @@ export default function CandlestickChart({ ticker }: Props) {
     }
   }, [ticker]);
 
+  // Persist interval
   useEffect(() => {
-    saveChartSettings(ticker, { interval, rangeIdx });
-  }, [ticker, interval, rangeIdx]);
+    saveChartSettings(ticker, { interval });
+  }, [ticker, interval]);
 
+  // Load candle data
   useEffect(() => {
     let cancelled = false;
     const { from, till } = getDateRange();
@@ -258,7 +312,26 @@ export default function CandlestickChart({ ticker }: Props) {
 
         candleSeriesRef.current?.setData(candleData);
         volumeSeriesRef.current?.setData(volumeData);
-        chartRef.current?.timeScale().fitContent();
+
+        if (isInitialLoadRef.current) {
+          const s = loadChartSettings(ticker);
+          if (s.visibleRange) {
+            try {
+              chartRef.current?.timeScale().setVisibleRange({
+                from: s.visibleRange.from as Time,
+                to: s.visibleRange.to as Time,
+              });
+            } catch {
+              chartRef.current?.timeScale().fitContent();
+            }
+          } else {
+            chartRef.current?.timeScale().fitContent();
+          }
+          isInitialLoadRef.current = false;
+        } else {
+          chartRef.current?.timeScale().fitContent();
+        }
+
         setLoading(false);
       })
       .catch((e) => {
@@ -269,11 +342,6 @@ export default function CandlestickChart({ ticker }: Props) {
 
     return () => { cancelled = true; };
   }, [ticker, interval, getDateRange]);
-
-  const onRangeChange = (idx: number) => {
-    setRangeIdx(idx);
-    setInterval(RANGES[idx].defaultInterval);
-  };
 
   const handleSelectTool = (type: string | null) => {
     setActiveTool(type);
@@ -309,24 +377,30 @@ export default function CandlestickChart({ ticker }: Props) {
     }
   };
 
+  const handleResetAll = () => {
+    clearChartSettings(ticker);
+    drawingManagerRef.current?.clearAll();
+    setHasSelection(false);
+    setActiveTool(null);
+    activeToolRef.current = null;
+    setInterval(5);
+    isInitialLoadRef.current = false;
+    chartRef.current?.timeScale().fitContent();
+  };
+
+  const handleCustomInterval = () => {
+    const val = parseCustomInterval(customInput);
+    if (val && val >= 1 && val <= 10080) {
+      setInterval(val);
+      setCustomInput('');
+    }
+  };
+
+  const isCustomInterval = !INTERVALS.some((iv) => iv.value === interval);
+
   return (
     <div>
       <div className="flex items-center gap-1.5 mb-2 flex-wrap">
-        <div className="flex items-center gap-0.5 mr-3">
-          {RANGES.map((r, i) => (
-            <button
-              key={r.label}
-              onClick={() => onRangeChange(i)}
-              className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
-                rangeIdx === i
-                  ? 'bg-blue/20 text-blue border border-blue/30'
-                  : 'text-muted-foreground hover:bg-glass-soft hover:text-foreground'
-              }`}
-            >
-              {r.label}
-            </button>
-          ))}
-        </div>
         <div className="flex items-center gap-0.5">
           {INTERVALS.map((iv) => (
             <button
@@ -342,6 +416,31 @@ export default function CandlestickChart({ ticker }: Props) {
             </button>
           ))}
         </div>
+
+        <div className="flex items-center gap-1 ml-2">
+          <input
+            type="text"
+            value={customInput}
+            onChange={(e) => setCustomInput(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleCustomInterval()}
+            placeholder="2h, 45m…"
+            className="w-20 px-2 py-1 rounded text-xs bg-glass-soft border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-blue/50"
+          />
+          {customInput && (
+            <button
+              onClick={handleCustomInterval}
+              className="px-2 py-1 rounded text-xs font-medium text-blue hover:bg-blue/20 transition-colors"
+            >
+              ОК
+            </button>
+          )}
+        </div>
+
+        {isCustomInterval && (
+          <span className="px-2 py-1 rounded text-xs font-medium bg-blue/20 text-blue border border-blue/30">
+            {formatInterval(interval)}
+          </span>
+        )}
       </div>
 
       <div className="mb-2">
@@ -350,6 +449,7 @@ export default function CandlestickChart({ ticker }: Props) {
           onSelectTool={handleSelectTool}
           onClearAll={handleClearAll}
           onDeleteSelected={handleDeleteSelected}
+          onResetAll={handleResetAll}
           hasSelection={hasSelection}
         />
       </div>

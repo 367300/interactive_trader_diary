@@ -2,8 +2,8 @@ import type { SerializedDrawing } from 'lightweight-charts-drawing';
 
 interface ChartSettings {
   interval: number;
-  rangeIdx: number;
   drawings: SerializedDrawing[];
+  visibleRange: { from: number; to: number } | null;
 }
 
 const STORAGE_KEY = 'chart_settings';
@@ -45,4 +45,12 @@ export function saveDrawings(
 export function loadDrawings(ticker: string): SerializedDrawing[] {
   const settings = loadChartSettings(ticker);
   return settings.drawings ?? [];
+}
+
+export function clearChartSettings(ticker: string): void {
+  try {
+    localStorage.removeItem(getKey(ticker));
+  } catch {
+    // localStorage unavailable
+  }
 }
