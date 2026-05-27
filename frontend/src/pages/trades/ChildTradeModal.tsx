@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Alert } from '@/components/ui/alert';
 import { DateTimePicker } from '@/components/ui/date-time-picker';
+import ChartPricePickerDialog from '@/components/ChartPricePickerDialog';
 
 export type ChildAction = 'average' | 'partial-close' | 'close';
 
@@ -21,11 +22,13 @@ interface Props {
   tradeId: string;
   action: ChildAction;
   availableVolume: number;
+  instrumentTicker: string;
+  parentTradeDate: string;
   onClose: () => void;
   onCreated: () => void;
 }
 
-export default function ChildTradeModal({ tradeId, action, availableVolume, onClose, onCreated }: Props) {
+export default function ChildTradeModal({ tradeId, action, availableVolume, instrumentTicker, parentTradeDate, onClose, onCreated }: Props) {
   const [date, setDate] = useState(nowForInput());
   const [price, setPrice] = useState('');
   const [volume, setVolume] = useState<number>(
@@ -33,6 +36,7 @@ export default function ChildTradeModal({ tradeId, action, availableVolume, onCl
   );
   const [busy, setBusy] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [chartOpen, setChartOpen] = useState(false);
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -62,6 +66,7 @@ export default function ChildTradeModal({ tradeId, action, availableVolume, onCl
   };
 
   return (
+    <>
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-md">
         <form onSubmit={onSubmit}>
@@ -82,7 +87,18 @@ export default function ChildTradeModal({ tradeId, action, availableVolume, onCl
               <DateTimePicker value={date} onChange={setDate} required />
             </div>
             <div className="space-y-2">
-              <Label>Цена</Label>
+              <div className="flex items-center justify-between">
+                <Label>Цена</Label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-auto py-0.5 px-2 text-xs"
+                  onClick={() => setChartOpen(true)}
+                >
+                  Показать на графике
+                </Button>
+              </div>
               <Input
                 type="number"
                 step="0.0001"
@@ -119,5 +135,16 @@ export default function ChildTradeModal({ tradeId, action, availableVolume, onCl
         </form>
       </DialogContent>
     </Dialog>
+    <ChartPricePickerDialog
+      ticker={instrumentTicker}
+      open={chartOpen}
+      onOpenChange={setChartOpen}
+      onApply={(d, p) => {
+        setDate(d);
+        setPrice(p);
+      }}
+      minDate={parentTradeDate}
+    />
+    </>
   );
 }

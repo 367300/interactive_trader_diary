@@ -181,6 +181,8 @@ export default function TradeDetail() {
           tradeId={t.id}
           action={action}
           availableVolume={t.available_volume}
+          instrumentTicker={t.instrument_detail.ticker}
+          parentTradeDate={t.trade_date}
           onClose={() => setAction(null)}
           onCreated={() => {
             setAction(null);

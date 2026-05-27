@@ -66,6 +66,14 @@ class TradeViewSet(viewsets.ModelViewSet):
         serializer = ChildTradeCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
+
+        child_date = data.get('trade_date')
+        if child_date and child_date < parent.trade_date:
+            return Response(
+                {'trade_date': ['Дата операции не может быть раньше даты открытия позиции.']},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         analysis_data = data.pop('analysis', None)
 
         if full_close:

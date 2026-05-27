@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Alert } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DateTimePicker } from '@/components/ui/date-time-picker';
+import ChartPricePickerDialog from '@/components/ChartPricePickerDialog';
 
 interface FormState {
   strategy: string;
@@ -75,6 +76,7 @@ export default function TradeForm() {
   const [busy, setBusy] = useState(false);
   const [instruments, setInstruments] = useState<InstrumentListItem[]>([]);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [chartOpen, setChartOpen] = useState(false);
   const showInstruments = !form.instrument && instruments.length > 0;
 
   const strategiesQ = useApi(() => strategiesApi.list(), []);
@@ -287,7 +289,20 @@ export default function TradeForm() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
               <div className="space-y-2">
-                <Label>Цена входа</Label>
+                <div className="flex items-center justify-between">
+                  <Label>Цена входа</Label>
+                  {form.instrument && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-auto py-0.5 px-2 text-xs"
+                      onClick={() => setChartOpen(true)}
+                    >
+                      Показать на графике
+                    </Button>
+                  )}
+                </div>
                 <Input
                   type="number"
                   step="0.0001"
@@ -384,6 +399,15 @@ export default function TradeForm() {
           </form>
         </CardContent>
       </Card>
+
+      {form.instrument && (
+        <ChartPricePickerDialog
+          ticker={form.instrument_search}
+          open={chartOpen}
+          onOpenChange={setChartOpen}
+          onApply={(date, price) => setForm((prev) => ({ ...prev, trade_date: date, price }))}
+        />
+      )}
     </section>
   );
 }
