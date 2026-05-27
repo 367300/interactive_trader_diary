@@ -289,20 +289,7 @@ export default function TradeForm() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label>Цена входа</Label>
-                  {form.instrument && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="h-auto py-0.5 px-2 text-xs"
-                      onClick={() => setChartOpen(true)}
-                    >
-                      Показать на графике
-                    </Button>
-                  )}
-                </div>
+                <Label>Цена входа</Label>
                 <Input
                   type="number"
                   step="0.0001"
@@ -331,6 +318,22 @@ export default function TradeForm() {
                 />
               </div>
             </div>
+
+            {form.instrument && (
+              <div className="mb-4">
+                <Button
+                  type="button"
+                  variant="default"
+                  onClick={() => setChartOpen(true)}
+                  className="w-full border-blue/30 text-blue hover:bg-blue/10 hover:text-blue bg-blue/5"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                  </svg>
+                  Выбрать цену и SL/TP на графике
+                </Button>
+              </div>
+            )}
 
             <div className="space-y-2 mb-4">
               <Label>Комиссия (₽)</Label>
@@ -405,7 +408,16 @@ export default function TradeForm() {
           ticker={form.instrument_search}
           open={chartOpen}
           onOpenChange={setChartOpen}
-          onApply={(date, price) => setForm((prev) => ({ ...prev, trade_date: date, price }))}
+          direction={form.direction}
+          onApply={(date, price, stopLoss, takeProfit) =>
+            setForm((prev) => ({
+              ...prev,
+              trade_date: date,
+              price,
+              ...(stopLoss ? { planned_stop_loss: stopLoss } : {}),
+              ...(takeProfit ? { planned_take_profit: takeProfit } : {}),
+            }))
+          }
         />
       )}
     </section>
