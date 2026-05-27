@@ -22,12 +22,18 @@ export default function PublicLayout() {
           <a href={`${landingHref}help/`} className="px-3.5 py-2 rounded-[10px] text-soft-foreground text-[13.5px] font-medium no-underline hover:bg-glass-soft hover:text-foreground transition-colors">Помощь</a>
         </nav>
         <div className="hidden sm:flex gap-2 ml-auto">
-          <Button variant="ghost" asChild>
-            <NavLink to="/login">Войти</NavLink>
-          </Button>
-          {registrationEnabled && (
+          {registrationEnabled ? (
+            <>
+              <Button variant="ghost" asChild>
+                <NavLink to="/login">Войти</NavLink>
+              </Button>
+              <Button variant="primary" asChild>
+                <NavLink to="/register">Создать аккаунт</NavLink>
+              </Button>
+            </>
+          ) : (
             <Button variant="primary" asChild>
-              <NavLink to="/register">Создать аккаунт</NavLink>
+              <NavLink to="/login">Войти</NavLink>
             </Button>
           )}
         </div>
