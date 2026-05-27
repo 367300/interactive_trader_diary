@@ -215,7 +215,7 @@ CANDLES_ROOT = Path(BASE_DIR).parent / "uploads" / "candles"
 CELERY_BEAT_SCHEDULE = {
     "update-today-candles": {
         "task": "instruments.tasks.update_today_candles",
-        "schedule": 1800.0,  # every 30 minutes
+        "schedule": 300.0,  # every 5 minutes
     },
 }
 
