@@ -47,6 +47,20 @@ _RESAMPLE_FREQS: dict[int, str | None] = {
     1440: "1D",
 }
 
+
+def _interval_to_freq(interval_minutes: int) -> str | None:
+    """Вычислить pandas freq-строку для произвольного интервала в минутах."""
+    if interval_minutes <= 1:
+        return None
+    cached = _RESAMPLE_FREQS.get(interval_minutes)
+    if cached is not None:
+        return cached
+    if interval_minutes % 1440 == 0:
+        return f"{interval_minutes // 1440}D"
+    if interval_minutes % 60 == 0:
+        return f"{interval_minutes // 60}h"
+    return f"{interval_minutes}min"
+
 _CSV_COLUMNS = ["datetime", "open", "high", "low", "close", "volume", "value"]
 
 
@@ -302,7 +316,7 @@ def resample_candles(df: pd.DataFrame, interval_minutes: int) -> pd.DataFrame:
     df : pd.DataFrame
         Исходные свечи (столбец ``datetime`` должен быть datetime64).
     interval_minutes : int
-        Целевой интервал: 1, 5, 15, 30, 60, 240, 1440.
+        Целевой интервал в минутах (любое целое ≥ 1).
 
     Returns
     -------
@@ -312,14 +326,9 @@ def resample_candles(df: pd.DataFrame, interval_minutes: int) -> pd.DataFrame:
     if df.empty:
         return df.copy()
 
-    freq = _RESAMPLE_FREQS.get(interval_minutes)
+    freq = _interval_to_freq(interval_minutes)
     if freq is None:
-        if interval_minutes == 1:
-            return df.copy()
-        raise ValueError(
-            f"Unsupported interval {interval_minutes}. "
-            f"Supported: {sorted(_RESAMPLE_FREQS)}"
-        )
+        return df.copy()
 
     tmp = df.set_index("datetime")
 

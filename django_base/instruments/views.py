@@ -139,7 +139,6 @@ class InstrumentStatsView(APIView):
 class CandleDataView(APIView):
     """OHLCV candle data for charting."""
 
-    INTERVAL_CHOICES = {1, 5, 15, 30, 60, 240, 1440}
     MAX_CANDLES = 5000
 
     def get(self, request, ticker):
@@ -164,8 +163,7 @@ class CandleDataView(APIView):
             interval = int(interval)
         except (TypeError, ValueError):
             interval = 1
-        if interval not in self.INTERVAL_CHOICES:
-            interval = 1
+        interval = max(1, min(interval, 10080))
 
         try:
             from_date = date.fromisoformat(from_date) if from_date else today
