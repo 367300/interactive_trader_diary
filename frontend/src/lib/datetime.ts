@@ -1,11 +1,13 @@
-const MOSCOW_TZ = 'Europe/Moscow';
-const MOSCOW_OFFSET = '+03:00';
+const MSK_OFFSET_MS = 3 * 3600 * 1000;
+const MSK_OFFSET_STR = '+03:00';
+
+function pad(n: number): string {
+  return String(n).padStart(2, '0');
+}
 
 function toMoscowLocal(date: Date): string {
-  return date
-    .toLocaleString('sv-SE', { timeZone: MOSCOW_TZ })
-    .slice(0, 16)
-    .replace(' ', 'T');
+  const msk = new Date(date.getTime() + MSK_OFFSET_MS);
+  return `${msk.getUTCFullYear()}-${pad(msk.getUTCMonth() + 1)}-${pad(msk.getUTCDate())}T${pad(msk.getUTCHours())}:${pad(msk.getUTCMinutes())}`;
 }
 
 export function nowForInput(): string {
@@ -20,5 +22,5 @@ export function isoToInput(value?: string | null): string {
 }
 
 export function inputToIso(value: string): string {
-  return new Date(value + MOSCOW_OFFSET).toISOString();
+  return new Date(value + MSK_OFFSET_STR).toISOString();
 }

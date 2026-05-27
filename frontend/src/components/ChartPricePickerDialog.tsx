@@ -48,22 +48,18 @@ interface ChartPricePickerProps {
   minDate?: string;
 }
 
+const MSK_OFFSET_SEC = 3 * 3600;
+
 function timestampToDatetimeLocal(ts: number): string {
-  return new Date(ts * 1000)
-    .toLocaleString('sv-SE', { timeZone: 'Europe/Moscow' })
-    .slice(0, 16)
-    .replace(' ', 'T');
+  const d = new Date((ts + MSK_OFFSET_SEC) * 1000);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}T${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`;
 }
 
 function formatDisplayDate(ts: number): string {
-  return new Date(ts * 1000).toLocaleString('ru-RU', {
-    timeZone: 'Europe/Moscow',
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  const d = new Date((ts + MSK_OFFSET_SEC) * 1000);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${pad(d.getUTCDate())}.${pad(d.getUTCMonth() + 1)}.${d.getUTCFullYear()}, ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`;
 }
 
 function formatPrice(price: number): string {
