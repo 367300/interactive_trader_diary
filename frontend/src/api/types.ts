@@ -31,6 +31,8 @@ export interface Profile {
   user: User;
   created_at: string;
   updated_at: string;
+  tinkoff_token_masked: string | null;
+  has_tinkoff_token: boolean;
   stats: ProfileStats;
 }
 
