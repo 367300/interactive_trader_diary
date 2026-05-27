@@ -181,6 +181,12 @@ class Instrument(models.Model):
         default=True,
         verbose_name='Активен'
     )
+    tinkoff_uid = models.CharField(
+        "T-Invest UID",
+        max_length=64,
+        blank=True,
+        default="",
+    )
     created_at = models.DateTimeField(
         auto_now_add=True,
         verbose_name='Дата создания'
@@ -304,6 +310,12 @@ class Futures(models.Model):
     is_active = models.BooleanField(
         default=True,
         verbose_name='Активен'
+    )
+    tinkoff_uid = models.CharField(
+        "T-Invest UID",
+        max_length=64,
+        blank=True,
+        default="",
     )
     created_at = models.DateTimeField(
         auto_now_add=True,
