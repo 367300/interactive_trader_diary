@@ -15,6 +15,7 @@ import {
 } from 'lightweight-charts';
 import { instrumentsApi } from '../api/endpoints';
 import type { CandleData } from '../api/types';
+import { getInitialDateRange, getEarlierDateRange } from '@/lib/candleChunks';
 import {
   Dialog,
   DialogContent,
@@ -82,6 +83,9 @@ function ChartPickerContent({
   const volumeSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null);
   const markersRef = useRef<ISeriesMarkersPluginApi<Time> | null>(null);
   const candleDataRef = useRef<CandlestickData<Time>[]>([]);
+  const volumeDataRef = useRef<HistogramData<Time>[]>([]);
+  const isLoadingMoreRef = useRef(false);
+  const earliestLoadedDateRef = useRef<string | null>(null);
 
   const [interval, setInterval] = useState(1440);
   const [loading, setLoading] = useState(true);
@@ -171,6 +175,12 @@ function ChartPickerContent({
       ]);
     });
 
+    chart.timeScale().subscribeVisibleLogicalRangeChange((range) => {
+      if (range && range.from < 0 && earliestLoadedDateRef.current && !isLoadingMoreRef.current) {
+        void loadMore();
+      }
+    });
+
     return () => {
       chart.remove();
       chartRef.current = null;
@@ -180,16 +190,48 @@ function ChartPickerContent({
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  async function loadMore() {
+    if (isLoadingMoreRef.current || !earliestLoadedDateRef.current) return;
+    isLoadingMoreRef.current = true;
+    try {
+      const { from, till } = getEarlierDateRange(earliestLoadedDateRef.current, interval);
+      const res = await instrumentsApi.candles(ticker, { from, till, interval });
+      if (!res.candles.length) { earliestLoadedDateRef.current = null; return; }
+
+      const existingTimes = new Set(candleDataRef.current.map((c) => c.time as number));
+      const newCandles: CandlestickData<Time>[] = [];
+      const newVolume: HistogramData<Time>[] = [];
+      for (const c of res.candles) {
+        if (existingTimes.has(c.time)) continue;
+        newCandles.push({ time: c.time as Time, open: c.open, high: c.high, low: c.low, close: c.close });
+        newVolume.push({ time: c.time as Time, value: c.volume, color: c.close >= c.open ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)' });
+      }
+      if (!newCandles.length) { earliestLoadedDateRef.current = null; return; }
+
+      const visibleRange = chartRef.current?.timeScale().getVisibleRange();
+      candleDataRef.current = [...newCandles, ...candleDataRef.current];
+      volumeDataRef.current = [...newVolume, ...volumeDataRef.current];
+      candleSeriesRef.current?.setData(candleDataRef.current);
+      volumeSeriesRef.current?.setData(volumeDataRef.current);
+      if (visibleRange) { try { chartRef.current?.timeScale().setVisibleRange(visibleRange); } catch { /* */ } }
+      earliestLoadedDateRef.current = from;
+    } finally {
+      isLoadingMoreRef.current = false;
+    }
+  }
+
   useEffect(() => {
     let cancelled = false;
-    const till = new Date().toISOString().slice(0, 10);
-    const from = minFromDate ?? new Date(new Date().getFullYear(), 0, 1).toISOString().slice(0, 10);
+    const initRange = getInitialDateRange(interval);
+    const from = minFromDate && minFromDate > initRange.from ? minFromDate : initRange.from;
+    const till = initRange.till;
 
     setLoading(true);
     setError(null);
     setNoData(false);
     setSelected(null);
     markersRef.current?.setMarkers([]);
+    earliestLoadedDateRef.current = from;
 
     instrumentsApi
       .candles(ticker, { from, till, interval })
@@ -216,6 +258,7 @@ function ChartPickerContent({
         }));
 
         candleDataRef.current = candleData;
+        volumeDataRef.current = volumeData;
         candleSeriesRef.current?.setData(candleData);
         volumeSeriesRef.current?.setData(volumeData);
         chartRef.current?.timeScale().fitContent();

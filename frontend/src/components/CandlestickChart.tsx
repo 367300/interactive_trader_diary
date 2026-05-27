@@ -20,6 +20,7 @@ import {
 } from 'lightweight-charts-drawing';
 import { instrumentsApi } from '../api/endpoints';
 import type { CandleData } from '../api/types';
+import { getInitialDateRange, getEarlierDateRange } from '@/lib/candleChunks';
 import { Alert } from '@/components/ui/alert';
 import DrawingToolbar from './DrawingToolbar';
 import {
@@ -117,9 +118,16 @@ export default function CandlestickChart({ ticker }: Props) {
   const magnetModeRef = useRef(false);
   const activeColorRef = useRef('#5a8cff');
   const activeLineDashRef = useRef<number[] | undefined>(undefined);
+  const isLoadingMoreRef = useRef(false);
+  const earliestLoadedDateRef = useRef<string | null>(null);
+  const volumeDataRef = useRef<HistogramData<Time>[]>([]);
 
   const saved = loadChartSettings(ticker);
   const [interval, setInterval] = useState(saved.interval ?? 5);
+
+  const intervalRef = useRef(interval);
+  intervalRef.current = interval;
+  const loadEarlierRef = useRef<() => void>(() => {});
   const [customInput, setCustomInput] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -146,14 +154,61 @@ export default function CandlestickChart({ ticker }: Props) {
     };
   }, []);
 
-  const getDateRange = useCallback(() => {
-    const till = new Date();
-    const from = new Date(till.getFullYear(), 0, 1);
-    return {
-      from: from.toISOString().slice(0, 10),
-      till: till.toISOString().slice(0, 10),
-    };
-  }, []);
+  async function loadEarlierCandles() {
+    if (isLoadingMoreRef.current || !earliestLoadedDateRef.current) return;
+    isLoadingMoreRef.current = true;
+
+    try {
+      const curInterval = intervalRef.current;
+      const { from, till } = getEarlierDateRange(earliestLoadedDateRef.current, curInterval);
+      const res = await instrumentsApi.candles(ticker, { from, till, interval: curInterval });
+      if (!res.candles.length) {
+        earliestLoadedDateRef.current = null;
+        return;
+      }
+
+      const existingTimes = new Set(candleDataRef.current.map((c) => c.time as number));
+      const newCandles: CandlestickData<Time>[] = [];
+      const newVolume: HistogramData<Time>[] = [];
+
+      for (const c of res.candles) {
+        if (existingTimes.has(c.time)) continue;
+        newCandles.push({ time: c.time as Time, open: c.open, high: c.high, low: c.low, close: c.close });
+        newVolume.push({
+          time: c.time as Time,
+          value: c.volume,
+          color: c.close >= c.open ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)',
+        });
+      }
+
+      if (!newCandles.length) {
+        earliestLoadedDateRef.current = null;
+        return;
+      }
+
+      const chart = chartRef.current;
+      const visibleRange = chart?.timeScale().getVisibleRange();
+
+      const combined = [...newCandles, ...candleDataRef.current];
+      const combinedVolume = [...newVolume, ...volumeDataRef.current];
+
+      candleDataRef.current = combined;
+      volumeDataRef.current = combinedVolume;
+      dataTimestampsRef.current = combined.map((c) => c.time as number);
+
+      candleSeriesRef.current?.setData(combined);
+      volumeSeriesRef.current?.setData(combinedVolume);
+
+      if (visibleRange) {
+        try { chart?.timeScale().setVisibleRange(visibleRange); } catch { /* range outside data */ }
+      }
+
+      earliestLoadedDateRef.current = from;
+    } finally {
+      isLoadingMoreRef.current = false;
+    }
+  }
+  loadEarlierRef.current = loadEarlierCandles;
 
   // Chart creation (once)
   useEffect(() => {
@@ -383,7 +438,7 @@ export default function CandlestickChart({ ticker }: Props) {
     container.addEventListener('mousedown', onMouseDown);
     container.addEventListener('mouseup', onMouseUp);
 
-    // Save visible range (debounced)
+    // Save visible range (debounced) + scroll-to-load
     let rangeTimer: ReturnType<typeof setTimeout> | null = null;
     chart.timeScale().subscribeVisibleTimeRangeChange((range) => {
       if (rangeTimer) clearTimeout(rangeTimer);
@@ -394,6 +449,12 @@ export default function CandlestickChart({ ticker }: Props) {
           });
         }
       }, 500);
+    });
+
+    chart.timeScale().subscribeVisibleLogicalRangeChange((range) => {
+      if (range && range.from < 0 && earliestLoadedDateRef.current && !isLoadingMoreRef.current) {
+        loadEarlierRef.current();
+      }
     });
 
     return () => {
@@ -436,11 +497,12 @@ export default function CandlestickChart({ ticker }: Props) {
   // Load candle data
   useEffect(() => {
     let cancelled = false;
-    const { from, till } = getDateRange();
+    const { from, till } = getInitialDateRange(interval);
 
     setLoading(true);
     setError(null);
     setNoData(false);
+    earliestLoadedDateRef.current = from;
 
     instrumentsApi
       .candles(ticker, { from, till, interval })
@@ -466,8 +528,8 @@ export default function CandlestickChart({ ticker }: Props) {
           color: c.close >= c.open ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)',
         }));
 
-        // Update refs BEFORE setData so cross-timeframe interpolation uses new timestamps
         candleDataRef.current = candleData;
+        volumeDataRef.current = volumeData;
         dataTimestampsRef.current = candleData.map((c) => c.time as number);
 
         candleSeriesRef.current?.setData(candleData);
@@ -501,7 +563,7 @@ export default function CandlestickChart({ ticker }: Props) {
       });
 
     return () => { cancelled = true; };
-  }, [ticker, interval, getDateRange]);
+  }, [ticker, interval]);
 
   const handleSelectTool = (type: string | null) => {
     // Cancel preview if deactivating
