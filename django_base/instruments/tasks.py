@@ -115,13 +115,21 @@ def load_instruments_from_moex_task(
     call_command("load_instruments_from_moex", **command_kwargs)
 
 
+_MONTH_COMPLETE_THRESHOLD = 10
+
+
 @shared_task(bind=True, time_limit=7200, soft_time_limit=7000)
 def load_candles_for_instrument(self, ticker: str, year: int | None = None) -> dict:
     """Load 1-min candles from MOEX ISS API for a single instrument and year.
 
     Fetches month by month to keep response sizes manageable.
+    Skips past months that already have sufficient CSV data (≥10 files).
     """
-    from instruments.moex_candles import fetch_moex_candles, save_candles_to_csv
+    from instruments.moex_candles import (
+        fetch_moex_candles,
+        month_csv_count,
+        save_candles_to_csv,
+    )
 
     if year is None:
         year = date.today().year
@@ -129,6 +137,7 @@ def load_candles_for_instrument(self, ticker: str, year: int | None = None) -> d
     today = date.today()
     total_candles = 0
     total_files = 0
+    skipped_months = 0
 
     for month in range(1, 13):
         from_date = date(year, month, 1)
@@ -142,6 +151,17 @@ def load_candles_for_instrument(self, ticker: str, year: int | None = None) -> d
         if till_date > today:
             till_date = today
 
+        is_current_month = (year == today.year and month == today.month)
+        if not is_current_month:
+            existing = month_csv_count(ticker, year, month)
+            if existing >= _MONTH_COMPLETE_THRESHOLD:
+                logger.debug(
+                    "Skipping %s %d-%02d: already has %d CSV files",
+                    ticker, year, month, existing,
+                )
+                skipped_months += 1
+                continue
+
         logger.info("Fetching %s candles: %s to %s", ticker, from_date, till_date)
         candles = fetch_moex_candles(ticker, from_date, till_date)
         total_candles += len(candles)
@@ -150,10 +170,16 @@ def load_candles_for_instrument(self, ticker: str, year: int | None = None) -> d
         total_files += files
 
     logger.info(
-        "Done loading %s for %d: %d candles, %d files",
-        ticker, year, total_candles, total_files,
+        "Done loading %s for %d: %d candles, %d files, %d months skipped",
+        ticker, year, total_candles, total_files, skipped_months,
     )
-    return {"ticker": ticker, "year": year, "candles": total_candles, "files": total_files}
+    return {
+        "ticker": ticker,
+        "year": year,
+        "candles": total_candles,
+        "files": total_files,
+        "skipped_months": skipped_months,
+    }
 
 
 @shared_task(bind=True, time_limit=3600, soft_time_limit=3300)
@@ -204,15 +230,18 @@ def update_today_candles(self) -> dict:
     )
 
     updated = 0
-    for ticker in instruments:
+    for i, ticker in enumerate(instruments):
         try:
             candles = fetch_moex_candles(ticker, today, today)
             if candles:
                 save_candles_to_csv(ticker, candles)
-                cache.delete(f"candles:{ticker}:{today.isoformat()}")
+                cache.delete_pattern(f"candles:{ticker}:*")
                 updated += 1
         except Exception as e:
             logger.error("Failed to update candles for %s: %s", ticker, e)
+
+        if i < len(instruments) - 1:
+            time.sleep(0.5)
 
     logger.info("Updated today's candles for %d/%d instruments", updated, len(instruments))
     return {"updated": updated, "total": len(instruments), "date": today.isoformat()}

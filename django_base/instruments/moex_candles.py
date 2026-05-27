@@ -86,6 +86,14 @@ def candle_path(ticker: str, dt: date) -> Path:
     return candle_dir(ticker, dt.year, dt.month) / f"{dt.day:02d}.csv"
 
 
+def month_csv_count(ticker: str, year: int, month: int) -> int:
+    """Количество CSV-файлов (дней) в директории месяца."""
+    d = candle_dir(ticker, year, month)
+    if not d.exists():
+        return 0
+    return len(list(d.glob("*.csv")))
+
+
 # ---------------------------------------------------------------------------
 # Загрузка с MOEX ISS
 # ---------------------------------------------------------------------------
