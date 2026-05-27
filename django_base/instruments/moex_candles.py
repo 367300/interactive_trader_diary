@@ -27,10 +27,16 @@ logger = logging.getLogger(__name__)
 # Константы
 # ---------------------------------------------------------------------------
 
-_MOEX_CANDLES_URL = (
-    "https://iss.moex.com/iss/engines/stock/markets/shares"
-    "/boards/TQBR/securities/{ticker}/candles.json"
-)
+_MOEX_CANDLES_URLS = {
+    "stock": (
+        "https://iss.moex.com/iss/engines/stock/markets/shares"
+        "/boards/TQBR/securities/{ticker}/candles.json"
+    ),
+    "futures": (
+        "https://iss.moex.com/iss/engines/futures/markets/forts"
+        "/securities/{ticker}/candles.json"
+    ),
+}
 
 _MOEX_PAGE_SIZE = 500
 
@@ -104,6 +110,7 @@ def fetch_moex_candles(
     till_date: date,
     interval: int = 1,
     request_delay: float = 0.3,
+    market: str = "stock",
 ) -> list[dict[str, Any]]:
     """
     Загрузить свечи с MOEX ISS API с автоматической пагинацией.
@@ -111,13 +118,15 @@ def fetch_moex_candles(
     Parameters
     ----------
     ticker : str
-        Тикер инструмента (например «SBER»).
+        Тикер инструмента (например «SBER» или «SiM6»).
     from_date, till_date : date
         Диапазон дат (включительно).
     interval : int
         Интервал свечей MOEX (1 = 1 мин, 10 = 10 мин, 60 = 1 ч, 24 = 1 д).
     request_delay : float
         Пауза между запросами для rate-limit.
+    market : str
+        Рынок MOEX: ``"stock"`` (акции) или ``"futures"`` (фьючерсы).
 
     Returns
     -------
@@ -125,7 +134,8 @@ def fetch_moex_candles(
         Список словарей с ключами:
         open, close, high, low, value, volume, begin, end.
     """
-    url = _MOEX_CANDLES_URL.format(ticker=ticker.upper())
+    url_template = _MOEX_CANDLES_URLS.get(market, _MOEX_CANDLES_URLS["stock"])
+    url = url_template.format(ticker=ticker.upper())
     params: dict[str, str | int] = {
         "from": from_date.isoformat(),
         "till": till_date.isoformat(),

@@ -267,6 +267,12 @@ class Futures(models.Model):
         max_length=50,
         verbose_name='Тикер контракта'
     )
+    secid = models.CharField(
+        max_length=20,
+        blank=True,
+        default='',
+        verbose_name='SECID на MOEX (для API-запросов)'
+    )
     name = models.CharField(
         max_length=200,
         blank=True,

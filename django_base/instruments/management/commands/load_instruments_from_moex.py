@@ -333,10 +333,14 @@ class Command(BaseCommand):
         if expiration_date is not None and expiration_date < today:
             is_active = False
 
+        secid = row[6] if len(row) > 6 else ''
+        secid = str(secid).strip() if secid else ''
+
         currency = (base_asset.currency or 'RUB')[:3]
 
         defaults = {
             'name': name,
+            'secid': secid,
             'min_price_step': min_price_step,
             'lot_size': lot_size,
             'currency': currency,
@@ -369,7 +373,7 @@ class Command(BaseCommand):
             'iss.meta': 'off',
             'iss.only': 'securities',
             'limit': 'unlimited',
-            'securities.columns': 'SHORTNAME,ASSETCODE,SECNAME,MINSTEP,LASTDELDATE,LOTVOLUME',
+            'securities.columns': 'SHORTNAME,ASSETCODE,SECNAME,MINSTEP,LASTDELDATE,LOTVOLUME,SECID',
         }
 
         try:

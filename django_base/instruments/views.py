@@ -148,7 +148,13 @@ class CandleDataView(APIView):
             resample_candles,
         )
 
-        if not Instrument.objects.filter(ticker=ticker, is_active=True).exists():
+        is_instrument = Instrument.objects.filter(ticker=ticker, is_active=True).exists()
+        is_futures = (
+            not is_instrument
+            and Futures.objects.filter(ticker=ticker, is_active=True).exists()
+        )
+
+        if not is_instrument and not is_futures:
             return Response(
                 {"detail": "Инструмент не найден."},
                 status=status.HTTP_404_NOT_FOUND,

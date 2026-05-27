@@ -119,17 +119,29 @@ _MONTH_COMPLETE_THRESHOLD = 10
 
 
 @shared_task(bind=True, time_limit=7200, soft_time_limit=7000)
-def load_candles_for_instrument(self, ticker: str, year: int | None = None) -> dict:
+def load_candles_for_instrument(
+    self,
+    ticker: str,
+    year: int | None = None,
+    market: str = "stock",
+    api_ticker: str | None = None,
+) -> dict:
     """Load 1-min candles from MOEX ISS API for a single instrument and year.
 
     Fetches month by month to keep response sizes manageable.
     Skips past months that already have sufficient CSV data (≥10 files).
+
+    ``api_ticker`` — тикер для запроса к MOEX ISS (SECID для фьючерсов).
+    Если не указан, используется ``ticker``.
     """
     from instruments.moex_candles import (
         fetch_moex_candles,
         month_csv_count,
         save_candles_to_csv,
     )
+
+    if api_ticker is None:
+        api_ticker = ticker
 
     if year is None:
         year = date.today().year
@@ -163,7 +175,7 @@ def load_candles_for_instrument(self, ticker: str, year: int | None = None) -> d
                 continue
 
         logger.info("Fetching %s candles: %s to %s", ticker, from_date, till_date)
-        candles = fetch_moex_candles(ticker, from_date, till_date)
+        candles = fetch_moex_candles(api_ticker, from_date, till_date, market=market)
         total_candles += len(candles)
 
         files = save_candles_to_csv(ticker, candles)
@@ -184,55 +196,81 @@ def load_candles_for_instrument(self, ticker: str, year: int | None = None) -> d
 
 @shared_task(bind=True, time_limit=3600, soft_time_limit=3300)
 def load_all_candles(self, year: int | None = None) -> dict:
-    """Fan out candle loading for all active STOCK instruments.
+    """Fan out candle loading for all active stocks and futures.
 
     Staggers tasks with 3-second delays to be respectful to MOEX API.
     """
-    from instruments.models import Instrument
+    from instruments.models import Futures, Instrument
 
     if year is None:
         year = date.today().year
 
-    instruments = list(
+    stocks = list(
         Instrument.objects.filter(
             is_active=True,
             instrument_type=Instrument.InstrumentType.STOCK,
         ).values_list("ticker", flat=True)
     )
+    futures_qs = Futures.objects.filter(
+        is_active=True, secid__gt="",
+    ).values_list("ticker", "secid")
 
-    for i, ticker in enumerate(instruments):
+    all_tasks: list[tuple[str, str, str]] = []
+    all_tasks.extend((t, t, "stock") for t in stocks)
+    all_tasks.extend((ticker, secid, "futures") for ticker, secid in futures_qs)
+
+    for i, (ticker, api_ticker, market) in enumerate(all_tasks):
         load_candles_for_instrument.apply_async(
             args=[ticker, year],
+            kwargs={"market": market, "api_ticker": api_ticker},
             countdown=i * 3,
         )
 
-    logger.info("Dispatched candle loading for %d instruments, year %d", len(instruments), year)
-    return {"dispatched": len(instruments), "year": year}
+    futures_count = len(all_tasks) - len(stocks)
+    logger.info(
+        "Dispatched candle loading: %d stocks + %d futures, year %d",
+        len(stocks), futures_count, year,
+    )
+    return {
+        "dispatched_stocks": len(stocks),
+        "dispatched_futures": futures_count,
+        "year": year,
+    }
 
 
 @shared_task(bind=True, time_limit=3600, soft_time_limit=3300)
 def update_today_candles(self) -> dict:
-    """Periodic task: fetch today's candles for all active stocks from MOEX.
+    """Periodic task: fetch today's candles for all active stocks and futures.
 
     Runs every 30 minutes via Celery Beat.
     Invalidates Redis cache after updating each instrument.
     """
     from django.core.cache import cache
-    from instruments.models import Instrument
+    from instruments.models import Futures, Instrument
     from instruments.moex_candles import fetch_moex_candles, save_candles_to_csv
 
     today = date.today()
-    instruments = list(
+    stocks = list(
         Instrument.objects.filter(
             is_active=True,
             instrument_type=Instrument.InstrumentType.STOCK,
         ).values_list("ticker", flat=True)
     )
+    futures_qs = list(
+        Futures.objects.filter(
+            is_active=True, secid__gt="",
+        ).values_list("ticker", "secid")
+    )
+
+    # (ticker_for_csv, ticker_for_api, market)
+    all_tickers: list[tuple[str, str, str]] = []
+    all_tickers.extend((t, t, "stock") for t in stocks)
+    all_tickers.extend((ticker, secid, "futures") for ticker, secid in futures_qs)
 
     updated = 0
-    for i, ticker in enumerate(instruments):
+    for i, (ticker, api_ticker, market) in enumerate(all_tickers):
         try:
-            candles = fetch_moex_candles(ticker, today, today)
+            candles = fetch_moex_candles(api_ticker, today, today, market=market)
             if candles:
                 save_candles_to_csv(ticker, candles)
                 cache.delete_pattern(f"candles:{ticker}:*")
@@ -240,8 +278,17 @@ def update_today_candles(self) -> dict:
         except Exception as e:
             logger.error("Failed to update candles for %s: %s", ticker, e)
 
-        if i < len(instruments) - 1:
+        if i < len(all_tickers) - 1:
             time.sleep(0.5)
 
-    logger.info("Updated today's candles for %d/%d instruments", updated, len(instruments))
-    return {"updated": updated, "total": len(instruments), "date": today.isoformat()}
+    logger.info(
+        "Updated today's candles for %d/%d tickers (%d stocks + %d futures)",
+        updated, len(all_tickers), len(stocks), len(futures_qs),
+    )
+    return {
+        "updated": updated,
+        "total": len(all_tickers),
+        "stocks": len(stocks),
+        "futures": len(futures_qs),
+        "date": today.isoformat(),
+    }
