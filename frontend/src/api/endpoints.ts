@@ -75,6 +75,27 @@ export interface ChildTradePayload {
   analysis?: TradeAnalysis | null;
 }
 
+export type QuickChainLeg = {
+  type: 'OPEN' | 'AVERAGE' | 'PARTIAL_CLOSE' | 'CLOSE';
+  date: string; // ISO 8601
+  price: string; // decimal as string (для соответствия DecimalField)
+  volume_from_capital: number;
+  planned_stop_loss?: string | null;
+  planned_take_profit?: string | null;
+};
+
+export type QuickChainPayload = {
+  instrument_id: number;
+  strategy_id: number;
+  direction: 'LONG' | 'SHORT';
+  legs: QuickChainLeg[];
+};
+
+export type QuickChainResponse = {
+  open_trade: TradeDetail;
+  chain_id: string;
+};
+
 export const tradesApi = {
   list: (params?: { page?: number }) =>
     api.get<Paginated<TradeListItem>>('/trades/', { query: params }),
@@ -83,6 +104,8 @@ export const tradesApi = {
     api.post<Trade>('/trades/', data),
   update: (id: string, data: Partial<Trade> & { analysis?: TradeAnalysis | null }) =>
     api.patch<Trade>(`/trades/${id}/`, data),
+  createQuickChain: (data: QuickChainPayload) =>
+    api.post<QuickChainResponse>('/trades/quick-chain/', data),
   remove: (id: string) => api.delete(`/trades/${id}/`),
   average: (id: string, data: ChildTradePayload) =>
     api.post<Trade>(`/trades/${id}/average/`, data),
