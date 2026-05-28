@@ -5,7 +5,15 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
-import { LogOut, Menu, Plus } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { ChevronDown, LogOut, Menu, Plus, User as UserIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
@@ -88,18 +96,41 @@ function NavContent({ user, initials, onLogout, onNavClick }: {
 
       <div className="mt-auto" />
 
-      <div className="rounded-xl bg-glass-strong border border-border p-2.5 flex items-center gap-2.5">
-        <Avatar>
-          <AvatarFallback>{initials}</AvatarFallback>
-        </Avatar>
-        <div className="flex flex-col flex-1 leading-tight min-w-0">
-          <span className="text-sm truncate">{user.username}</span>
-          <span className="text-[11px] text-muted-foreground">{user.is_staff ? 'Администратор' : 'Трейдер'}</span>
-        </div>
-        <Button variant="ghost" size="icon" onClick={onLogout} title="Выйти" className="h-8 w-8 shrink-0">
-          <LogOut className="h-4 w-4" />
-        </Button>
-      </div>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            type="button"
+            className="rounded-xl bg-glass-strong border border-border p-2.5 flex items-center gap-2.5 w-full text-left hover:bg-glass-soft transition-colors outline-none focus-visible:ring-2 focus-visible:ring-border-strong"
+          >
+            <Avatar>
+              <AvatarFallback>{initials}</AvatarFallback>
+            </Avatar>
+            <div className="flex flex-col flex-1 leading-tight min-w-0">
+              <span className="text-sm truncate">{user.username}</span>
+              <span className="text-[11px] text-muted-foreground">{user.is_staff ? 'Администратор' : 'Трейдер'}</span>
+            </div>
+            <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent side="top" align="start" className="w-[218px]">
+          <DropdownMenuLabel className="text-xs text-muted-foreground font-normal truncate">
+            {user.username}
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem asChild>
+            <NavLink to="/profile" onClick={onNavClick} className="no-underline">
+              <UserIcon className="h-4 w-4" /> Профиль
+            </NavLink>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onClick={onLogout}
+            className="text-red focus:text-red focus:bg-red/10"
+          >
+            <LogOut className="h-4 w-4" /> Выйти
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </>
   );
 }
@@ -146,9 +177,6 @@ export default function Layout() {
           >
             <Menu className="h-5 w-5" />
           </Button>
-          <NavLink to="/profile" className="text-soft-foreground text-sm hover:text-foreground transition-colors no-underline">
-            Профиль
-          </NavLink>
           <span className="flex-1" />
           <Button variant="primary" size="sm" asChild>
             <NavLink to="/trades/new"><Plus className="h-4 w-4" /> Новая сделка</NavLink>
