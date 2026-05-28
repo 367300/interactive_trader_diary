@@ -3,6 +3,7 @@ from pathlib import Path
 
 from django.conf import settings
 from django.core.cache import cache
+from django.shortcuts import redirect
 from django.views.generic import TemplateView
 from rest_framework import status
 from rest_framework.parsers import MultiPartParser
@@ -24,7 +25,13 @@ logger = logging.getLogger(__name__)
 
 
 class PublicTemplateView(TemplateView):
-    """Публичный шаблон с пробросом frontend_url для ссылок на SPA."""
+    """Шаблон, доступный только авторизованным; анонимов отправляем на /login."""
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            frontend_url = getattr(settings, 'FRONTEND_URL', '') or ''
+            return redirect(f"{frontend_url}/login")
+        return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
