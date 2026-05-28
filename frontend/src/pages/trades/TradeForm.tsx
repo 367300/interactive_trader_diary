@@ -191,6 +191,20 @@ export default function TradeForm() {
   return (
     <section>
       <h1>{isEdit ? 'Редактирование сделки' : 'Новая сделка'}</h1>
+      {!isEdit && (
+        <div
+          style={{
+            marginBottom: 12,
+            padding: 10,
+            background: '#eff6ff',
+            border: '1px solid #93c5fd',
+            borderRadius: 6,
+          }}
+        >
+          Нужно быстро записать уже завершённую сделку?{' '}
+          <Link to="/trades/quick">Быстрый ввод цепочки →</Link>
+        </div>
+      )}
       <Card className="max-w-[900px]">
         <CardContent className="pt-6">
           <form onSubmit={onSubmit}>
