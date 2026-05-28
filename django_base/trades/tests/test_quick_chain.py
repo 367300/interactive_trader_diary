@@ -363,3 +363,40 @@ class QuickChainCreationTest(QuickChainBaseTestCase):
 
         after = Trade.objects.count()
         self.assertEqual(after, before, 'Транзакция должна быть откачена')
+
+
+class QuickChainEndpointTest(QuickChainBaseTestCase):
+    URL = '/api/trades/quick-chain/'
+
+    def test_unauthenticated_blocked(self):
+        self.client.force_authenticate(user=None)
+        response = self.client.post(self.URL, self.make_payload(), format='json')
+        self.assertIn(response.status_code, (status.HTTP_401_UNAUTHORIZED,
+                                              status.HTTP_403_FORBIDDEN))
+
+    def test_creates_chain_and_returns_open_trade(self):
+        response = self.client.post(self.URL, self.make_payload(), format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.content)
+        body = response.json()
+        self.assertIn('open_trade', body)
+        self.assertIn('chain_id', body)
+        self.assertEqual(body['open_trade']['trade_type'], 'OPEN')
+        self.assertEqual(body['chain_id'], body['open_trade']['id'])
+
+    def test_validation_error_returns_400(self):
+        bad = self.make_payload(legs=[
+            {'type': 'AVERAGE', 'date': '2026-05-01T10:00:00Z',
+             'price': '100', 'volume_from_capital': 10},
+            {'type': 'CLOSE', 'date': '2026-05-01T11:00:00Z',
+             'price': '108', 'volume_from_capital': 10},
+        ])
+        response = self.client.post(self.URL, bad, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_chain_appears_in_list(self):
+        self.client.post(self.URL, self.make_payload(), format='json')
+        list_response = self.client.get('/api/trades/')
+        self.assertEqual(list_response.status_code, status.HTTP_200_OK)
+        items = list_response.json().get('results', list_response.json())
+        opens = [t for t in items if t['trade_type'] == 'OPEN']
+        self.assertGreaterEqual(len(opens), 1)

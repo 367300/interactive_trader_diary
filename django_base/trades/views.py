@@ -141,6 +141,18 @@ class TradeViewSet(viewsets.ModelViewSet):
                             status=status.HTTP_400_BAD_REQUEST)
         return Response(calculate_trade_stats(trade))
 
+    @action(detail=False, methods=['post'], url_path='quick-chain')
+    def quick_chain(self, request):
+        """Атомарное создание цепочки сделок одним запросом."""
+        from .serializers import QuickChainSerializer, TradeDetailSerializer
+        serializer = QuickChainSerializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        open_trade = serializer.save()
+        return Response({
+            'open_trade': TradeDetailSerializer(open_trade, context={'request': request}).data,
+            'chain_id': str(open_trade.id),
+        }, status=status.HTTP_201_CREATED)
+
 
 class TradeScreenshotViewSet(viewsets.ModelViewSet):
     """Скриншоты сделки: список/добавление/удаление/правка описания."""
