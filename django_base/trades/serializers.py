@@ -244,3 +244,17 @@ class QuickChainLegSerializer(serializers.Serializer):
         if value <= 0:
             raise serializers.ValidationError('Цена должна быть положительной.')
         return value
+
+
+class QuickChainSerializer(serializers.Serializer):
+    """Атомарное создание цепочки сделок одним запросом."""
+
+    instrument_id = serializers.IntegerField()
+    strategy_id = serializers.IntegerField()
+    direction = serializers.ChoiceField(choices=Trade.Direction.choices)
+    legs = QuickChainLegSerializer(many=True)
+
+    def validate_legs(self, value):
+        if len(value) < 2:
+            raise serializers.ValidationError('Цепочка должна содержать минимум 2 шага (OPEN и CLOSE).')
+        return value

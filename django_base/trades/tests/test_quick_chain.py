@@ -110,3 +110,28 @@ class QuickChainLegSerializerTest(QuickChainBaseTestCase):
             s = QuickChainLegSerializer(data=data)
             self.assertFalse(s.is_valid(), f'vol={vol} must fail')
             self.assertIn('volume_from_capital', s.errors)
+
+
+class QuickChainSerializerStructureTest(QuickChainBaseTestCase):
+    def test_parses_valid_payload(self):
+        from trades.serializers import QuickChainSerializer
+        payload = self.make_payload()
+        s = QuickChainSerializer(
+            data=payload,
+            context={'request': self._fake_request()},
+        )
+        self.assertTrue(s.is_valid(), s.errors)
+        self.assertEqual(len(s.validated_data['legs']), 2)
+        self.assertEqual(s.validated_data['direction'], 'LONG')
+
+    def test_rejects_missing_legs(self):
+        from trades.serializers import QuickChainSerializer
+        payload = self.make_payload(legs=[])
+        s = QuickChainSerializer(data=payload, context={'request': self._fake_request()})
+        self.assertFalse(s.is_valid())
+
+    def _fake_request(self):
+        from unittest.mock import MagicMock
+        req = MagicMock()
+        req.user = self.user
+        return req
