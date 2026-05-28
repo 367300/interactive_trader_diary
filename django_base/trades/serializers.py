@@ -222,3 +222,25 @@ class ChildTradeCreateSerializer(serializers.ModelSerializer):
         if value is not None and value <= 0:
             raise serializers.ValidationError('Цена должна быть положительной')
         return value
+
+
+class QuickChainLegSerializer(serializers.Serializer):
+    """Один шаг цепочки в быстром вводе."""
+
+    LEG_TYPES = ('OPEN', 'AVERAGE', 'PARTIAL_CLOSE', 'CLOSE')
+
+    type = serializers.ChoiceField(choices=LEG_TYPES)
+    date = serializers.DateTimeField()
+    price = serializers.DecimalField(max_digits=15, decimal_places=2)
+    volume_from_capital = serializers.IntegerField(min_value=1, max_value=100)
+    planned_stop_loss = serializers.DecimalField(
+        max_digits=15, decimal_places=2, required=False, allow_null=True
+    )
+    planned_take_profit = serializers.DecimalField(
+        max_digits=15, decimal_places=2, required=False, allow_null=True
+    )
+
+    def validate_price(self, value):
+        if value <= 0:
+            raise serializers.ValidationError('Цена должна быть положительной.')
+        return value

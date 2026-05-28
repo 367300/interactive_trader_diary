@@ -75,3 +75,38 @@ class QuickChainSmokeTest(QuickChainBaseTestCase):
         response = self.client.post('/api/trades/quick-chain/', payload, format='json')
         # endpoint должен существовать (не 404)
         self.assertNotEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+
+class QuickChainLegSerializerTest(QuickChainBaseTestCase):
+    def test_serializes_valid_open_leg(self):
+        from trades.serializers import QuickChainLegSerializer
+        data = {
+            'type': 'OPEN',
+            'date': '2026-05-01T10:00:00Z',
+            'price': '100.50',
+            'volume_from_capital': 25,
+            'planned_stop_loss': '95.00',
+            'planned_take_profit': '110.00',
+        }
+        s = QuickChainLegSerializer(data=data)
+        self.assertTrue(s.is_valid(), s.errors)
+        self.assertEqual(s.validated_data['type'], 'OPEN')
+        self.assertEqual(s.validated_data['price'], Decimal('100.50'))
+        self.assertEqual(s.validated_data['volume_from_capital'], 25)
+
+    def test_rejects_negative_price(self):
+        from trades.serializers import QuickChainLegSerializer
+        data = {'type': 'OPEN', 'date': '2026-05-01T10:00:00Z',
+                'price': '-1', 'volume_from_capital': 10}
+        s = QuickChainLegSerializer(data=data)
+        self.assertFalse(s.is_valid())
+        self.assertIn('price', s.errors)
+
+    def test_rejects_volume_out_of_range(self):
+        from trades.serializers import QuickChainLegSerializer
+        for vol in [0, -5, 101]:
+            data = {'type': 'CLOSE', 'date': '2026-05-01T10:00:00Z',
+                    'price': '100', 'volume_from_capital': vol}
+            s = QuickChainLegSerializer(data=data)
+            self.assertFalse(s.is_valid(), f'vol={vol} must fail')
+            self.assertIn('volume_from_capital', s.errors)
