@@ -267,4 +267,34 @@ class QuickChainSerializer(serializers.Serializer):
             raise serializers.ValidationError(f'В цепочке должен быть ровно один OPEN, найдено {open_count}.')
         if close_count != 1:
             raise serializers.ValidationError(f'В цепочке должен быть ровно один CLOSE, найдено {close_count}.')
+
+        # Даты неубывающие
+        for i in range(1, len(value)):
+            if value[i]['date'] < value[i-1]['date']:
+                raise serializers.ValidationError(
+                    f'Даты должны быть в неубывающем порядке (шаг #{i} раньше предыдущего).'
+                )
+
+        # Сумма объёмов открытий = сумма объёмов закрытий
+        open_volume = sum(leg['volume_from_capital'] for leg in value
+                          if leg['type'] in ('OPEN', 'AVERAGE'))
+        close_volume = sum(leg['volume_from_capital'] for leg in value
+                           if leg['type'] in ('PARTIAL_CLOSE', 'CLOSE'))
+        if open_volume != close_volume:
+            raise serializers.ValidationError(
+                f'Сумма открытий ({open_volume}%) не равна сумме закрытий ({close_volume}%).'
+            )
+
+        # SL/TP допустимы только на OPEN и AVERAGE
+        for i, leg in enumerate(value):
+            if leg['type'] in ('PARTIAL_CLOSE', 'CLOSE'):
+                if leg.get('planned_stop_loss') is not None:
+                    raise serializers.ValidationError(
+                        f'planned_stop_loss не допускается на шаге #{i} (тип {leg["type"]}).'
+                    )
+                if leg.get('planned_take_profit') is not None:
+                    raise serializers.ValidationError(
+                        f'planned_take_profit не допускается на шаге #{i} (тип {leg["type"]}).'
+                    )
+
         return value
