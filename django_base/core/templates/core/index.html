@@ -24,12 +24,18 @@
                 </p>
                 <div class="d-flex gap-3 flex-wrap mb-4">
                     {% if not user.is_authenticated %}
-                        <a href="{{ frontend_url }}/register" class="btn btn-light btn-lg" id="tutorial-btn-1">
-                            <i class="bi bi-rocket-takeoff me-2"></i>Начать бесплатно
-                        </a>
-                        <a href="{{ frontend_url }}/login" class="btn btn-outline-light btn-lg">
-                            <i class="bi bi-box-arrow-in-right me-2"></i>У меня уже есть аккаунт
-                        </a>
+                        {% if registration_enabled %}
+                            <a href="{{ frontend_url }}/register" class="btn btn-light btn-lg" id="tutorial-btn-1">
+                                <i class="bi bi-rocket-takeoff me-2"></i>Начать бесплатно
+                            </a>
+                            <a href="{{ frontend_url }}/login" class="btn btn-outline-light btn-lg">
+                                <i class="bi bi-box-arrow-in-right me-2"></i>У меня уже есть аккаунт
+                            </a>
+                        {% else %}
+                            <a href="{{ frontend_url }}/login" class="btn btn-light btn-lg" id="tutorial-btn-1">
+                                <i class="bi bi-box-arrow-in-right me-2"></i>Войти
+                            </a>
+                        {% endif %}
                     {% else %}
                         <a href="{{ frontend_url }}/dashboard" class="btn btn-light btn-lg" id="tutorial-btn-1">
                             <i class="bi bi-speedometer2 me-2"></i>Перейти к дашборду
@@ -407,9 +413,15 @@
                 </p>
             </div>
             <div class="col-lg-4 text-lg-end mt-4 mt-lg-0">
-                <a href="{{ frontend_url }}/register" class="btn btn-light btn-lg w-100 w-lg-auto">
-                    <i class="bi bi-rocket-takeoff me-2"></i>Завести дневник
-                </a>
+                {% if registration_enabled %}
+                    <a href="{{ frontend_url }}/register" class="btn btn-light btn-lg w-100 w-lg-auto">
+                        <i class="bi bi-rocket-takeoff me-2"></i>Завести дневник
+                    </a>
+                {% else %}
+                    <a href="{{ frontend_url }}/login" class="btn btn-light btn-lg w-100 w-lg-auto">
+                        <i class="bi bi-box-arrow-in-right me-2"></i>Войти
+                    </a>
+                {% endif %}
             </div>
         </div>
     </div>

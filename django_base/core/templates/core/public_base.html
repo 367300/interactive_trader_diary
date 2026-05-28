@@ -42,8 +42,12 @@
         <a href="{% url 'help' %}">Помощь</a>
     </nav>
     <div class="public-actions">
-        <a class="public-link" href="{{ frontend_url }}/login">Войти</a>
-        <a class="public-cta" href="{{ frontend_url }}/register">Создать аккаунт <i class="bi bi-arrow-right"></i></a>
+        {% if registration_enabled %}
+            <a class="public-link" href="{{ frontend_url }}/login">Войти</a>
+            <a class="public-cta" href="{{ frontend_url }}/register">Создать аккаунт <i class="bi bi-arrow-right"></i></a>
+        {% else %}
+            <a class="public-cta" href="{{ frontend_url }}/login">Войти <i class="bi bi-arrow-right"></i></a>
+        {% endif %}
     </div>
 </header>
 

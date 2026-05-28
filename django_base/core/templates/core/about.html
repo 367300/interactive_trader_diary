@@ -174,9 +174,15 @@
                         <i class="bi bi-speedometer2 me-2"></i>К дашборду
                     </a>
                 {% else %}
-                    <a href="{{ frontend_url }}/register" class="btn btn-primary btn-lg">
-                        <i class="bi bi-rocket-takeoff me-2"></i>Начать вести дневник
-                    </a>
+                    {% if registration_enabled %}
+                        <a href="{{ frontend_url }}/register" class="btn btn-primary btn-lg">
+                            <i class="bi bi-rocket-takeoff me-2"></i>Начать вести дневник
+                        </a>
+                    {% else %}
+                        <a href="{{ frontend_url }}/login" class="btn btn-primary btn-lg">
+                            <i class="bi bi-box-arrow-in-right me-2"></i>Войти
+                        </a>
+                    {% endif %}
                     <a href="{% url 'index' %}" class="btn btn-outline-secondary btn-lg">
                         <i class="bi bi-arrow-left me-2"></i>На главную
                     </a>

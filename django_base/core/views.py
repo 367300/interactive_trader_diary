@@ -29,6 +29,7 @@ class PublicTemplateView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['frontend_url'] = getattr(settings, 'FRONTEND_URL', '')
+        context['registration_enabled'] = SiteSettings.load().registration_enabled
         return context
 
 
