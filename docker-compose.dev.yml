@@ -140,6 +140,7 @@ services:
     environment:
       - TZ=Europe/Moscow
       - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+    command: celery --broker=${CELERY_BROKER_URL} flower --timezone=Europe/Moscow
     ports:
       - "5555:5555"
     depends_on:

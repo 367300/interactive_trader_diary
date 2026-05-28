@@ -272,15 +272,14 @@ def candles_to_json(df: pd.DataFrame) -> list[dict[str, Any]]:
         return []
 
     records: list[dict[str, Any]] = []
-    moscow_offset = _MOSCOW_UTC_OFFSET
 
     for _, row in df.iterrows():
         dt = pd.Timestamp(row["datetime"])
 
-        # Считаем, что datetime — Moscow time (UTC+3).
-        # Переводим в UTC, вычитая offset.
-        utc_dt = dt - moscow_offset
-        unix_ts = int(utc_dt.replace(tzinfo=timezone.utc).timestamp())
+        # В CSV хранится Moscow time. lightweight-charts отображает unix-timestamp
+        # как UTC. Чтобы пользователь видел московское время — передаём МСК-наивное
+        # значение, объявляя его «как UTC» (без вычитания смещения).
+        unix_ts = int(dt.replace(tzinfo=timezone.utc).timestamp())
 
         records.append(
             {
