@@ -12,6 +12,7 @@ import InstrumentsLoad from './pages/admin/InstrumentsLoad';
 import InstrumentsRouter from './pages/instruments';
 import StrategiesRouter from './pages/strategies';
 import TradesRouter from './pages/trades';
+import { QuickTradeEntryPage } from '@/pages/trades/quick/QuickTradeEntryPage';
 import { SiteSettingsContext, useSiteSettingsLoader } from './lib/useSiteSettings';
 
 export default function App() {
@@ -44,6 +45,7 @@ export default function App() {
           <Route path="/profile" element={<Profile />} />
           <Route path="/strategies/*" element={<StrategiesRouter />} />
           <Route path="/instruments/*" element={<InstrumentsRouter />} />
+          <Route path="/trades/quick" element={<QuickTradeEntryPage />} />
           <Route path="/trades/*" element={<TradesRouter />} />
           <Route path="/analytics" element={<Analytics />} />
           <Route path="/admin/instruments" element={<InstrumentsLoad />} />

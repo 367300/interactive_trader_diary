@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils';
 const navItems = [
   { to: '/dashboard', label: 'Дашборд' },
   { to: '/trades/new', label: 'Новая сделка' },
+  { to: '/trades/quick', label: 'Быстрый ввод' },
   { to: '/trades', label: 'Все сделки', exact: true },
   { to: '/strategies', label: 'Стратегии' },
   { to: '/instruments', label: 'Инструменты' },
