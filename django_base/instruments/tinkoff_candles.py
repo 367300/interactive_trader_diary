@@ -132,23 +132,27 @@ def fetch_tinkoff_candles(
     result: list[dict[str, Any]] = []
     try:
         with Client(token) as client:
-            candles = client.market_data.get_all_candles(
-                instrument_id=uid,
-                from_=from_dt,
-                to=to_dt,
-                interval=candle_interval,
-            )
-            for c in candles:
-                msk_time = c.time + timedelta(hours=3)
-                result.append({
-                    "datetime": msk_time.strftime("%Y-%m-%d %H:%M:%S"),
-                    "open": _q(c.open),
-                    "high": _q(c.high),
-                    "low": _q(c.low),
-                    "close": _q(c.close),
-                    "volume": c.volume,
-                    "value": 0,
-                })
+            cursor = from_dt
+            while cursor < to_dt:
+                chunk_end = min(cursor + timedelta(days=1), to_dt)
+                resp = client.market_data.get_candles(
+                    instrument_id=uid,
+                    from_=cursor,
+                    to=chunk_end,
+                    interval=candle_interval,
+                )
+                for c in resp.candles:
+                    msk_time = c.time + timedelta(hours=3)
+                    result.append({
+                        "datetime": msk_time.strftime("%Y-%m-%d %H:%M:%S"),
+                        "open": _q(c.open),
+                        "high": _q(c.high),
+                        "low": _q(c.low),
+                        "close": _q(c.close),
+                        "volume": c.volume,
+                        "value": 0,
+                    })
+                cursor = chunk_end
     except Exception as exc:
         logger.error("T-Invest candles failed for uid=%s: %s", uid, exc)
 
