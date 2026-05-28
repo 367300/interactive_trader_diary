@@ -281,3 +281,85 @@ class QuickChainAuthValidationTest(QuickChainBaseTestCase):
         s = self._serializer(payload)
         self.assertFalse(s.is_valid())
         self.assertIn('instrument_id', s.errors)
+
+
+class QuickChainCreationTest(QuickChainBaseTestCase):
+    def _serializer_and_save(self, payload):
+        from trades.serializers import QuickChainSerializer
+        from unittest.mock import MagicMock
+        req = MagicMock()
+        req.user = self.user
+        s = QuickChainSerializer(data=payload, context={'request': req})
+        self.assertTrue(s.is_valid(), s.errors)
+        return s.save()
+
+    def test_creates_open_with_children(self):
+        payload = self.make_payload(legs=[
+            {'type': 'OPEN', 'date': '2026-05-01T10:00:00Z',
+             'price': '100', 'volume_from_capital': 20,
+             'planned_stop_loss': '90', 'planned_take_profit': '120'},
+            {'type': 'AVERAGE', 'date': '2026-05-01T11:00:00Z',
+             'price': '95', 'volume_from_capital': 10},
+            {'type': 'PARTIAL_CLOSE', 'date': '2026-05-01T12:00:00Z',
+             'price': '102', 'volume_from_capital': 15},
+            {'type': 'CLOSE', 'date': '2026-05-01T13:00:00Z',
+             'price': '108', 'volume_from_capital': 15},
+        ])
+        open_trade = self._serializer_and_save(payload)
+        self.assertEqual(open_trade.trade_type, Trade.TradeType.OPEN)
+        self.assertEqual(open_trade.user, self.user)
+        self.assertEqual(open_trade.instrument, self.instrument)
+        self.assertEqual(open_trade.strategy, self.strategy)
+        self.assertEqual(open_trade.direction, 'LONG')
+        self.assertEqual(open_trade.volume_from_capital, 20)
+        self.assertEqual(open_trade.planned_stop_loss, Decimal('90'))
+        self.assertEqual(open_trade.planned_take_profit, Decimal('120'))
+
+        children = list(open_trade.child_trades.order_by('trade_date'))
+        self.assertEqual(len(children), 3)
+        self.assertEqual([c.trade_type for c in children],
+                         ['AVERAGE', 'PARTIAL_CLOSE', 'CLOSE'])
+        for c in children:
+            self.assertEqual(c.parent_trade, open_trade)
+            self.assertEqual(c.user, self.user)
+            self.assertEqual(c.instrument, self.instrument)
+            self.assertEqual(c.direction, 'LONG')
+
+        self.assertTrue(open_trade.is_closed())
+
+    def test_atomic_rollback_on_failure(self):
+        """Если падает на 3-м leg — в БД ничего не остаётся."""
+        from unittest.mock import patch, MagicMock
+
+        payload = self.make_payload(legs=[
+            {'type': 'OPEN', 'date': '2026-05-01T10:00:00Z',
+             'price': '100', 'volume_from_capital': 10},
+            {'type': 'AVERAGE', 'date': '2026-05-01T11:00:00Z',
+             'price': '95', 'volume_from_capital': 5},
+            {'type': 'CLOSE', 'date': '2026-05-01T12:00:00Z',
+             'price': '108', 'volume_from_capital': 15},
+        ])
+
+        before = Trade.objects.count()
+
+        original_create = Trade.objects.create
+        call_counter = {'n': 0}
+
+        def buggy_create(*args, **kwargs):
+            call_counter['n'] += 1
+            if call_counter['n'] == 3:
+                raise RuntimeError('Simulated DB error')
+            return original_create(*args, **kwargs)
+
+        from trades.serializers import QuickChainSerializer
+        req = MagicMock()
+        req.user = self.user
+        s = QuickChainSerializer(data=payload, context={'request': req})
+        self.assertTrue(s.is_valid())
+
+        with patch('trades.serializers.Trade.objects.create', side_effect=buggy_create):
+            with self.assertRaises(RuntimeError):
+                s.save()
+
+        after = Trade.objects.count()
+        self.assertEqual(after, before, 'Транзакция должна быть откачена')

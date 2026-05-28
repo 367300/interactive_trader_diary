@@ -1,3 +1,4 @@
+from django.db import transaction
 from django.urls import reverse
 from rest_framework import serializers
 
@@ -315,3 +316,39 @@ class QuickChainSerializer(serializers.Serializer):
                     )
 
         return value
+
+    @transaction.atomic
+    def create(self, validated_data):
+        request = self.context['request']
+        legs_data = validated_data['legs']
+        open_data = legs_data[0]
+
+        open_trade = Trade.objects.create(
+            user=request.user,
+            instrument_id=validated_data['instrument_id'],
+            strategy_id=validated_data['strategy_id'],
+            direction=validated_data['direction'],
+            trade_type=Trade.TradeType.OPEN,
+            trade_date=open_data['date'],
+            price=open_data['price'],
+            volume_from_capital=open_data['volume_from_capital'],
+            planned_stop_loss=open_data.get('planned_stop_loss'),
+            planned_take_profit=open_data.get('planned_take_profit'),
+        )
+
+        for leg in legs_data[1:]:
+            Trade.objects.create(
+                user=request.user,
+                instrument_id=validated_data['instrument_id'],
+                strategy_id=validated_data['strategy_id'],
+                direction=validated_data['direction'],
+                trade_type=leg['type'],
+                trade_date=leg['date'],
+                price=leg['price'],
+                volume_from_capital=leg['volume_from_capital'],
+                planned_stop_loss=leg.get('planned_stop_loss'),
+                planned_take_profit=leg.get('planned_take_profit'),
+                parent_trade=open_trade,
+            )
+
+        return open_trade
