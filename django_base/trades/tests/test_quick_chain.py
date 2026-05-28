@@ -1,0 +1,82 @@
+import uuid
+from decimal import Decimal
+from django.contrib.auth.models import User
+from django.urls import reverse
+from rest_framework import status
+from rest_framework.test import APITestCase
+
+from instruments.models import Sector, IndustryGroup, Industry, SubIndustry, Instrument
+from strategies.models import TradingStrategy
+from trades.models import Trade
+
+
+class QuickChainBaseTestCase(APITestCase):
+    """Базовый кейс — создаёт user, instrument, strategy, аутентифицирует клиент."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create_user(
+            username='trader1', password='pwd12345', email='t@example.com'
+        )
+        cls.other_user = User.objects.create_user(
+            username='trader2', password='pwd12345', email='t2@example.com'
+        )
+        sector = Sector.objects.create(name='Финансы')
+        ig = IndustryGroup.objects.create(name='Банки', sector=sector)
+        ind = Industry.objects.create(name='Универсальные банки', industry_group=ig)
+        sub = SubIndustry.objects.create(name='Универсальные банки', industry=ind)
+        cls.instrument = Instrument.objects.create(
+            ticker='SBER',
+            name='Сбербанк',
+            instrument_type=Instrument.InstrumentType.STOCK,
+            min_price_step=Decimal('0.01'),
+            sub_industry=sub,
+        )
+        cls.strategy = TradingStrategy.objects.create(
+            user=cls.user, name='Скальпинг', strategy_type='SCALPING'
+        )
+        cls.other_strategy = TradingStrategy.objects.create(
+            user=cls.other_user, name='Чужая', strategy_type='SCALPING'
+        )
+
+    def setUp(self):
+        self.client.force_authenticate(user=self.user)
+
+    @staticmethod
+    def make_payload(**overrides):
+        base = {
+            'instrument_id': None,
+            'strategy_id': None,
+            'direction': 'LONG',
+            'legs': [
+                {
+                    'type': 'OPEN',
+                    'date': '2026-05-01T10:00:00Z',
+                    'price': '100.00',
+                    'volume_from_capital': 10,
+                    'planned_stop_loss': '95.00',
+                    'planned_take_profit': '110.00',
+                },
+                {
+                    'type': 'CLOSE',
+                    'date': '2026-05-01T12:00:00Z',
+                    'price': '108.00',
+                    'volume_from_capital': 10,
+                },
+            ],
+        }
+        base.update(overrides)
+        return base
+
+
+class QuickChainSmokeTest(QuickChainBaseTestCase):
+    """Sanity-check: фикстура работает, endpoint существует."""
+
+    def test_endpoint_exists(self):
+        payload = self.make_payload(
+            instrument_id=self.instrument.id,
+            strategy_id=self.strategy.id,
+        )
+        response = self.client.post('/api/trades/quick-chain/', payload, format='json')
+        # endpoint должен существовать (не 404)
+        self.assertNotEqual(response.status_code, status.HTTP_404_NOT_FOUND)
