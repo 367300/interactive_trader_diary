@@ -254,6 +254,23 @@ class QuickChainSerializer(serializers.Serializer):
     direction = serializers.ChoiceField(choices=Trade.Direction.choices)
     legs = QuickChainLegSerializer(many=True)
 
+    def validate_strategy_id(self, value):
+        from strategies.models import TradingStrategy
+        request = self.context.get('request')
+        try:
+            strategy = TradingStrategy.objects.get(pk=value)
+        except TradingStrategy.DoesNotExist:
+            raise serializers.ValidationError('Стратегия не найдена.')
+        if request is not None and strategy.user_id != request.user.id:
+            raise serializers.ValidationError('Стратегия принадлежит другому пользователю.')
+        return value
+
+    def validate_instrument_id(self, value):
+        from instruments.models import Instrument
+        if not Instrument.objects.filter(pk=value).exists():
+            raise serializers.ValidationError('Инструмент не найден.')
+        return value
+
     def validate_legs(self, value):
         if len(value) < 2:
             raise serializers.ValidationError('Цепочка должна содержать минимум 2 шага (OPEN и CLOSE).')

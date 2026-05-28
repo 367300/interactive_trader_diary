@@ -254,3 +254,30 @@ class QuickChainFieldValidationTest(QuickChainBaseTestCase):
         ])
         s = self._serializer(payload)
         self.assertFalse(s.is_valid())
+
+
+class QuickChainAuthValidationTest(QuickChainBaseTestCase):
+    def _serializer(self, payload):
+        from trades.serializers import QuickChainSerializer
+        from unittest.mock import MagicMock
+        req = MagicMock()
+        req.user = self.user
+        return QuickChainSerializer(data=payload, context={'request': req})
+
+    def test_rejects_other_users_strategy(self):
+        payload = self.make_payload(strategy_id=self.other_strategy.id)
+        s = self._serializer(payload)
+        self.assertFalse(s.is_valid())
+        self.assertIn('strategy_id', s.errors)
+
+    def test_rejects_nonexistent_strategy(self):
+        payload = self.make_payload(strategy_id=999999)
+        s = self._serializer(payload)
+        self.assertFalse(s.is_valid())
+        self.assertIn('strategy_id', s.errors)
+
+    def test_rejects_nonexistent_instrument(self):
+        payload = self.make_payload(instrument_id=999999)
+        s = self._serializer(payload)
+        self.assertFalse(s.is_valid())
+        self.assertIn('instrument_id', s.errors)
