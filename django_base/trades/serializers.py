@@ -257,4 +257,14 @@ class QuickChainSerializer(serializers.Serializer):
     def validate_legs(self, value):
         if len(value) < 2:
             raise serializers.ValidationError('Цепочка должна содержать минимум 2 шага (OPEN и CLOSE).')
+        if value[0]['type'] != 'OPEN':
+            raise serializers.ValidationError('Первый шаг цепочки должен быть OPEN.')
+        if value[-1]['type'] != 'CLOSE':
+            raise serializers.ValidationError('Последний шаг цепочки должен быть CLOSE.')
+        open_count = sum(1 for leg in value if leg['type'] == 'OPEN')
+        close_count = sum(1 for leg in value if leg['type'] == 'CLOSE')
+        if open_count != 1:
+            raise serializers.ValidationError(f'В цепочке должен быть ровно один OPEN, найдено {open_count}.')
+        if close_count != 1:
+            raise serializers.ValidationError(f'В цепочке должен быть ровно один CLOSE, найдено {close_count}.')
         return value

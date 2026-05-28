@@ -135,3 +135,57 @@ class QuickChainSerializerStructureTest(QuickChainBaseTestCase):
         req = MagicMock()
         req.user = self.user
         return req
+
+
+class QuickChainStructureValidationTest(QuickChainBaseTestCase):
+    def _serializer(self, payload):
+        from trades.serializers import QuickChainSerializer
+        from unittest.mock import MagicMock
+        req = MagicMock()
+        req.user = self.user
+        return QuickChainSerializer(data=payload, context={'request': req})
+
+    def test_rejects_first_not_open(self):
+        payload = self.make_payload(legs=[
+            {'type': 'AVERAGE', 'date': '2026-05-01T10:00:00Z',
+             'price': '100', 'volume_from_capital': 10},
+            {'type': 'CLOSE', 'date': '2026-05-01T11:00:00Z',
+             'price': '108', 'volume_from_capital': 10},
+        ])
+        s = self._serializer(payload)
+        self.assertFalse(s.is_valid())
+        self.assertIn('legs', s.errors)
+
+    def test_rejects_last_not_close(self):
+        payload = self.make_payload(legs=[
+            {'type': 'OPEN', 'date': '2026-05-01T10:00:00Z',
+             'price': '100', 'volume_from_capital': 10},
+            {'type': 'AVERAGE', 'date': '2026-05-01T11:00:00Z',
+             'price': '98', 'volume_from_capital': 10},
+        ])
+        s = self._serializer(payload)
+        self.assertFalse(s.is_valid())
+
+    def test_rejects_multiple_opens(self):
+        payload = self.make_payload(legs=[
+            {'type': 'OPEN', 'date': '2026-05-01T10:00:00Z',
+             'price': '100', 'volume_from_capital': 10},
+            {'type': 'OPEN', 'date': '2026-05-01T11:00:00Z',
+             'price': '102', 'volume_from_capital': 10},
+            {'type': 'CLOSE', 'date': '2026-05-01T12:00:00Z',
+             'price': '108', 'volume_from_capital': 20},
+        ])
+        s = self._serializer(payload)
+        self.assertFalse(s.is_valid())
+
+    def test_rejects_multiple_closes(self):
+        payload = self.make_payload(legs=[
+            {'type': 'OPEN', 'date': '2026-05-01T10:00:00Z',
+             'price': '100', 'volume_from_capital': 10},
+            {'type': 'CLOSE', 'date': '2026-05-01T11:00:00Z',
+             'price': '108', 'volume_from_capital': 5},
+            {'type': 'CLOSE', 'date': '2026-05-01T12:00:00Z',
+             'price': '109', 'volume_from_capital': 5},
+        ])
+        s = self._serializer(payload)
+        self.assertFalse(s.is_valid())
