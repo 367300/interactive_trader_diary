@@ -52,7 +52,8 @@ django-cors-headers==4.4.0
 django-filter==24.3
 whitenoise==6.7.0
 django-redis==5.4.0
-# tinkoff-investments устанавливается вручную из GitHub (пакет карантинизирован на PyPI):
-# pip install git+https://github.com/Tinkoff/invest-python.git --no-deps
-# pip install "grpcio>=1.39.0" "protobuf>=4.21.6,<5.0.0" "deprecation>=2.1.0"
 cryptography
+grpcio>=1.39.0
+protobuf>=4.21.6,<5.0.0
+deprecation>=2.1.0
+cachetools>=5.2.0,<6.0.0

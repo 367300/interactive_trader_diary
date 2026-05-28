@@ -17,11 +17,16 @@ RUN apt-get update && apt-get install -y \
     make \
     build-essential \
     libffi-dev \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
 # Install pip requirements
 COPY requirements.txt .
 RUN python -m pip install -r requirements.txt
+
+# tinkoff-investments карантинирован на PyPI вместе с подзависимостью `tinkoff`,
+# поэтому ставим напрямую из GitHub без подтягивания зависимостей.
+RUN python -m pip install --no-deps git+https://github.com/Tinkoff/invest-python.git
 
 # Install debugpy for debugging support
 RUN python -m pip install debugpy
