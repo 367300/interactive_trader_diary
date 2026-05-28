@@ -165,6 +165,7 @@ class TradeListSerializer(TradeSerializer):
         fields = (
             'id',
             'strategy_detail',
+            'instrument',
             'instrument_detail',
             'trade_date',
             'direction',

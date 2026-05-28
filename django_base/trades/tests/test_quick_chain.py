@@ -400,3 +400,68 @@ class QuickChainEndpointTest(QuickChainBaseTestCase):
         items = list_response.json().get('results', list_response.json())
         opens = [t for t in items if t['trade_type'] == 'OPEN']
         self.assertGreaterEqual(len(opens), 1)
+
+
+class TradeListFiltersTest(QuickChainBaseTestCase):
+    def setUp(self):
+        super().setUp()
+        # Вторая Instrument-сущность для проверки фильтра
+        sub = self.instrument.sub_industry
+        self.other_instrument = Instrument.objects.create(
+            ticker='GAZP', name='Газпром', sub_industry=sub,
+            instrument_type=Instrument.InstrumentType.STOCK,
+            min_price_step=Decimal('0.01'),
+        )
+        # Закрытая цепочка на SBER
+        open1 = Trade.objects.create(
+            user=self.user, instrument=self.instrument, strategy=self.strategy,
+            trade_date='2026-05-01T10:00:00Z', direction='LONG',
+            trade_type=Trade.TradeType.OPEN, price=100, volume_from_capital=10,
+        )
+        Trade.objects.create(
+            user=self.user, instrument=self.instrument, strategy=self.strategy,
+            trade_date='2026-05-01T11:00:00Z', direction='LONG',
+            trade_type=Trade.TradeType.CLOSE, price=108, volume_from_capital=10,
+            parent_trade=open1,
+        )
+        # Открытая цепочка на SBER (без CLOSE)
+        Trade.objects.create(
+            user=self.user, instrument=self.instrument, strategy=self.strategy,
+            trade_date='2026-05-02T10:00:00Z', direction='LONG',
+            trade_type=Trade.TradeType.OPEN, price=100, volume_from_capital=10,
+        )
+        # Закрытая цепочка на GAZP
+        open3 = Trade.objects.create(
+            user=self.user, instrument=self.other_instrument, strategy=self.strategy,
+            trade_date='2026-05-03T10:00:00Z', direction='LONG',
+            trade_type=Trade.TradeType.OPEN, price=200, volume_from_capital=10,
+        )
+        Trade.objects.create(
+            user=self.user, instrument=self.other_instrument, strategy=self.strategy,
+            trade_date='2026-05-03T11:00:00Z', direction='LONG',
+            trade_type=Trade.TradeType.CLOSE, price=210, volume_from_capital=10,
+            parent_trade=open3,
+        )
+
+    def test_filter_by_instrument(self):
+        response = self.client.get(f'/api/trades/?instrument={self.instrument.id}')
+        items = response.json().get('results', response.json())
+        for t in items:
+            self.assertEqual(t['instrument'], self.instrument.id)
+        self.assertEqual(len(items), 2)  # 2 OPEN-trade на SBER
+
+    def test_filter_is_closed_true(self):
+        response = self.client.get(
+            f'/api/trades/?instrument={self.instrument.id}&is_closed=true'
+        )
+        items = response.json().get('results', response.json())
+        self.assertEqual(len(items), 1)
+        self.assertTrue(items[0]['is_closed'])
+
+    def test_filter_is_closed_false(self):
+        response = self.client.get(
+            f'/api/trades/?instrument={self.instrument.id}&is_closed=false'
+        )
+        items = response.json().get('results', response.json())
+        self.assertEqual(len(items), 1)
+        self.assertFalse(items[0]['is_closed'])
