@@ -1,7 +1,5 @@
-import uuid
 from decimal import Decimal
 from django.contrib.auth.models import User
-from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
@@ -42,11 +40,11 @@ class QuickChainBaseTestCase(APITestCase):
     def setUp(self):
         self.client.force_authenticate(user=self.user)
 
-    @staticmethod
-    def make_payload(**overrides):
+    @classmethod
+    def make_payload(cls, **overrides):
         base = {
-            'instrument_id': None,
-            'strategy_id': None,
+            'instrument_id': cls.instrument.id,
+            'strategy_id': cls.strategy.id,
             'direction': 'LONG',
             'legs': [
                 {
@@ -73,10 +71,7 @@ class QuickChainSmokeTest(QuickChainBaseTestCase):
     """Sanity-check: фикстура работает, endpoint существует."""
 
     def test_endpoint_exists(self):
-        payload = self.make_payload(
-            instrument_id=self.instrument.id,
-            strategy_id=self.strategy.id,
-        )
+        payload = self.make_payload()
         response = self.client.post('/api/trades/quick-chain/', payload, format='json')
         # endpoint должен существовать (не 404)
         self.assertNotEqual(response.status_code, status.HTTP_404_NOT_FOUND)
