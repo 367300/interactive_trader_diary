@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import {
   createChart,
+  createSeriesMarkers,
   type IChartApi,
   type ISeriesApi,
+  type ISeriesMarkersPluginApi,
+  type SeriesMarker,
   CandlestickSeries,
   HistogramSeries,
   type CandlestickData,
@@ -96,16 +99,36 @@ function nextDrawingId(): string {
   return `d-${++drawingIdCounter}`;
 }
 
-interface Props {
+export type ChartMarker = {
+  time: number; // unix seconds
+  position: 'aboveBar' | 'belowBar' | 'inBar';
+  color: string;
+  shape: 'arrowUp' | 'arrowDown' | 'circle' | 'square';
+  text?: string;
+  size?: number;
+};
+
+export interface CandlestickChartProps {
   ticker: string;
+  markers?: ChartMarker[];
+  onPointPick?: (point: { time: number; price: number }) => void;
+  pickerMode?: boolean; // если true — клики идут в onPointPick, не в DrawingManager
 }
 
-export default function CandlestickChart({ ticker }: Props) {
+export default function CandlestickChart({
+  ticker,
+  markers,
+  onPointPick,
+  pickerMode = false,
+}: CandlestickChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const candleSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
   const volumeSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null);
+  const markersApiRef = useRef<ISeriesMarkersPluginApi<Time> | null>(null);
   const drawingManagerRef = useRef<DrawingManager | null>(null);
+  const pickerModeRef = useRef(pickerMode);
+  const onPointPickRef = useRef(onPointPick);
   const drawingsRestoredRef = useRef(false);
   const isInitialLoadRef = useRef(true);
   const persistTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -153,6 +176,16 @@ export default function CandlestickChart({ ticker }: Props) {
       if (persistTimerRef.current) clearTimeout(persistTimerRef.current);
     };
   }, []);
+
+  // Sync picker mode refs to avoid stale closure inside subscribeClick
+  useEffect(() => { pickerModeRef.current = pickerMode; }, [pickerMode]);
+  useEffect(() => { onPointPickRef.current = onPointPick; }, [onPointPick]);
+
+  // Sync markers prop with chart
+  useEffect(() => {
+    if (!markersApiRef.current) return;
+    markersApiRef.current.setMarkers((markers ?? []) as SeriesMarker<Time>[]);
+  }, [markers]);
 
   async function loadEarlierCandles() {
     if (isLoadingMoreRef.current || !earliestLoadedDateRef.current) return;
@@ -261,6 +294,11 @@ export default function CandlestickChart({ ticker }: Props) {
     chartRef.current = chart;
     candleSeriesRef.current = candleSeries;
     volumeSeriesRef.current = volumeSeries;
+    markersApiRef.current = createSeriesMarkers<Time>(candleSeries);
+    // Apply initial markers if they were provided before chart init completed
+    if (markers && markers.length > 0) {
+      markersApiRef.current.setMarkers(markers as SeriesMarker<Time>[]);
+    }
 
     // Patch timeToCoordinate for cross-timeframe drawing support
     const ts = chart.timeScale();
@@ -302,6 +340,23 @@ export default function CandlestickChart({ ticker }: Props) {
 
     // Click handler — creates drawings with preview for multi-anchor tools
     chart.subscribeClick((param) => {
+      // Picker mode short-circuit: forward click coordinates to onPointPick instead of drawing
+      if (pickerModeRef.current && onPointPickRef.current) {
+        if (!param.time || !param.point) return;
+        const candlePrice = candleSeries.coordinateToPrice(param.point.y);
+        if (candlePrice === null) return;
+        const t = param.time;
+        const unixTime =
+          typeof t === 'number'
+            ? t
+            : Math.floor(new Date(t as unknown as string).getTime() / 1000);
+        onPointPickRef.current({
+          time: unixTime,
+          price: Number(candlePrice),
+        });
+        return;
+      }
+
       const toolType = activeToolRef.current;
       if (!toolType || !param.time || !param.point) return;
 
@@ -468,6 +523,7 @@ export default function CandlestickChart({ ticker }: Props) {
       chartRef.current = null;
       candleSeriesRef.current = null;
       volumeSeriesRef.current = null;
+      markersApiRef.current = null;
       drawingManagerRef.current = null;
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -709,22 +765,24 @@ export default function CandlestickChart({ ticker }: Props) {
         )}
       </div>
 
-      <div className="mb-2">
-        <DrawingToolbar
-          activeTool={activeTool}
-          onSelectTool={handleSelectTool}
-          onClearAll={handleClearAll}
-          onDeleteSelected={handleDeleteSelected}
-          onResetAll={handleResetAll}
-          onChangeColor={handleChangeColor}
-          onChangeLineDash={handleChangeLineDash}
-          hasSelection={hasSelection}
-          magnetMode={magnetMode}
-          onToggleMagnet={toggleMagnet}
-          activeColor={activeColor}
-          activeLineDash={activeLineDash}
-        />
-      </div>
+      {!pickerMode && (
+        <div className="mb-2">
+          <DrawingToolbar
+            activeTool={activeTool}
+            onSelectTool={handleSelectTool}
+            onClearAll={handleClearAll}
+            onDeleteSelected={handleDeleteSelected}
+            onResetAll={handleResetAll}
+            onChangeColor={handleChangeColor}
+            onChangeLineDash={handleChangeLineDash}
+            hasSelection={hasSelection}
+            magnetMode={magnetMode}
+            onToggleMagnet={toggleMagnet}
+            activeColor={activeColor}
+            activeLineDash={activeLineDash}
+          />
+        </div>
+      )}
 
       {error && <Alert variant="destructive" className="mb-2">{error}</Alert>}
       {noData && !loading && (
