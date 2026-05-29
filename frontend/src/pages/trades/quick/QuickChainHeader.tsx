@@ -1,5 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
 import { instrumentsApi, strategiesApi } from '@/api/endpoints';
 import type { ActiveChain, PendingLeg } from './types';
 
@@ -64,84 +69,133 @@ export function QuickChainHeader(props: Props) {
   })();
 
   return (
-    <aside style={{ minWidth: 240, padding: 12 }}>
-      <h2>Цепочка</h2>
-
-      <label>Инструмент</label>
-      <input
-        type="text"
-        placeholder={props.chain.instrumentTicker ?? 'SBER, GAZP...'}
-        value={instrumentSearch}
-        onChange={(e) => setInstrumentSearch(e.target.value)}
-      />
-      {instrumentResults.length > 0 && (
-        <ul>
-          {instrumentResults.map((i) => (
-            <li key={i.id}>
-              <button
-                onClick={() => {
-                  props.onInstrumentChange(i.id, i.ticker);
-                  setInstrumentSearch('');
-                  setInstrumentResults([]);
-                }}
-              >
-                {i.ticker} — {i.name}
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-
-      <label>Стратегия</label>
-      <select
-        value={props.chain.strategyId ?? ''}
-        onChange={(e) => props.onStrategyChange(e.target.value ? Number(e.target.value) : null)}
-      >
-        <option value="">— выберите —</option>
-        {strategies.map((s) => (
-          <option key={s.id} value={s.id}>
-            {s.name}
-          </option>
-        ))}
-      </select>
-
-      <label>Направление</label>
-      <div>
-        <label>
-          <input
-            type="radio"
-            name="dir"
-            checked={props.chain.direction === 'LONG'}
-            onChange={() => props.onDirectionChange('LONG')}
+    <Card>
+      <CardHeader>
+        <CardTitle>Цепочка</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-2 relative">
+          <Label>Инструмент</Label>
+          <Input
+            type="text"
+            placeholder={props.chain.instrumentTicker ?? 'SBER, GAZP...'}
+            value={instrumentSearch}
+            onChange={(e) => setInstrumentSearch(e.target.value)}
+            autoComplete="off"
           />
-          LONG
-        </label>
-        <label>
-          <input
-            type="radio"
-            name="dir"
-            checked={props.chain.direction === 'SHORT'}
-            onChange={() => props.onDirectionChange('SHORT')}
-          />
-          SHORT
-        </label>
-      </div>
+          {instrumentResults.length > 0 && (
+            <Card className="absolute top-full left-0 right-0 z-20 mt-1 p-1.5 max-h-60 overflow-y-auto">
+              <ul className="space-y-0.5">
+                {instrumentResults.map((i) => (
+                  <li key={i.id}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        props.onInstrumentChange(i.id, i.ticker);
+                        setInstrumentSearch('');
+                        setInstrumentResults([]);
+                      }}
+                      className="w-full text-left px-2.5 py-1.5 rounded-lg text-sm text-foreground hover:bg-blue/14 transition-colors"
+                    >
+                      {i.ticker} — {i.name}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
+        </div>
 
-      <hr />
-      <p data-testid="status-label">{statusLabel}</p>
+        <div className="space-y-2">
+          <Label htmlFor="quick-chain-strategy">Стратегия</Label>
+          {/* Нативный <select> — тесты используют getByRole('combobox')
+              и getByRole('option') без открытия выпадающего списка. */}
+          <select
+            id="quick-chain-strategy"
+            value={props.chain.strategyId ?? ''}
+            onChange={(e) => props.onStrategyChange(e.target.value ? Number(e.target.value) : null)}
+            className="flex h-10 w-full rounded-[10px] border border-border bg-input px-3 py-2 text-sm text-foreground focus:border-blue focus:outline-none focus:ring-2 focus:ring-blue/15"
+          >
+            <option value="">— выберите —</option>
+            {strategies.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))}
+          </select>
+        </div>
 
-      <Button onClick={() => props.onStartLeg('OPEN')} disabled={props.hasOpen}>
-        + Вход
-      </Button>
-      <Button onClick={() => props.onStartLeg('AVERAGE')} disabled={!props.hasOpen || props.canCloseExist}>
-        + Усреднение
-      </Button>
-      <Button onClick={() => props.onStartLeg('PARTIAL_CLOSE')} disabled={!props.hasOpen || props.canCloseExist}>
-        + Частичка
-      </Button>
-      <Button onClick={() => props.onStartLeg('CLOSE')} disabled={!props.hasOpen || props.canCloseExist}>
-        + Закрытие
-      </Button>
-    </aside>
+        <div className="space-y-2">
+          <Label>Направление</Label>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant={props.chain.direction === 'LONG' ? 'primary' : 'ghost'}
+              size="sm"
+              className="flex-1"
+              onClick={() => props.onDirectionChange('LONG')}
+            >
+              LONG
+            </Button>
+            <Button
+              type="button"
+              variant={props.chain.direction === 'SHORT' ? 'primary' : 'ghost'}
+              size="sm"
+              className="flex-1"
+              onClick={() => props.onDirectionChange('SHORT')}
+            >
+              SHORT
+            </Button>
+          </div>
+        </div>
+
+        <Separator />
+
+        <p
+          data-testid="status-label"
+          className={cn(
+            'text-sm rounded-[8px] px-3 py-2 bg-glass-soft border border-border',
+            props.pendingLeg ? 'text-cyan' : 'text-muted-foreground',
+          )}
+        >
+          {statusLabel}
+        </p>
+
+        <div className="flex flex-col gap-2">
+          <Button
+            type="button"
+            variant="default"
+            onClick={() => props.onStartLeg('OPEN')}
+            disabled={props.hasOpen}
+          >
+            + Вход
+          </Button>
+          <Button
+            type="button"
+            variant="default"
+            onClick={() => props.onStartLeg('AVERAGE')}
+            disabled={!props.hasOpen || props.canCloseExist}
+          >
+            + Усреднение
+          </Button>
+          <Button
+            type="button"
+            variant="default"
+            onClick={() => props.onStartLeg('PARTIAL_CLOSE')}
+            disabled={!props.hasOpen || props.canCloseExist}
+          >
+            + Частичка
+          </Button>
+          <Button
+            type="button"
+            variant="default"
+            onClick={() => props.onStartLeg('CLOSE')}
+            disabled={!props.hasOpen || props.canCloseExist}
+          >
+            + Закрытие
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

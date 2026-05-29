@@ -1,5 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { X } from 'lucide-react';
 
 interface Props {
   chainId: string;
@@ -11,33 +13,51 @@ export function QuickChainSuccessPanel({ chainId, onNextChain, onClose }: Props)
   const navigate = useNavigate();
 
   return (
-    <div
+    <Card
       role="dialog"
       aria-label="Цепочка сохранена"
-      style={{
-        position: 'fixed',
-        top: 80,
-        right: 24,
-        padding: 16,
-        background: 'white',
-        border: '1px solid #16a34a',
-        borderRadius: 8,
-        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-        zIndex: 50,
-      }}
       data-testid="success-panel"
+      className="fixed top-20 right-6 w-full max-w-sm z-50 border-2 border-green shadow-lg"
     >
-      <h3>Цепочка сохранена</h3>
-      <Button onClick={() => navigate(`/trades/${chainId}/edit?tab=analysis`)}>
-        Добавить анализ
-      </Button>
-      <Button onClick={onNextChain} variant="ghost">
-        Следующая цепочка
-      </Button>
-      <Button onClick={() => navigate(`/trades/${chainId}`)} variant="ghost">
-        Открыть детали
-      </Button>
-      <button onClick={onClose} aria-label="close">×</button>
-    </div>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0">
+        <CardTitle className="text-green">Цепочка сохранена</CardTitle>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={onClose}
+          aria-label="close"
+          className="h-7 w-7"
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        <Button
+          type="button"
+          variant="primary"
+          onClick={() => navigate(`/trades/${chainId}/edit?tab=analysis`)}
+          className="w-full"
+        >
+          Добавить анализ
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={onNextChain}
+          className="w-full"
+        >
+          Следующая цепочка
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => navigate(`/trades/${chainId}`)}
+          className="w-full"
+        >
+          Открыть детали
+        </Button>
+      </CardContent>
+    </Card>
   );
 }

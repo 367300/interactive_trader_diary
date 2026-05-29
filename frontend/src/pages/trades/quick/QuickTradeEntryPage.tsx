@@ -3,6 +3,17 @@ import { QuickChainHeader } from './QuickChainHeader';
 import { QuickChainChart } from './QuickChainChart';
 import { QuickChainLegsPanel } from './QuickChainLegsPanel';
 import { QuickChainSuccessPanel } from './QuickChainSuccessPanel';
+import { Alert } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { tradesApi, type QuickChainPayload } from '@/api/endpoints';
 import type {
   ActiveChain, ChainLeg, LegType, PendingLeg, SavedChainSummary,
@@ -217,7 +228,18 @@ export function QuickTradeEntryPage() {
   return (
     <section>
       <h1>Быстрый ввод цепочек сделок</h1>
-      <div style={{ display: 'flex', gap: 12 }}>
+
+      {nonFieldError && (
+        <Alert
+          variant="destructive"
+          className="mb-4"
+          data-testid="non-field-error"
+        >
+          {nonFieldError}
+        </Alert>
+      )}
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[280px_1fr_320px]">
         <QuickChainHeader
           chain={chain}
           pendingLeg={pendingLeg}
@@ -237,9 +259,11 @@ export function QuickTradeEntryPage() {
             onPointPick={handlePointPick}
           />
         ) : (
-          <div style={{ flex: 1, padding: 32, textAlign: 'center' }}>
-            Выберите инструмент чтобы открыть график
-          </div>
+          <Card>
+            <CardContent className="flex items-center justify-center py-20 text-center text-muted-foreground">
+              Выберите инструмент чтобы открыть график
+            </CardContent>
+          </Card>
         )}
         <QuickChainLegsPanel
           legs={chain.legs}
@@ -251,11 +275,7 @@ export function QuickTradeEntryPage() {
           onReset={() => requestReset(() => setChain((c) => ({ ...c, legs: [] })))}
         />
       </div>
-      {nonFieldError && (
-        <div role="alert" style={{ color: 'red' }} data-testid="non-field-error">
-          {nonFieldError}
-        </div>
-      )}
+
       {successChainId && (
         <QuickChainSuccessPanel
           chainId={successChainId}
@@ -263,15 +283,42 @@ export function QuickTradeEntryPage() {
           onClose={() => setSuccessChainId(null)}
         />
       )}
-      {resetConfirm && (
-        <div role="dialog" aria-label="Подтвердите сброс" data-testid="reset-confirm">
-          <p>Сбросить незавершённую цепочку?</p>
-          <button onClick={() => { resetConfirm(); setResetConfirm(null); }} data-testid="reset-confirm-yes">
-            Да, сбросить
-          </button>
-          <button onClick={() => setResetConfirm(null)}>Отмена</button>
-        </div>
-      )}
+
+      <Dialog
+        open={resetConfirm !== null}
+        onOpenChange={(open) => {
+          if (!open) setResetConfirm(null);
+        }}
+      >
+        <DialogContent data-testid="reset-confirm" aria-label="Подтвердите сброс">
+          <DialogHeader>
+            <DialogTitle>Сбросить незавершённую цепочку?</DialogTitle>
+            <DialogDescription>
+              Все добавленные шаги будут удалены. Это действие нельзя отменить.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setResetConfirm(null)}
+            >
+              Отмена
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              data-testid="reset-confirm-yes"
+              onClick={() => {
+                if (resetConfirm) resetConfirm();
+                setResetConfirm(null);
+              }}
+            >
+              Да, сбросить
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }
