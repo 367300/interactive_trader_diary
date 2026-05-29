@@ -73,11 +73,38 @@ cd frontend && npm run build   # tsc + vite build
 - Алиас Vite `@` указывает на `frontend/src/`.
 - Redis db0 — Channels, db1 — кэш Django. TTL кэша по умолчанию 30 мин.
 - CSV-файлы свечей хранятся в `uploads/candles/` (вне Django).
-- Celery beat запускает `update_today_candles` каждые 30 мин.
+- Celery beat запускает `update_today_candles` каждые 5 мин (см. `CELERY_BEAT_SCHEDULE` в settings).
 - Конфигурация через `python-decouple` (читает `.env`). У всех настроек есть значения по умолчанию.
 
 ### Продакшен (Dokploy + Traefik)
 Используется `docker-compose.prod.yml`. Без nginx — TLS и маршрутизацию обрабатывает Traefik через labels контейнеров. Статику отдаёт WhiteNoise, медиа — Django view. Домен задаётся через переменную `DOMAIN` в `.env`.
+
+## Доступ к prod-серверу по SSH
+
+В `~/.ssh/config` настроен alias `midas-hand` (IP `82.146.58.10`, порт `49822`, user `root`,
+ключ `~/.ssh/id_ed25519_claude` без пароля, `IdentitiesOnly yes`). Можно подключаться
+напрямую: `ssh midas-hand`. Стандартный 22-й порт закрыт, password-аутентификация
+отключена — только publickey.
+
+Корень compose-стэка Dokploy на сервере: `/etc/dokploy/compose/traderdiary-midashand-5fsvxg/code`.
+Compose-файл — `docker-compose.prod.yml`. Имена контейнеров с префиксом
+`traderdiary-midashand-5fsvxg-`.
+
+Полезные one-liners:
+
+```bash
+# Логи / статус
+ssh midas-hand 'cd /etc/dokploy/compose/traderdiary-midashand-5fsvxg/code && docker compose -f docker-compose.prod.yml ps'
+ssh midas-hand 'cd /etc/dokploy/compose/traderdiary-midashand-5fsvxg/code && docker compose -f docker-compose.prod.yml logs celery --tail=200'
+
+# Django shell на проде
+ssh midas-hand 'cd /etc/dokploy/compose/traderdiary-midashand-5fsvxg/code && docker compose -f docker-compose.prod.yml exec -T web python manage.py shell -c "<код>"'
+
+# Redis (кэш на db1)
+ssh midas-hand 'cd /etc/dokploy/compose/traderdiary-midashand-5fsvxg/code && docker compose -f docker-compose.prod.yml exec -T redis redis-cli -n 1 KEYS "candles:*"'
+```
+
+Деплой автоматический: push в `main` → Dokploy пересобирает стэк по `docker-compose.prod.yml`.
 
 ## Коммиты
 
