@@ -32,6 +32,7 @@ export default defineConfig({
       '/admin': { target: django, changeOrigin: true },
       '/static': { target: django, changeOrigin: true },
       '/media': { target: django, changeOrigin: true },
+      '/ws': { target: django.replace(/^http/, 'ws'), ws: true, changeOrigin: true },
     },
   },
 });

@@ -268,3 +268,20 @@ export interface CandleResponse {
   count: number;
   candles: CandleData[];
 }
+
+export type CandleSyncSnapshot = {
+  task_id: string;
+  done_ranges: number;
+  total_ranges: number;
+  range_from: string;
+  range_till: string;
+  range_candles?: number;
+  cumulative_candles: number;
+};
+
+export type CandleSyncEvent =
+  | ({ type: 'sync.snapshot' | 'sync.progress' } & CandleSyncSnapshot)
+  | { type: 'sync.done'; task_id: string; total_ranges: number; cumulative_candles: number; duration_s: number; errors: number }
+  | { type: 'sync.error'; task_id: string; message: string };
+
+export type CandleSyncStartResponse = { task_id: string; ticker: string };

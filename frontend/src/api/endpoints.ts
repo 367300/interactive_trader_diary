@@ -3,6 +3,8 @@ import type {
   AnalyticsResponse,
   AuthTokens,
   CandleResponse,
+  CandleSyncSnapshot,
+  CandleSyncStartResponse,
   Dashboard,
   FuturesListItem,
   InstrumentDetail,
@@ -63,6 +65,16 @@ export const instrumentsApi = {
   stats: () => api.get<InstrumentStats>('/instruments/stats/'),
   candles: (ticker: string, params?: { from?: string; till?: string; interval?: number }) =>
     api.get<CandleResponse>(`/instruments/${ticker}/candles/`, { query: params }),
+};
+
+export const adminCandleSync = {
+  start: (ticker: string, body?: { start?: string; end?: string }) =>
+    api.post<CandleSyncStartResponse>(
+      `/instruments/${ticker}/sync-candles/`,
+      body ?? {},
+    ),
+  state: (ticker: string) =>
+    api.get<CandleSyncSnapshot | null>(`/instruments/${ticker}/sync-candles/state/`),
 };
 
 export interface ChildTradePayload {
