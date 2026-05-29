@@ -318,6 +318,8 @@ def _run_sync_candles(
                 cache.set(_state_key(ticker), event, 86400)
                 _publish(layer, group, event)
                 time.sleep(0.2)
+            except SoftTimeLimitExceeded:
+                raise
             except Exception as exc:
                 logger.error("sync_candles %s %s-%s: %s", ticker, gap.from_date, gap.till_date, exc)
                 errors += 1
