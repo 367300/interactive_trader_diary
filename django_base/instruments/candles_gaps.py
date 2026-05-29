@@ -152,7 +152,11 @@ def find_missing_ranges(
     if last_dt is not None:
         last_day = last_dt.date()
         tail_end = min(end, today) if end > today else end
-        if last_day < tail_end:
+        # last_day == tail_end == today: торговый день ещё идёт, добиваем
+        # текущий день с последней свечи до now (fetch_tinkoff_candles за
+        # один день не дороже одного запроса, дубликаты дропнутся в merge).
+        need_tail = last_day < tail_end or (last_day == tail_end == today)
+        if need_tail:
             tail = GapRange(last_day, tail_end, "tail")
             ranges = [r for r in ranges if not (r.from_date <= tail.till_date and r.till_date >= tail.from_date)]
             ranges.append(tail)

@@ -115,10 +115,11 @@ class FindMissingRangesTests(TestCase):
         self.assertEqual(tail[0].from_date, date(2026, 5, 22))
         self.assertEqual(tail[0].till_date, date(2026, 5, 25))
 
-    def test_no_gap_when_everything_covered_until_today(self):
+    def test_no_gap_when_historical_range_fully_covered(self):
         from instruments import candles_gaps
         _write_csv(self.root, "SBER", date(2026, 5, 4), ["23:49:00"])
         _write_csv(self.root, "SBER", date(2026, 5, 5), ["23:49:00"])
+        # end в прошлом, далеко от today — tail не нужен
         with override_settings(CANDLES_ROOT=str(self.root)):
             candles_gaps._last_saved_cache_clear()
             ranges = candles_gaps.find_missing_ranges(
@@ -127,3 +128,23 @@ class FindMissingRangesTests(TestCase):
                 end=date(2026, 5, 5),
             )
         self.assertEqual(ranges, [])
+
+    def test_tail_created_when_last_saved_is_today_but_partial(self):
+        """Регрессия: торговый день идёт, утренние свечи сохранены, но
+        последующие должны догружаться при каждом запросе."""
+        from datetime import date as _date
+        from unittest.mock import patch
+        from instruments import candles_gaps
+
+        fake_today = _date(2026, 5, 22)
+        _write_csv(self.root, "SBER", fake_today, ["09:14:00"])
+        with override_settings(CANDLES_ROOT=str(self.root)), \
+             patch("instruments.candles_gaps.date") as mock_date:
+            mock_date.today.return_value = fake_today
+            mock_date.side_effect = lambda *a, **kw: _date(*a, **kw)
+            candles_gaps._last_saved_cache_clear()
+            ranges = candles_gaps.find_missing_ranges("SBER", start=fake_today, end=fake_today)
+        tail = [r for r in ranges if r.reason == "tail"]
+        self.assertEqual(len(tail), 1)
+        self.assertEqual(tail[0].from_date, fake_today)
+        self.assertEqual(tail[0].till_date, fake_today)
