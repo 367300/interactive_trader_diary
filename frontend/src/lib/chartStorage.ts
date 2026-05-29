@@ -3,7 +3,6 @@ import type { SerializedDrawing } from 'lightweight-charts-drawing';
 interface ChartSettings {
   interval: number;
   drawings: SerializedDrawing[];
-  visibleRange: { from: number; to: number } | null;
 }
 
 const STORAGE_KEY = 'chart_settings';

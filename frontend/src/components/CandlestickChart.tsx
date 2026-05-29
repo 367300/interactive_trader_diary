@@ -137,7 +137,6 @@ export default function CandlestickChart({
   const pickerModeRef = useRef(pickerMode);
   const onPointPickRef = useRef(onPointPick);
   const drawingsRestoredRef = useRef(false);
-  const isInitialLoadRef = useRef(true);
   const persistTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const activeToolRef = useRef<string | null>(null);
@@ -503,19 +502,6 @@ export default function CandlestickChart({
     container.addEventListener('mousedown', onMouseDown);
     container.addEventListener('mouseup', onMouseUp);
 
-    // Save visible range (debounced) + scroll-to-load
-    let rangeTimer: ReturnType<typeof setTimeout> | null = null;
-    chart.timeScale().subscribeVisibleTimeRangeChange((range) => {
-      if (rangeTimer) clearTimeout(rangeTimer);
-      rangeTimer = setTimeout(() => {
-        if (range) {
-          saveChartSettings(ticker, {
-            visibleRange: { from: range.from as number, to: range.to as number },
-          });
-        }
-      }, 500);
-    });
-
     chart.timeScale().subscribeVisibleLogicalRangeChange((range) => {
       if (range && range.from < 0 && earliestLoadedDateRef.current && !isLoadingMoreRef.current) {
         loadEarlierRef.current();
@@ -523,7 +509,6 @@ export default function CandlestickChart({
     });
 
     return () => {
-      if (rangeTimer) clearTimeout(rangeTimer);
       container.removeEventListener('mousemove', onMouseMove);
       container.removeEventListener('mouseleave', onMouseLeave);
       container.removeEventListener('mousedown', onMouseDown);
@@ -611,21 +596,6 @@ export default function CandlestickChart({
           try {
             chartRef.current?.timeScale().setVisibleLogicalRange(savedLogicalRange);
           } catch { /* range outside data — fall through */ }
-        } else if (isInitialLoadRef.current) {
-          const s = loadChartSettings(ticker);
-          if (s.visibleRange) {
-            try {
-              chartRef.current?.timeScale().setVisibleRange({
-                from: s.visibleRange.from as Time,
-                to: s.visibleRange.to as Time,
-              });
-            } catch {
-              chartRef.current?.timeScale().fitContent();
-            }
-          } else {
-            chartRef.current?.timeScale().fitContent();
-          }
-          isInitialLoadRef.current = false;
         } else {
           chartRef.current?.timeScale().fitContent();
         }
@@ -693,7 +663,6 @@ export default function CandlestickChart({
     previewDrawingIdRef.current = null;
     previewAnchorIdxRef.current = 0;
     setInterval(5);
-    isInitialLoadRef.current = false;
     chartRef.current?.timeScale().fitContent();
   };
 
