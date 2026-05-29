@@ -41,7 +41,7 @@ class SyncCandlesTaskHappyPathTests(TestCase):
                 group_send.side_effect = lambda group, event: events.append(event) or _AsyncNoop()
                 self_mock = MagicMock()
                 self_mock.request.id = "task-abc"
-                tasks.sync_candles_for_instrument(
+                tasks._run_sync_candles(
                     self_mock,
                     ticker="SBER",
                     market="stock",

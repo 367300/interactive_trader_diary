@@ -248,7 +248,7 @@ def _release_lock(ticker: str) -> None:
     cache.delete(_state_key(ticker))
 
 
-def sync_candles_for_instrument(
+def _run_sync_candles(
     self,
     ticker: str,
     *,
@@ -258,11 +258,11 @@ def sync_candles_for_instrument(
     end: str | None = None,
     triggered_by: int | None = None,
 ):
-    """Унифицированная задача догрузки свечей одного инструмента.
+    """Реализация унифицированной задачи догрузки свечей одного инструмента.
 
-    Шлёт прогресс в Channels group ``candles_sync_{ticker}``.
-    Может вызываться напрямую (передав объект-заглушку self) или через
-    Celery-обёртку ``sync_candles_task``.
+    Plain-функция, чтобы тесты могли вызывать её с произвольным mock-объектом
+    self. Celery-обёртка ниже регистрирует её как задачу
+    ``sync_candles_for_instrument`` для apply_async/delay.
     """
     ticker = ticker.upper()
     group = f"candles_sync_{ticker}"
@@ -346,12 +346,9 @@ def sync_candles_for_instrument(
     }
 
 
-# Celery-обёртка: регистрируем задачу под именем sync_candles_task,
-# чтобы `sync_candles_for_instrument` оставался обычной функцией
-# и тесты могли вызывать её напрямую с произвольным объектом self.
-sync_candles_task = shared_task(
+sync_candles_for_instrument = shared_task(
     bind=True,
     name="instruments.tasks.sync_candles_for_instrument",
     time_limit=7200,
     soft_time_limit=7000,
-)(sync_candles_for_instrument)
+)(_run_sync_candles)
