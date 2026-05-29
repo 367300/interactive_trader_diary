@@ -32,6 +32,19 @@ class TradeViewSet(viewsets.ModelViewSet):
         )
         if self.action == 'list':
             qs = qs.filter(parent_trade__isnull=True)
+
+            instrument_id = self.request.query_params.get('instrument')
+            if instrument_id:
+                qs = qs.filter(instrument_id=instrument_id)
+
+            is_closed = self.request.query_params.get('is_closed')
+            if is_closed is not None:
+                # Закрытая цепочка = есть child с trade_type=CLOSE
+                if is_closed.lower() in ('true', '1', 'yes'):
+                    qs = qs.filter(child_trades__trade_type=Trade.TradeType.CLOSE).distinct()
+                elif is_closed.lower() in ('false', '0', 'no'):
+                    qs = qs.exclude(child_trades__trade_type=Trade.TradeType.CLOSE)
+
         return qs.order_by('-trade_date')
 
     def get_serializer_class(self):
@@ -140,6 +153,18 @@ class TradeViewSet(viewsets.ModelViewSet):
             return Response({'detail': 'Статистика доступна только по родительской сделке.'},
                             status=status.HTTP_400_BAD_REQUEST)
         return Response(calculate_trade_stats(trade))
+
+    @action(detail=False, methods=['post'], url_path='quick-chain')
+    def quick_chain(self, request):
+        """Атомарное создание цепочки сделок одним запросом."""
+        from .serializers import QuickChainSerializer, TradeDetailSerializer
+        serializer = QuickChainSerializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        open_trade = serializer.save()
+        return Response({
+            'open_trade': TradeDetailSerializer(open_trade, context={'request': request}).data,
+            'chain_id': str(open_trade.id),
+        }, status=status.HTTP_201_CREATED)
 
 
 class TradeScreenshotViewSet(viewsets.ModelViewSet):

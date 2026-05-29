@@ -1,3 +1,4 @@
+from django.db import transaction
 from django.urls import reverse
 from rest_framework import serializers
 
@@ -164,6 +165,7 @@ class TradeListSerializer(TradeSerializer):
         fields = (
             'id',
             'strategy_detail',
+            'instrument',
             'instrument_detail',
             'trade_date',
             'direction',
@@ -222,3 +224,132 @@ class ChildTradeCreateSerializer(serializers.ModelSerializer):
         if value is not None and value <= 0:
             raise serializers.ValidationError('Цена должна быть положительной')
         return value
+
+
+class QuickChainLegSerializer(serializers.Serializer):
+    """Один шаг цепочки в быстром вводе."""
+
+    LEG_TYPES = ('OPEN', 'AVERAGE', 'PARTIAL_CLOSE', 'CLOSE')
+
+    type = serializers.ChoiceField(choices=LEG_TYPES)
+    date = serializers.DateTimeField()
+    price = serializers.DecimalField(max_digits=15, decimal_places=2)
+    volume_from_capital = serializers.IntegerField(min_value=1, max_value=100)
+    planned_stop_loss = serializers.DecimalField(
+        max_digits=15, decimal_places=2, required=False, allow_null=True
+    )
+    planned_take_profit = serializers.DecimalField(
+        max_digits=15, decimal_places=2, required=False, allow_null=True
+    )
+
+    def validate_price(self, value):
+        if value <= 0:
+            raise serializers.ValidationError('Цена должна быть положительной.')
+        return value
+
+
+class QuickChainSerializer(serializers.Serializer):
+    """Атомарное создание цепочки сделок одним запросом."""
+
+    instrument_id = serializers.IntegerField()
+    strategy_id = serializers.IntegerField()
+    direction = serializers.ChoiceField(choices=Trade.Direction.choices)
+    legs = QuickChainLegSerializer(many=True)
+
+    def validate_strategy_id(self, value):
+        from strategies.models import TradingStrategy
+        request = self.context.get('request')
+        try:
+            strategy = TradingStrategy.objects.get(pk=value)
+        except TradingStrategy.DoesNotExist:
+            raise serializers.ValidationError('Стратегия не найдена.')
+        if request is not None and strategy.user_id != request.user.id:
+            raise serializers.ValidationError('Стратегия принадлежит другому пользователю.')
+        return value
+
+    def validate_instrument_id(self, value):
+        from instruments.models import Instrument
+        if not Instrument.objects.filter(pk=value).exists():
+            raise serializers.ValidationError('Инструмент не найден.')
+        return value
+
+    def validate_legs(self, value):
+        if len(value) < 2:
+            raise serializers.ValidationError('Цепочка должна содержать минимум 2 шага (OPEN и CLOSE).')
+        if value[0]['type'] != 'OPEN':
+            raise serializers.ValidationError('Первый шаг цепочки должен быть OPEN.')
+        if value[-1]['type'] != 'CLOSE':
+            raise serializers.ValidationError('Последний шаг цепочки должен быть CLOSE.')
+        open_count = sum(1 for leg in value if leg['type'] == 'OPEN')
+        close_count = sum(1 for leg in value if leg['type'] == 'CLOSE')
+        if open_count != 1:
+            raise serializers.ValidationError(f'В цепочке должен быть ровно один OPEN, найдено {open_count}.')
+        if close_count != 1:
+            raise serializers.ValidationError(f'В цепочке должен быть ровно один CLOSE, найдено {close_count}.')
+
+        # Даты неубывающие
+        for i in range(1, len(value)):
+            if value[i]['date'] < value[i-1]['date']:
+                raise serializers.ValidationError(
+                    f'Даты должны быть в неубывающем порядке (шаг #{i} раньше предыдущего).'
+                )
+
+        # Сумма объёмов открытий = сумма объёмов закрытий
+        open_volume = sum(leg['volume_from_capital'] for leg in value
+                          if leg['type'] in ('OPEN', 'AVERAGE'))
+        close_volume = sum(leg['volume_from_capital'] for leg in value
+                           if leg['type'] in ('PARTIAL_CLOSE', 'CLOSE'))
+        if open_volume != close_volume:
+            raise serializers.ValidationError(
+                f'Сумма открытий ({open_volume}%) не равна сумме закрытий ({close_volume}%).'
+            )
+
+        # SL/TP допустимы только на OPEN и AVERAGE
+        for i, leg in enumerate(value):
+            if leg['type'] in ('PARTIAL_CLOSE', 'CLOSE'):
+                if leg.get('planned_stop_loss') is not None:
+                    raise serializers.ValidationError(
+                        f'planned_stop_loss не допускается на шаге #{i} (тип {leg["type"]}).'
+                    )
+                if leg.get('planned_take_profit') is not None:
+                    raise serializers.ValidationError(
+                        f'planned_take_profit не допускается на шаге #{i} (тип {leg["type"]}).'
+                    )
+
+        return value
+
+    @transaction.atomic
+    def create(self, validated_data):
+        request = self.context['request']
+        legs_data = validated_data['legs']
+        open_data = legs_data[0]
+
+        open_trade = Trade.objects.create(
+            user=request.user,
+            instrument_id=validated_data['instrument_id'],
+            strategy_id=validated_data['strategy_id'],
+            direction=validated_data['direction'],
+            trade_type=Trade.TradeType.OPEN,
+            trade_date=open_data['date'],
+            price=open_data['price'],
+            volume_from_capital=open_data['volume_from_capital'],
+            planned_stop_loss=open_data.get('planned_stop_loss'),
+            planned_take_profit=open_data.get('planned_take_profit'),
+        )
+
+        for leg in legs_data[1:]:
+            Trade.objects.create(
+                user=request.user,
+                instrument_id=validated_data['instrument_id'],
+                strategy_id=validated_data['strategy_id'],
+                direction=validated_data['direction'],
+                trade_type=leg['type'],
+                trade_date=leg['date'],
+                price=leg['price'],
+                volume_from_capital=leg['volume_from_capital'],
+                planned_stop_loss=leg.get('planned_stop_loss'),
+                planned_take_profit=leg.get('planned_take_profit'),
+                parent_trade=open_trade,
+            )
+
+        return open_trade
