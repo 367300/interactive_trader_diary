@@ -57,7 +57,7 @@ export default function InstrumentDetail() {
       <Card className="mt-3.5">
         <CardHeader><CardTitle>График котировок</CardTitle></CardHeader>
         <CardContent>
-          <CandlestickChart ticker={data.ticker} />
+          <CandlestickChart ticker={data.ticker} market="stock" />
         </CardContent>
       </Card>
 

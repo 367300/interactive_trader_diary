@@ -33,6 +33,8 @@ import {
   loadDrawings,
   clearChartSettings,
 } from '@/lib/chartStorage';
+import { useAuth } from '@/auth/AuthContext';
+import AdminCandleSyncButton from './AdminCandleSyncButton';
 
 const INTERVALS = [
   { value: 1, label: '1м' },
@@ -110,6 +112,7 @@ export type ChartMarker = {
 
 export interface CandlestickChartProps {
   ticker: string;
+  market?: 'stock' | 'futures';
   markers?: ChartMarker[];
   onPointPick?: (point: { time: number; price: number }) => void;
   pickerMode?: boolean; // если true — клики идут в onPointPick, не в DrawingManager
@@ -117,10 +120,14 @@ export interface CandlestickChartProps {
 
 export default function CandlestickChart({
   ticker,
+  market,
   markers,
   onPointPick,
   pickerMode = false,
 }: CandlestickChartProps) {
+  const { user } = useAuth();
+  const isAdmin = !!user?.is_staff;
+  const effectiveMarket: 'stock' | 'futures' = market ?? 'stock';
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const candleSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
@@ -160,6 +167,9 @@ export default function CandlestickChart({
   const [magnetMode, setMagnetMode] = useState(false);
   const [activeColor, setActiveColor] = useState('#5a8cff');
   const [activeLineDash, setActiveLineDash] = useState<number[] | undefined>(undefined);
+  const [refetchTick, setRefetchTick] = useState(0);
+
+  const refetchTimer = useRef<number | null>(null);
 
   const persistDrawings = useCallback(() => {
     if (persistTimerRef.current) clearTimeout(persistTimerRef.current);
@@ -555,6 +565,11 @@ export default function CandlestickChart({
     let cancelled = false;
     const { from, till } = getInitialDateRange(interval);
 
+    // Preserve visible logical range for refetch (not initial/interval change)
+    const savedLogicalRange = refetchTick > 0
+      ? chartRef.current?.timeScale().getVisibleLogicalRange() ?? null
+      : null;
+
     setLoading(true);
     setError(null);
     setNoData(false);
@@ -591,7 +606,12 @@ export default function CandlestickChart({
         candleSeriesRef.current?.setData(candleData);
         volumeSeriesRef.current?.setData(volumeData);
 
-        if (isInitialLoadRef.current) {
+        if (savedLogicalRange) {
+          // Refetch — restore the logical range the user was viewing
+          try {
+            chartRef.current?.timeScale().setVisibleLogicalRange(savedLogicalRange);
+          } catch { /* range outside data — fall through */ }
+        } else if (isInitialLoadRef.current) {
           const s = loadChartSettings(ticker);
           if (s.visibleRange) {
             try {
@@ -619,7 +639,7 @@ export default function CandlestickChart({
       });
 
     return () => { cancelled = true; };
-  }, [ticker, interval]);
+  }, [ticker, interval, refetchTick]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSelectTool = (type: string | null) => {
     // Cancel preview if deactivating
@@ -720,6 +740,12 @@ export default function CandlestickChart({
 
   const isCustomInterval = !INTERVALS.some((iv) => iv.value === interval);
 
+  const refetchVisibleDebounced = useCallback(() => {
+    if (refetchTimer.current) window.clearTimeout(refetchTimer.current);
+    refetchTimer.current = window.setTimeout(() => setRefetchTick((x) => x + 1), 2000);
+  }, []);
+  const refetchVisibleNow = useCallback(() => setRefetchTick((x) => x + 1), []);
+
   return (
     <div>
       <div className="flex items-center gap-1.5 mb-2 flex-wrap">
@@ -762,6 +788,15 @@ export default function CandlestickChart({
           <span className="px-2 py-1 rounded text-xs font-medium bg-blue/20 text-blue border border-blue/30">
             {formatInterval(interval)}
           </span>
+        )}
+
+        {isAdmin && (
+          <AdminCandleSyncButton
+            ticker={ticker}
+            market={effectiveMarket}
+            onProgress={refetchVisibleDebounced}
+            onSynced={refetchVisibleNow}
+          />
         )}
       </div>
 
