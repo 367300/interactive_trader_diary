@@ -10,7 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
-from datetime import timedelta
+from datetime import date, timedelta
 from typing import List
 from decouple import config, Csv
 import os
@@ -211,6 +211,14 @@ CACHES = {
 
 # Path to candle CSV storage
 CANDLES_ROOT = Path(BASE_DIR).parent / "uploads" / "candles"
+
+# === Свечи: глубина истории по умолчанию ===
+CANDLES_HISTORY_START_YEAR = config(
+    "CANDLES_HISTORY_START_YEAR",
+    default=date.today().year,
+    cast=int,
+)
+CANDLES_SYNC_LOCK_TTL = 21600  # 6 часов
 
 # Celery Beat periodic tasks
 CELERY_BEAT_SCHEDULE = {
