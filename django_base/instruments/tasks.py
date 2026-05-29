@@ -1,12 +1,19 @@
 import logging
 import time
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from typing import Optional
 
 from celery import shared_task
+from celery.exceptions import SoftTimeLimitExceeded
 from django.conf import settings
 from django.core.cache import cache
 from django.core.management import call_command
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
+
+from instruments.candles import save_candles_to_csv
+from instruments.candles_gaps import find_missing_ranges
+from instruments.tinkoff_candles import fetch_tinkoff_candles, resolve_instrument_uid
 
 logger = logging.getLogger(__name__)
 
@@ -218,3 +225,133 @@ def update_today_candles(self):
         "total": total,
         "errors": errors,
     }
+
+
+# ---------------------------------------------------------------------------
+# Унифицированная задача синхронизации свечей с прогрессом в Channels
+# ---------------------------------------------------------------------------
+
+def _publish(layer, group, event):
+    async_to_sync(layer.group_send)(group, event)
+
+
+def _state_key(ticker: str) -> str:
+    return f"candles:sync_state:{ticker.upper()}"
+
+
+def _lock_key(ticker: str) -> str:
+    return f"candles:sync_lock:{ticker.upper()}"
+
+
+def _release_lock(ticker: str) -> None:
+    cache.delete(_lock_key(ticker))
+    cache.delete(_state_key(ticker))
+
+
+def sync_candles_for_instrument(
+    self,
+    ticker: str,
+    *,
+    market: str = "stock",
+    api_ticker: str | None = None,
+    start: str | None = None,
+    end: str | None = None,
+    triggered_by: int | None = None,
+):
+    """Унифицированная задача догрузки свечей одного инструмента.
+
+    Шлёт прогресс в Channels group ``candles_sync_{ticker}``.
+    Может вызываться напрямую (передав объект-заглушку self) или через
+    Celery-обёртку ``sync_candles_task``.
+    """
+    ticker = ticker.upper()
+    group = f"candles_sync_{ticker}"
+    layer = get_channel_layer()
+    task_id = getattr(self.request, "id", None) or "unknown"
+    started = time.monotonic()
+
+    def _error(message: str) -> dict:
+        event = {"type": "sync.error", "task_id": task_id, "message": message}
+        _publish(layer, group, event)
+        _release_lock(ticker)
+        return {"ticker": ticker, "status": message}
+
+    token = _get_admin_token()
+    if not token:
+        return _error("no_token")
+
+    instrument_type = "FUTURES" if market == "futures" else "STOCK"
+    uid = resolve_instrument_uid(token, api_ticker or ticker, instrument_type)
+    if not uid:
+        return _error("uid_not_found")
+
+    ranges = find_missing_ranges(
+        ticker,
+        start=date.fromisoformat(start) if start else None,
+        end=date.fromisoformat(end) if end else None,
+    )
+
+    total = len(ranges)
+    cumulative = 0
+    errors = 0
+
+    try:
+        for i, gap in enumerate(ranges, 1):
+            try:
+                candles = fetch_tinkoff_candles(token, uid, gap.from_date, gap.till_date, interval=1)
+                if candles:
+                    save_candles_to_csv(ticker, candles)
+                    cache.delete_pattern(f"candles:{ticker}:*")
+                    cache.delete(f"candles:last_saved:{ticker}")
+                    cumulative += len(candles)
+
+                event = {
+                    "type": "sync.progress",
+                    "task_id": task_id,
+                    "done_ranges": i,
+                    "total_ranges": total,
+                    "range_from": gap.from_date.isoformat(),
+                    "range_till": gap.till_date.isoformat(),
+                    "range_candles": len(candles),
+                    "cumulative_candles": cumulative,
+                }
+                cache.set(_state_key(ticker), event, 86400)
+                _publish(layer, group, event)
+                time.sleep(0.2)
+            except Exception as exc:
+                logger.error("sync_candles %s %s-%s: %s", ticker, gap.from_date, gap.till_date, exc)
+                errors += 1
+    except SoftTimeLimitExceeded:
+        _publish(layer, group, {"type": "sync.error", "task_id": task_id, "message": "timeout"})
+        _release_lock(ticker)
+        return {"ticker": ticker, "status": "timeout", "cumulative_candles": cumulative}
+
+    duration = round(time.monotonic() - started, 1)
+    done = {
+        "type": "sync.done",
+        "task_id": task_id,
+        "total_ranges": total,
+        "cumulative_candles": cumulative,
+        "duration_s": duration,
+        "errors": errors,
+    }
+    _publish(layer, group, done)
+    _release_lock(ticker)
+    return {
+        "ticker": ticker,
+        "total_ranges": total,
+        "cumulative_candles": cumulative,
+        "errors": errors,
+        "duration_s": duration,
+    }
+
+
+# Celery-обёртка: регистрируем задачу под именем sync_candles_task,
+# чтобы `sync_candles_for_instrument` оставался обычной функцией
+# и тесты могли вызывать её напрямую с произвольным объектом self.
+sync_candles_task = shared_task(
+    bind=True,
+    name="instruments.tasks.sync_candles_for_instrument",
+    time_limit=7200,
+    soft_time_limit=7000,
+)(sync_candles_for_instrument)
