@@ -43,3 +43,87 @@ class LastSavedCandleDtTests(TestCase):
             candles_gaps._last_saved_cache_clear()
             dt = candles_gaps.last_saved_candle_dt("SBER")
         self.assertEqual(dt, datetime(2026, 5, 22, 23, 49, 0))
+
+
+class FindMissingRangesTests(TestCase):
+    def setUp(self):
+        self.root = Path(f"_gaps_{self._testMethodName}_tmp").resolve()
+        if self.root.exists():
+            import shutil
+            shutil.rmtree(self.root)
+        self.root.mkdir(parents=True)
+        self.addCleanup(lambda: __import__("shutil").rmtree(self.root, ignore_errors=True))
+
+    def test_empty_storage_returns_full_range(self):
+        from instruments import candles_gaps
+        with override_settings(CANDLES_ROOT=str(self.root)):
+            candles_gaps._last_saved_cache_clear()
+            ranges = candles_gaps.find_missing_ranges(
+                "SBER",
+                start=date(2026, 5, 4),   # понедельник
+                end=date(2026, 5, 8),     # пятница
+            )
+        self.assertEqual(len(ranges), 1)
+        self.assertEqual(ranges[0].from_date, date(2026, 5, 4))
+        self.assertEqual(ranges[0].till_date, date(2026, 5, 8))
+        self.assertEqual(ranges[0].reason, "missing_days")
+
+    def test_weekends_skipped(self):
+        from instruments import candles_gaps
+        _write_csv(self.root, "SBER", date(2026, 5, 4), ["10:00:00"])
+        _write_csv(self.root, "SBER", date(2026, 5, 8), ["10:00:00"])
+        with override_settings(CANDLES_ROOT=str(self.root)):
+            candles_gaps._last_saved_cache_clear()
+            ranges = candles_gaps.find_missing_ranges(
+                "SBER",
+                start=date(2026, 5, 4),
+                end=date(2026, 5, 10),
+            )
+        gap_ranges = [r for r in ranges if r.reason == "missing_days"]
+        self.assertEqual(len(gap_ranges), 1)
+        self.assertEqual(gap_ranges[0].from_date, date(2026, 5, 5))
+        self.assertEqual(gap_ranges[0].till_date, date(2026, 5, 7))
+
+    def test_middle_gap_grouped(self):
+        from instruments import candles_gaps
+        for d in (date(2026, 5, 4), date(2026, 5, 5), date(2026, 5, 8)):
+            _write_csv(self.root, "SBER", d, ["10:00:00"])
+        with override_settings(CANDLES_ROOT=str(self.root)):
+            candles_gaps._last_saved_cache_clear()
+            ranges = candles_gaps.find_missing_ranges(
+                "SBER",
+                start=date(2026, 5, 4),
+                end=date(2026, 5, 8),
+            )
+        missing = [r for r in ranges if r.reason == "missing_days"]
+        self.assertEqual(len(missing), 1)
+        self.assertEqual(missing[0].from_date, date(2026, 5, 6))
+        self.assertEqual(missing[0].till_date, date(2026, 5, 7))
+
+    def test_tail_after_last_saved(self):
+        from instruments import candles_gaps
+        _write_csv(self.root, "SBER", date(2026, 5, 22), ["18:00:00"])
+        with override_settings(CANDLES_ROOT=str(self.root)):
+            candles_gaps._last_saved_cache_clear()
+            ranges = candles_gaps.find_missing_ranges(
+                "SBER",
+                start=date(2026, 5, 22),
+                end=date(2026, 5, 25),
+            )
+        tail = [r for r in ranges if r.reason == "tail"]
+        self.assertEqual(len(tail), 1)
+        self.assertEqual(tail[0].from_date, date(2026, 5, 22))
+        self.assertEqual(tail[0].till_date, date(2026, 5, 25))
+
+    def test_no_gap_when_everything_covered_until_today(self):
+        from instruments import candles_gaps
+        _write_csv(self.root, "SBER", date(2026, 5, 4), ["23:49:00"])
+        _write_csv(self.root, "SBER", date(2026, 5, 5), ["23:49:00"])
+        with override_settings(CANDLES_ROOT=str(self.root)):
+            candles_gaps._last_saved_cache_clear()
+            ranges = candles_gaps.find_missing_ranges(
+                "SBER",
+                start=date(2026, 5, 4),
+                end=date(2026, 5, 5),
+            )
+        self.assertEqual(ranges, [])
