@@ -1,11 +1,15 @@
 from datetime import date, timedelta
 
+from django.conf import settings
 from django.core.cache import cache
 from django.db.models import Count, Prefetch, Q
 from rest_framework import status
 from rest_framework.generics import ListAPIView, RetrieveAPIView
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+from instruments.tasks import sync_candles_for_instrument
 
 from .list_query import (
     LIST_TYPE_FUTURES,
@@ -210,3 +214,54 @@ class CandleDataView(APIView):
         cache.set(cache_key, result, ttl)
 
         return Response(result)
+
+
+def _resolve_market(ticker: str):
+    """Возвращает (market, api_ticker) либо (None, None) если тикер не найден."""
+    inst = Instrument.objects.filter(ticker=ticker, is_active=True).first()
+    if inst:
+        return "stock", inst.ticker
+    fut = Futures.objects.filter(ticker=ticker, is_active=True).first()
+    if fut and fut.secid:
+        return "futures", fut.secid
+    return None, None
+
+
+class AdminCandleSyncView(APIView):
+    permission_classes = (IsAuthenticated, IsAdminUser)
+
+    def post(self, request, ticker):
+        ticker = ticker.upper()
+        market, api_ticker = _resolve_market(ticker)
+        if not market:
+            return Response({"detail": "Инструмент не найден."}, status=status.HTTP_404_NOT_FOUND)
+
+        lock_key = f"candles:sync_lock:{ticker}"
+        state_key = f"candles:sync_state:{ticker}"
+        try:
+            redis_client = cache.client.get_client()
+        except Exception:
+            return Response({"detail": "Кэш недоступен."}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+        ttl = getattr(settings, "CANDLES_SYNC_LOCK_TTL", 21600)
+        acquired = redis_client.set(lock_key, "pending", nx=True, ex=ttl)
+        if not acquired:
+            existing = cache.get(state_key) or {}
+            return Response(
+                {"detail": "Синхронизация уже идёт.", "task_id": existing.get("task_id")},
+                status=status.HTTP_409_CONFLICT,
+            )
+
+        start = request.data.get("start")
+        end = request.data.get("end")
+
+        task = sync_candles_for_instrument.apply_async(kwargs={
+            "ticker": ticker,
+            "market": market,
+            "api_ticker": api_ticker,
+            "start": start,
+            "end": end,
+            "triggered_by": request.user.id,
+        })
+        redis_client.set(lock_key, task.id, ex=ttl)
+        return Response({"task_id": task.id, "ticker": ticker}, status=status.HTTP_202_ACCEPTED)
