@@ -265,3 +265,12 @@ class AdminCandleSyncView(APIView):
         })
         redis_client.set(lock_key, task.id, ex=ttl)
         return Response({"task_id": task.id, "ticker": ticker}, status=status.HTTP_202_ACCEPTED)
+
+
+class AdminCandleSyncStateView(APIView):
+    permission_classes = (IsAuthenticated, IsAdminUser)
+
+    def get(self, request, ticker):
+        ticker = ticker.upper()
+        state = cache.get(f"candles:sync_state:{ticker}")
+        return Response(state)

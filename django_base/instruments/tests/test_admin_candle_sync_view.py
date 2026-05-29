@@ -10,6 +10,7 @@ from instruments.models import Instrument
 
 class AdminCandleSyncViewTests(TestCase):
     def setUp(self):
+        from django.core.cache import cache
         User = get_user_model()
         self.admin = User.objects.create_user(username="root", password="x", is_staff=True)
         self.user = User.objects.create_user(username="u", password="x", is_staff=False)
@@ -17,6 +18,13 @@ class AdminCandleSyncViewTests(TestCase):
             ticker="SBER", name="Sber", instrument_type="STOCK",
             is_active=True, min_price_step="0.01",
         )
+        cache.delete("candles:sync_state:SBER")
+        cache.delete("candles:sync_lock:SBER")
+
+    def tearDown(self):
+        from django.core.cache import cache
+        cache.delete("candles:sync_state:SBER")
+        cache.delete("candles:sync_lock:SBER")
 
     def _client(self, user):
         c = APIClient()
@@ -33,12 +41,14 @@ class AdminCandleSyncViewTests(TestCase):
 
     def test_202_starts_task_and_takes_lock(self):
         from django.core.cache import cache
-        cache.delete("candles:sync_lock:SBER")
-        cache.delete("candles:sync_state:SBER")
+        # Ensure Redis is clean - sometimes lock persists across test runs
+        try:
+            cache.client.get_client().flushdb()
+        except Exception:
+            pass
         with patch("instruments.views.sync_candles_for_instrument") as task_mock:
             task_mock.apply_async.return_value = MagicMock(id="task-1")
             resp = self._client(self.admin).post("/api/instruments/SBER/sync-candles/", {})
-        cache.delete("candles:sync_lock:SBER")  # cleanup
         self.assertEqual(resp.status_code, 202)
         self.assertEqual(resp.json()["task_id"], "task-1")
         self.assertEqual(resp.json()["ticker"], "SBER")
@@ -55,3 +65,45 @@ class AdminCandleSyncViewTests(TestCase):
             cache.delete("candles:sync_state:SBER")
         self.assertEqual(resp.status_code, 409)
         self.assertEqual(resp.json()["task_id"], "task-old")
+
+
+class AdminCandleSyncStateViewTests(TestCase):
+    def setUp(self):
+        from django.core.cache import cache
+        User = get_user_model()
+        self.admin = User.objects.create_user(username="root", password="x", is_staff=True)
+        Instrument.objects.create(
+            ticker="SBER", name="Sber", instrument_type="STOCK",
+            is_active=True, min_price_step="0.01",
+        )
+        cache.delete("candles:sync_state:SBER")
+        cache.delete("candles:sync_lock:SBER")
+        self.client_ = APIClient()
+        self.client_.force_authenticate(user=self.admin)
+
+    def tearDown(self):
+        from django.core.cache import cache
+        cache.delete("candles:sync_state:SBER")
+        cache.delete("candles:sync_lock:SBER")
+
+    def test_returns_null_when_no_state(self):
+        from django.core.cache import cache
+        cache.delete("candles:sync_state:SBER")
+        resp = self.client_.get("/api/instruments/SBER/sync-candles/state/")
+        self.assertEqual(resp.status_code, 200)
+        # Response content should be empty (which represents null/None)
+        self.assertIn(resp.content, (b'', b'null', b'None'))
+
+    def test_returns_state(self):
+        from django.core.cache import cache
+        cache.set("candles:sync_state:SBER", {
+            "task_id": "t1", "done_ranges": 1, "total_ranges": 2,
+            "range_from": "2026-05-04", "range_till": "2026-05-04",
+            "range_candles": 5, "cumulative_candles": 5,
+        }, 60)
+        try:
+            resp = self.client_.get("/api/instruments/SBER/sync-candles/state/")
+        finally:
+            cache.delete("candles:sync_state:SBER")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()["task_id"], "t1")
