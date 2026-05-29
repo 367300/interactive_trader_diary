@@ -67,6 +67,39 @@ class AdminCandleSyncViewTests(TestCase):
         self.assertEqual(resp.json()["task_id"], "task-old")
 
 
+class AdminCandleSyncBrokerFailureTests(TestCase):
+    def setUp(self):
+        from django.core.cache import cache
+        User = get_user_model()
+        self.admin = User.objects.create_user(username="root", password="x", is_staff=True)
+        Instrument.objects.create(
+            ticker="SBER", name="Sber", instrument_type="STOCK",
+            is_active=True, min_price_step="0.01",
+        )
+        cache.delete("candles:sync_state:SBER")
+        cache.delete("candles:sync_lock:SBER")
+        self.client_ = APIClient()
+        self.client_.force_authenticate(user=self.admin)
+
+    def tearDown(self):
+        from django.core.cache import cache
+        cache.delete("candles:sync_state:SBER")
+        cache.delete("candles:sync_lock:SBER")
+
+    def test_lock_released_when_apply_async_fails(self):
+        from django.core.cache import cache
+        try:
+            cache.client.get_client().flushdb()
+        except Exception:
+            pass
+        with patch("instruments.views.sync_candles_for_instrument") as task_mock:
+            task_mock.apply_async.side_effect = RuntimeError("broker down")
+            resp = self.client_.post("/api/instruments/SBER/sync-candles/", {})
+        self.assertEqual(resp.status_code, 503)
+        # lock не должен оставаться занятым после сбоя брокера
+        self.assertIsNone(cache.get("candles:sync_lock:SBER"))
+
+
 class AdminCandleSyncStateViewTests(TestCase):
     def setUp(self):
         from django.core.cache import cache

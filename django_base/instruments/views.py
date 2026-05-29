@@ -255,14 +255,22 @@ class AdminCandleSyncView(APIView):
         start = request.data.get("start")
         end = request.data.get("end")
 
-        task = sync_candles_for_instrument.apply_async(kwargs={
-            "ticker": ticker,
-            "market": market,
-            "api_ticker": api_ticker,
-            "start": start,
-            "end": end,
-            "triggered_by": request.user.id,
-        })
+        try:
+            task = sync_candles_for_instrument.apply_async(kwargs={
+                "ticker": ticker,
+                "market": market,
+                "api_ticker": api_ticker,
+                "start": start,
+                "end": end,
+                "triggered_by": request.user.id,
+            })
+        except Exception:
+            redis_client.delete(lock_key)
+            cache.delete(state_key)
+            return Response(
+                {"detail": "Не удалось поставить задачу в очередь."},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
         redis_client.set(lock_key, task.id, ex=ttl)
         return Response({"task_id": task.id, "ticker": ticker}, status=status.HTTP_202_ACCEPTED)
 
