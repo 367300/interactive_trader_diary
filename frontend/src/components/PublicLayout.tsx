@@ -17,10 +17,14 @@ export default function PublicLayout() {
           <span className="w-9 h-9 rounded-[10px] bg-gradient-to-br from-blue to-purple grid place-items-center text-white font-bold text-sm">TD</span>
           <span className="font-bold">Дневник трейдера</span>
         </a>
-        <nav className="hidden sm:flex flex-1 gap-1">
-          <a href={`${landingHref}about/`} className="px-3.5 py-2 rounded-[10px] text-soft-foreground text-[13.5px] font-medium no-underline hover:bg-glass-soft hover:text-foreground transition-colors">О проекте</a>
-          <a href={`${landingHref}help/`} className="px-3.5 py-2 rounded-[10px] text-soft-foreground text-[13.5px] font-medium no-underline hover:bg-glass-soft hover:text-foreground transition-colors">Помощь</a>
-        </nav>
+        {registrationEnabled ? (
+          <nav className="hidden sm:flex flex-1 gap-1">
+            <a href={`${landingHref}about/`} className="px-3.5 py-2 rounded-[10px] text-soft-foreground text-[13.5px] font-medium no-underline hover:bg-glass-soft hover:text-foreground transition-colors">О проекте</a>
+            <a href={`${landingHref}help/`} className="px-3.5 py-2 rounded-[10px] text-soft-foreground text-[13.5px] font-medium no-underline hover:bg-glass-soft hover:text-foreground transition-colors">Помощь</a>
+          </nav>
+        ) : (
+          <div className="flex-1" />
+        )}
         <div className="hidden sm:flex gap-2 ml-auto">
           {registrationEnabled ? (
             <>
