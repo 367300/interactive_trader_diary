@@ -1,19 +1,3 @@
-# Prod-стек под Dokploy.
-#
-# Маршрутизацию делает Traefik (Dokploy), TLS — Let's Encrypt в Traefik.
-# Статику Django раздаёт WhiteNoise, медиа — Django views.static.serve.
-# SPA отдаётся из собственного контейнера на alpine-nginx (только статический bundle).
-#
-# Публичные домены:
-#   ${DOMAIN}              → frontend SPA + Django (path routing внутри Traefik)
-#   www.${DOMAIN}          → 301 на ${DOMAIN}
-#   flower.${DOMAIN}       → Flower (мониторинг Celery, basic-auth внутри Flower)
-#   pgadmin.${DOMAIN}      → pgAdmin
-#
-# В Dokploy достаточно подключить compose, задать переменные окружения и
-# нажать Deploy — labels ниже сами поднимут роутеры Traefik. Никакого
-# конфига доменов в UI Dokploy руками задавать не нужно.
-
 services:
   db:
     image: postgres:17.5
@@ -28,7 +12,6 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
-
   rabbitmq:
     image: rabbitmq:4.1.1-management
     environment:
@@ -36,25 +19,27 @@ services:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
     healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      test:
+        - CMD
+        - rabbitmq-diagnostics
+        - -q
+        - ping
       interval: 5s
       timeout: 10s
       retries: 10
       start_period: 30s
     restart: unless-stopped
-
   redis:
     image: redis:8
     environment:
       TZ: Europe/Moscow
     restart: unless-stopped
-
   web:
     build: .
     image: django-base:latest
     working_dir: /app/django_base
     user: root
-    command: >
+    command: |
       sh -c "mkdir -p /app/uploads/data_instruments /app/uploads/candles &&
              chown -R 5678:5678 /app/uploads &&
              su -s /bin/sh appuser -c '
@@ -99,8 +84,13 @@ services:
       - traefik.http.routers.web.tls.certresolver=letsencrypt
       - traefik.http.routers.web.priority=100
       - traefik.http.routers.web.service=web
+      - traefik.http.routers.web-http.rule=Host(`${DOMAIN}`) && (PathPrefix(`/api`) || PathPrefix(`/admin`) || PathPrefix(`/ws`) || PathPrefix(`/static`) || PathPrefix(`/media`) || PathPrefix(`/about`) || PathPrefix(`/help`) || Path(`/`) || Path(`/favicon.ico`))
+      - traefik.http.routers.web-http.entrypoints=web
+      - traefik.http.routers.web-http.middlewares=web-redirect
+      - traefik.http.routers.web-http.priority=100
+      - traefik.http.middlewares.web-redirect.redirectscheme.scheme=https
+      - traefik.http.middlewares.web-redirect.redirectscheme.permanent=true
       - traefik.http.services.web.loadbalancer.server.port=8000
-
   celery:
     build: .
     image: django-base:latest
@@ -119,12 +109,10 @@ services:
       rabbitmq:
         condition: service_healthy
     restart: unless-stopped
-
   celery-beat:
     build: .
     image: django-base:latest
     working_dir: /app/django_base
-    # schedule-файл живёт на uploads_data, чтобы при рестарте не задваивать таски.
     command: celery -A django_base beat --loglevel=info --schedule=/app/uploads/celerybeat-schedule
     volumes:
       - uploads_data:/app/uploads
@@ -144,13 +132,11 @@ services:
       rabbitmq:
         condition: service_healthy
     restart: unless-stopped
-
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile.prod
       args:
-        # Same-origin: фронт зовёт `/api`, Traefik отдаст это Django (web).
         VITE_API_BASE_URL: /api
     image: trader-diary-frontend:latest
     environment:
@@ -166,8 +152,13 @@ services:
       - traefik.http.routers.frontend.tls.certresolver=letsencrypt
       - traefik.http.routers.frontend.priority=10
       - traefik.http.routers.frontend.service=frontend
+      - traefik.http.routers.frontend-http.rule=Host(`${DOMAIN}`) || Host(`www.${DOMAIN}`)
+      - traefik.http.routers.frontend-http.entrypoints=web
+      - traefik.http.routers.frontend-http.middlewares=frontend-redirect
+      - traefik.http.routers.frontend-http.priority=10
+      - traefik.http.middlewares.frontend-redirect.redirectscheme.scheme=https
+      - traefik.http.middlewares.frontend-redirect.redirectscheme.permanent=true
       - traefik.http.services.frontend.loadbalancer.server.port=80
-
   flower:
     image: mher/flower:2.0.1
     environment:
@@ -189,16 +180,18 @@ services:
       - traefik.http.routers.flower.entrypoints=websecure
       - traefik.http.routers.flower.tls.certresolver=letsencrypt
       - traefik.http.routers.flower.service=flower
+      - traefik.http.routers.flower-http.rule=Host(`flower.${DOMAIN}`)
+      - traefik.http.routers.flower-http.entrypoints=web
+      - traefik.http.routers.flower-http.middlewares=flower-redirect
+      - traefik.http.middlewares.flower-redirect.redirectscheme.scheme=https
+      - traefik.http.middlewares.flower-redirect.redirectscheme.permanent=true
       - traefik.http.services.flower.loadbalancer.server.port=5555
-
   pgadmin:
     image: dpage/pgadmin4
     environment:
       TZ: Europe/Moscow
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
-      # pgAdmin за reverse-proxy: подсказываем ему о внешнем https-домене,
-      # иначе ломаются редиректы при логине.
       PGADMIN_CONFIG_PROXY_X_FOR_COUNT: 1
       PGADMIN_CONFIG_PROXY_X_PROTO_COUNT: 1
       PGADMIN_CONFIG_PROXY_X_HOST_COUNT: 1
@@ -217,17 +210,16 @@ services:
       - traefik.http.routers.pgadmin.entrypoints=websecure
       - traefik.http.routers.pgadmin.tls.certresolver=letsencrypt
       - traefik.http.routers.pgadmin.service=pgadmin
+      - traefik.http.routers.pgadmin-http.rule=Host(`pgadmin.${DOMAIN}`)
+      - traefik.http.routers.pgadmin-http.entrypoints=web
+      - traefik.http.routers.pgadmin-http.middlewares=pgadmin-redirect
+      - traefik.http.middlewares.pgadmin-redirect.redirectscheme.scheme=https
+      - traefik.http.middlewares.pgadmin-redirect.redirectscheme.permanent=true
       - traefik.http.services.pgadmin.loadbalancer.server.port=80
-
 volumes:
-  postgres_data:
-  pgadmin_data:
-  uploads_data:
-
-# `default` — внутренняя сеть стека (создаётся docker compose'ом автоматически),
-# по ней web/frontend/celery/db общаются между собой.
-# `dokploy-network` — внешняя сеть Dokploy/Traefik. К ней подключаем только
-# сервисы, на которые приходит публичный трафик (web, frontend, flower, pgadmin).
+  postgres_data: null
+  pgadmin_data: null
+  uploads_data: null
 networks:
   dokploy-network:
     external: true
